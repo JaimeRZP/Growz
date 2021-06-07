@@ -119,11 +119,11 @@ class make_data():
             print('Found file for '+ dataset_name)
             pass
         else:
-            SN = self.tools.read_light_curve_parameters('/home/jaimerz/PhD/Growth/data/raw/PantheonDS17/lcparam_DS17f.txt')
+            SN = self.tools.read_light_curve_parameters('/home/jaimerz/PhD/Growz/data/raw/PantheonDS17/lcparam_DS17f.txt')
             SN_data = np.array(SN.mb)
             z_SN = np.array(SN.zcmb)
             SN_idx = np.array([int(x) for x in z_SN/(self.dz)])
-            SN_cov = np.genfromtxt('/home/jaimerz/PhD/Growth/data/raw/PantheonDS17/syscov_panth.txt') + np.diag(SN.dmb**2)
+            SN_cov = np.genfromtxt('/home/jaimerz/PhD/Growz/data/raw/PantheonDS17/syscov_panth.txt') + np.diag(SN.dmb**2)
             SN_err = np.sqrt(np.diag(SN_cov))
 
             np.savez(os.path.join(self.path, dataset_name),  
