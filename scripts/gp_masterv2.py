@@ -89,7 +89,7 @@ data_cov = data_cov [1:]
 #base model
 with pm.Model() as model:
     ℓ = pm.InverseGamma("ℓ", alpha=1, beta=20) 
-    η = pm.HalfNormal("η", lam=10) 
+    η = pm.HalfNormal("η", sigma=10) 
     H0 = pm.Normal('H0', mu=70 , sigma=5)
     H1 = pm.Normal('H1', mu=35 , sigma=5)
     H2 = pm.Normal('H2', mu=35 , sigma=5)
