@@ -49,7 +49,7 @@ datadict = {'DESI': DESI,
 
 datasets = ['BOSS', 'eBOSS']
 
-need_dM = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DS17']
+need_dM = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'CMB', 'DS17']
 need_fs8 = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DSS']
 if any(dataset in datasets for dataset in need_dM):
     get_dM=True 
