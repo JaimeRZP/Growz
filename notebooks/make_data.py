@@ -215,6 +215,29 @@ class make_data():
         
         return np.load(filepath)
     
+    def get_CMB(self, new='False'):
+        dataset_name = 'CMB'
+        filepath = os.path.join(self.path, dataset_name+'.npz')
+        if (os.path.exists(filepath)) and (new is False):
+            print('Found file for '+ dataset_name)
+            pass
+        else:
+            z_CMB = np.array([1090.30])
+            perp_CMB = np.array([1.04097])
+            CMB_cov = np.array([[0.00046**2]])
+            CMB_err = np.array([0.00046])
+            CMB_rd = 144.46 #+- 0.48
+            CMB_idx = [-2]
+            np.savez(os.path.join(self.path, dataset_name),  
+             data = perp_CMB,
+             rd=CMB_rd,
+             z=z_CMB,
+             cov=CMB_cov,
+             err=CMB_err, 
+             idx=CMB_idx)
+        
+        return np.load(filepath)
+    
     def get_eBOSS(self, new='False'):
         dataset_name = 'eBOSS'
         filepath = os.path.join(self.path, dataset_name+'.npz')
