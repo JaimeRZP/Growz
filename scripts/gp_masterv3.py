@@ -105,8 +105,10 @@ with pm.Model() as model:
                tt.as_tensor_variable(H0+H1*z_arr+(1/2)*H2*z_arr**2))
     
     #Set up Gaussian process
-    DH_gp = gp.prior("DH_gp", X=z_arr[:, None]) 
-    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H*(1+DH_gp))) 
+    DH_gp = gp.prior("DH_gp", X=z_arr_l[:, None]) 
+    H_gp = H
+    H_gp = tt.inc_subtensor(H_gp[:len_l], H[:len_l]+DH_gp)
+    H_gp = pm.Deterministic("H_gp", H_gp) 
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
     
     if get_dM:
