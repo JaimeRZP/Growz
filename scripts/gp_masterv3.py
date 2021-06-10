@@ -325,7 +325,7 @@ else:
 
 os.mkdir(path)
 np.savez(os.path.join(path,'samples.npz'), 
-         z_arr = z_arr_f,
+         z_arr = z_arr,
          n=n,
          l=l,
          DHz = DHz,

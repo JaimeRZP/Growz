@@ -9,13 +9,15 @@ import make_data
 from scipy.linalg import block_diag
 
 #Load data
-path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/products/'
 dz_l = 0.01
 z_max_l = 2.5
 z_arr_l = np.arange(0.0, z_max_l+dz_l, dz_l)
 len_l = len(z_arr_l)
 a_arr_l = 1/(1+z_arr_l) 
 x_arr_l = np.log(a_arr_l)
+
+path = '/mnt/zfsuers/jaimerz/PhD/Growz/data/products'
+
 
 tools = utils.utils()
 c = tools.c
@@ -33,10 +35,8 @@ DS17 = data.get_DS17(new=True)
 CMB = data.get_CMB(new=True)
 
 #Settings
-Planck = tools.get_preds(z_arr_l, mode='Planck')
-
-n_samples = 10
-n_tune = 10
+n_samples = 100
+n_tune = 100
 datadict = {'DESI': DESI,
             'WFIRST': WFIRST,
             'CC': CC,
@@ -47,9 +47,7 @@ datadict = {'DESI': DESI,
             'DSS': DSS,
             'CMB': CMB}
 
-datasets = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'CMB', 'DS17']
-#datasets = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DSS']
-#datasets = ['CC', 'CMB']
+datasets = ['CC', 'CMB']
 
 need_dM = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'CMB', 'DS17']
 need_fs8 = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DSS']
@@ -90,7 +88,7 @@ data_cov = data_cov [1:]
 
 #base model
 with pm.Model() as model:
-    ℓ = pm.InverseGamma("ℓ", alpha=1, beta=20) 
+    ℓ = pm.InverseGamma("ℓ", alpha=1, beta=2) 
     η = pm.HalfNormal("η", sigma=10) 
     H0 = pm.Normal('H0', mu=70 , sigma=5)
     H1 = pm.Normal('H1', mu=35 , sigma=5)
@@ -106,7 +104,7 @@ with pm.Model() as model:
     
     #Set up Gaussian process
     DH_gp = gp.prior("DH_gp", X=z_arr[:, None]) 
-    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H*(1+DH_gp))) 
+    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H+DH_gp)) 
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
     
     if get_dM:
@@ -323,7 +321,7 @@ else:
 
 os.mkdir(path)
 np.savez(os.path.join(path,'samples.npz'), 
-         z_arr = z_arr_f,
+         z_arr = z_arr,
          n=n,
          l=l,
          DHz = DHz,
