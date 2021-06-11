@@ -31,6 +31,7 @@ eBOSS = data.get_eBOSS(new=True)
 Wigglez = data.get_Wigglez(new=True)
 DS17 = data.get_DS17(new=True)
 CMB = data.get_CMB(new=True)
+FCMB = data.get_FCMB(new=True)
 
 #Settings
 Planck = tools.get_preds(z_arr_l, mode='Planck')
@@ -45,7 +46,8 @@ datadict = {'DESI': DESI,
             'eBOSS': eBOSS,
             'Wigglez': Wigglez,
             'DSS': DSS,
-            'CMB': CMB}
+            'CMB': CMB,
+           'FCMB': FCMB}
 
 datasets = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'CMB', 'DS17']
 #datasets = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DSS']
@@ -53,6 +55,7 @@ datasets = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'CMB', 'DS17']
 
 need_dM = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'CMB', 'DS17']
 need_fs8 = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DSS']
+need_extraH = ['CMB', 'FCMB']
 if any(dataset in datasets for dataset in need_dM):
     get_dM=True 
 else:
@@ -62,8 +65,8 @@ if any(dataset in datasets for dataset in need_fs8):
 else:
     get_fs8=False
 
-if 'CMB' in datasets:
-    dz_h = 10
+if any(dataset in datasets for dataset in need_extraH):
+    dz_h = 0.1
     z_max_h = z_max_l+1090
     z_arr_h =  np.arange(z_max_l+dz_h, z_max_h+dz_h, dz_h)
     len_h = len(z_arr_h)
@@ -78,7 +81,7 @@ else:
     z_arr = z_arr_l
     a_arr = a_arr_l
     x_arr = x_arr_l
-        
+    
 #Data
 data = np.array([])
 data_cov = np.array([])
@@ -260,6 +263,13 @@ if 'CMB' in datasets:
         CMB_perp = pm.Deterministic("CMB_perp",
                                     tt.as_tensor_variable(theta100[CMB['idx']]+(theta100[CMB['idx']+1]-theta100[CMB['idx']])*(CMB['z']-z_arr[CMB['idx']])/dz_h))
         theory = tt.concatenate([theory, CMB_perp])
+        
+if 'FCMB' in datasets:
+    print('Adding FCMB')
+    with model:
+        FCMB_para = pm.Deterministic("FCMB_para",
+                                    tt.as_tensor_variable(H_gp[FCMB['idx']]+(H_gp[FCMB['idx']+1]-H_gp[FCMB['idx']])*(FCMB['z']-z_arr[FCMB['idx']])/dz_h))
+        theory = tt.concatenate([theory, FCMB_para])
 
 #Sampling
 with model:
