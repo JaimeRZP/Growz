@@ -14,7 +14,7 @@ z_max = 2.5
 z_arr = np.arange(0.0, z_max+0.1, dz)
 a_arr = 1/(1+z_arr) 
 x_arr = np.log(a_arr)
-path = '/home/jaimerz/PhD/Growz/data/products'
+path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/products'
 
 tools = utils.utils()
 c = tools.c
@@ -31,8 +31,8 @@ Wigglez = data.get_Wigglez(new=True)
 DS17 = data.get_DS17(new=True)
 
 #Settings
-n_samples = 1000
-n_tune = 1000
+n_samples = 10000
+n_tune = 10000
 datadict = {'DESI': DESI,
             'WFIRST': WFIRST,
             'CC': CC,
@@ -42,12 +42,9 @@ datadict = {'DESI': DESI,
             'Wigglez': Wigglez,
             'DSS': DSS}
 
-datasets = ['WFIRST']
-
 #datasets = ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS']
 #datasets = ['BOSS', 'eBOSS']
-datasets = ['CC', 'DS17']
-#datasets = ['DESI']
+datasets = ['DESI']
 #datasets = ['WFIRST']
 
 need_dM = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DS17']
@@ -78,7 +75,7 @@ with pm.Model() as model:
     H1 = pm.Normal('H1', mu=35 , sigma=5)
     H2 = pm.Normal('H2', mu=35 , sigma=5)
     Wm0 = pm.Uniform("Wm0", 0., 1.) 
-    Df = pm.Normal("Df", mu=0.05, sigma=0.05) 
+    Df = pm.Normal("Df", mu=0, sigma=0.05) 
     s80 = pm.Normal("s80", 0.8, 0.5)
     gp_cov = η ** 2 * pm.gp.cov.ExpQuad(1, ℓ) + pm.gp.cov.WhiteNoise(1e-3)
     gp = pm.gp.Latent(cov_func=gp_cov)
@@ -94,18 +91,18 @@ with pm.Model() as model:
     
     if get_dM:
         dH_gp = pm.Deterministic("dH", tt.as_tensor_variable((c/1000)/H_gp))
-        dM_gp = tt.zeros(len(z_arr_f))
-        dM_gp = tt.inc_subtensor(dM_gp_f[1:],
-                  tt.as_tensor_variable(dz*tt.cumsum(dH_gp_f)[:-1]))
-        dM_gp = pm.Deterministic('dM_gp', dM_gp_f)
-        dA_gp = pm.Deterministic('dA_gp', dM_gp_f/(1+z_arr))
-        dL_gp = pm.Deterministic('dL_gp', dM_gp_f*(1+z_arr))
+        dM_gp = tt.zeros(len(z_arr))
+        dM_gp = tt.inc_subtensor(dM_gp[1:],
+                  tt.as_tensor_variable(dz*tt.cumsum(dH_gp)[:-1]))
+        dM_gp = pm.Deterministic('dM_gp', dM_gp)
+        dA_gp = pm.Deterministic('dA_gp', dM_gp/(1+z_arr))
+        dL_gp = pm.Deterministic('dL_gp', dM_gp*(1+z_arr))
     
     if get_fs8:
         #Second order differentiation scheme
-        Wm =  pm.Deterministic("Wm", Wm0*(H0_gp/H_gp_f)**2*(1+z_arr_f)**3)
-        comf_H = pm.Deterministic("comf_H", a_arr_f*H_gp_f)
-        diff_comf_H = tt.zeros(len(z_arr_f))
+        Wm =  pm.Deterministic("Wm", Wm0*(H0_gp/H_gp)**2*(1+z_arr)**3)
+        comf_H = pm.Deterministic("comf_H", a_arr*H_gp)
+        diff_comf_H = tt.zeros(len(z_arr))
         diff_comf_H = tt.inc_subtensor(diff_comf_H[0], (comf_H[1]-comf_H[0])/(x_arr[1]-x_arr[0]))
         diff_comf_H = tt.inc_subtensor(diff_comf_H[1:-1], (comf_H[2:]-comf_H[:-2])/(x_arr[2:]-x_arr[:-2]))
         diff_comf_H = tt.inc_subtensor(diff_comf_H[-1], (comf_H[-1]-comf_H[-2])/(x_arr[-1]-x_arr[-2]))
@@ -116,10 +113,10 @@ with pm.Model() as model:
         f0 = pm.Deterministic('f0', 1-Df) 
         f_gp = tt.zeros(len(z_arr))
         f_gp = tt.inc_subtensor(f_gp[-1], f0)
-        for i in np.arange(1, len(z_arr_f)):
-            k0 = (-1/(1+z_arr_f[-i]))*((3/2)*Wm[-i]-f_gp[-i]**2-q[-i]*f_gp[-i])
+        for i in np.arange(1, len(z_arr)):
+            k0 = (-1/(1+z_arr[-i]))*((3/2)*Wm[-i]-f_gp[-i]**2-q[-i]*f_gp[-i])
             f1 = f_gp[-i]-dz*k0
-            k1 = (-1/(1+z_arr_f[-(i+1)]))*((3/2)*Wm[-(i+1)]-f1**2-q[-(i+1)]*f1)
+            k1 = (-1/(1+z_arr[-(i+1)]))*((3/2)*Wm[-(i+1)]-f1**2-q[-(i+1)]*f1)
             f_gp = tt.inc_subtensor(f_gp[-(i+1)], f_gp[-i]-dz*(k1+k0)/2)
         f_gp = pm.Deterministic("f_gp", f_gp) 
 
@@ -128,7 +125,7 @@ with pm.Model() as model:
         s8_gp = tt.inc_subtensor(s8_gp[0], s80)
         for i in np.arange(1, len(z_arr)):
             k0 = -1*(f_gp[i-1]*s8_gp[i-1])/(1+z_arr[i-1])
-            s8_gp = tt.inc_subtensor(s8_gp_f[i], s8_gp[i-1] + dz*(k0))
+            s8_gp = tt.inc_subtensor(s8_gp[i], s8_gp[i-1] + dz*(k0))
         s8_gp = pm.Deterministic("s8_gp", s8_gp) 
 
         fs8_gp = f_gp*s8_gp
@@ -215,12 +212,7 @@ if 'DSS' in datasets:
     with model:
         DSS_fs8 = pm.Deterministic("fs8_eBOSS", tt.as_tensor_variable(fs8_gp[DSS['idx']]))
         theory = tt.concatenate([theory, DSS_fs8])
-        
-with model:
-    lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
-    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune)
-
-
+    
 #Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
@@ -234,7 +226,7 @@ print(pm.summary(trace)['r_hat'][["ℓ","η"]])
 filename = ''
 for dataset in datasets:
     filename+=dataset+'_'
-path = filename+'{}_{}'.format(n_samples, n_tune)
+path = filename+'{}_{}_t'.format(n_samples, n_tune)
 
 n = np.array(trace.posterior["η"]).flatten()
 l = np.array(trace.posterior["ℓ"]).flatten()

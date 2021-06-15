@@ -36,8 +36,8 @@ FCMB = data.get_FCMB(new=True)
 #Settings
 Planck = tools.get_preds(z_arr_l, mode='Planck')
 
-n_samples = 10
-n_tune = 10
+n_samples = 10000
+n_tune = 10000
 datadict = {'DESI': DESI,
             'WFIRST': WFIRST,
             'CC': CC,
@@ -49,9 +49,9 @@ datadict = {'DESI': DESI,
             'CMB': CMB,
            'FCMB': FCMB}
 
-datasets = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'CMB', 'DS17']
+#datasets = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'CMB', 'DS17']
 #datasets = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DSS']
-#datasets = ['CC', 'CMB']
+datasets = ['DESI', 'FCMB']
 
 need_dM = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'CMB', 'DS17']
 need_fs8 = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DSS']
@@ -284,7 +284,7 @@ print(pm.summary(trace)['r_hat'][["ℓ","η"]])
 filename = ''
 for dataset in datasets:
     filename+=dataset+'_'
-path = filename+'{}_{}'.format(n_samples, n_tune)
+path = filename+'{}_{}_v3'.format(n_samples, n_tune)
 
 n = np.array(trace.posterior["η"]).flatten()
 l = np.array(trace.posterior["ℓ"]).flatten()

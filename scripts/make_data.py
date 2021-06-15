@@ -239,7 +239,7 @@ class make_data():
         return np.load(filepath)
     
     def get_FCMB(self, new='False'):
-        dataset_name = 'CMB'
+        dataset_name = 'FCMB'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
             print('Found file for '+ dataset_name)
