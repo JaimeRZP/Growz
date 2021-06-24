@@ -14,7 +14,7 @@ class utils():
     def __init__(self):
         self.c = 299792458.0
         self.z_new = np.arange(0.0, 3+0.1, 0.01)[:, None]
-        
+    
     def read_light_curve_parameters(self, path):
         with open(path, 'r') as text:
             clean_first_line = text.readline()[1:].strip()
@@ -47,8 +47,14 @@ class utils():
               'Omega_b': 0.050,
               'n_s': 0.9665,
               'ln10^{10}A_s': 3.040}
+        if mode == 'Panth':
+            params = {'h': 0.724,
+              'Omega_cdm': 0.262,
+              'Omega_b': 0.037,
+              'n_s': 0.837,
+              'ln10^{10}A_s': 3.138}
         self.cosmo = classy.Class()
-        self.cosmo.set({ 'output':'mPk', 'P_k_max_h/Mpc': 20, 'z_max_pk': 1000})
+        self.cosmo.set({ 'output':'mPk', 'P_k_max_h/Mpc': 20, 'z_max_pk': 1085})
         self.cosmo.set(params)
         self.cosmo.compute()
 
@@ -79,81 +85,37 @@ class utils():
                'Hkms_arr': Hkms_arr, 'f_arr': f_arr, 
                's8_arr': s8_arr}
         return preds
-
-    def make_f(self, H, z_arr, Wm0, Df):  
-        dz_f = z_arr[1]
-        a_arr = 1/(1+z_arr) 
-        x_arr = np.log(a_arr)
-        Wm =  Wm0*(H[0]/H)**2*(1+z_arr)**3
-        comf_H = a_arr*H
-        diff_comf_H = np.zeros(len(z_arr))
-        diff_comf_H[0] = (comf_H[1]-comf_H[0])/(x_arr[1]-x_arr[0])
-        diff_comf_H[1:-1] = (comf_H[2:]-comf_H[:-2])/(x_arr[2:]-x_arr[:-2])
-        diff_comf_H[-1] = (comf_H[-1]-comf_H[-2])/(x_arr[-1]-x_arr[-2])
-        q =  1+(diff_comf_H/comf_H)
-
-        f0 = 1-Df
-        f = np.zeros(len(z_arr))
-        f[-1] = f0
-        for i in np.arange(1, len(z_arr)):
-            k0 = (-1/(1+z_arr[-i]))*((3/2)*Wm[-i]-f[-i]**2-q[-i]*f[-i])
-            f1 = f[-i]-dz_f*k0
-            k1 = (-1/(1+z_arr[-(i+1)]))*((3/2)*Wm[-(i+1)]-f1**2-q[-(i+1)]*f1)
-            f[-(i+1)] =  f[-i] - dz_f*(k1+k0)/2
-        return np.array(f)
     
-    def make_sigma8(self, f, z_arr, sigma80): 
-        dz_f = z_arr[1]
-        s8 = np.ones(len(z_arr))
-        s8[0] = sigma80
-        for i in np.arange(1, len(z_arr)):
-            k0 = -1*(f[i-1]*s8[i-1])/(1+z_arr[i-1])
-            #s1 = s8[i-1]+dz_f*k0
-            #k1 = -1*(f[i]*s1)/(1+z_arr_f[i])
-            s8[i] = s8[i-1] + dz_f*(k0)  #+ dz_f*(k0+k1)/2
-
-        return  np.array(s8)
-    
-    def make_dM(self, H, z_arr):
-        dz_f = z_arr[1]
-        dM = np.zeros_like(z_arr)
-        dM[1:] = dz_f*np.cumsum(1/H)[:-1]
-        return dM
-
-    def get_pred_samples(self, trace, model, gp):
-        with model:
-            DHkms_pred_f = gp.conditional("DHkms_pred", self.z_new)
-        with model:
-            pred_samples = pm.sample_posterior_predictive(trace, samples=1000, var_names=["DHkms_pred"])
-
-        return pred_samples
-    
-    def H_model(self, z, coeffs):
-        return coeffs[0] + coeffs[1]*z  + (1/2)*coeffs[2]*z**2
-
-    def _loss(self, coeffs, data, cov, z):
-        inv_cov = np.linalg.inv(cov)
-        diff = data - self.H_model(z, coeffs)
-        xi2 = np.dot(np.dot(diff, inv_cov), diff)
-        return np.sqrt(xi2)
-    
-    def get_H_fit(self, z_output, z_data, data, cov):
-        x0 = [70, 0.675, 0.003]
-        x = least_squares(self._loss, x0, args=(data, cov, z_data))
-        best_coeffs = x['x']
-        print(best_coeffs)
-        return self.H_model(z_output, best_coeffs)
+    def make_fs8(self, H, x_arr, wm0, s80):
+        z_arr = np.exp(x_arr)-1
+        a_arr = 1./(1+z_arr) 
+        dx = np.mean(np.diff(x_arr))
         
-
-    def R_check(self, trace, model, gp,  path):
-        R_stat = pm.summary(trace)['r_hat'][["ℓ","η"]]
-        print(R_stat, np.all(np.array(R_stat)))
-        with open(os.path.join(path, 'trace.pkl'), 'wb') as buff:
-            pickle.dump({'trace': trace}, buff)      
-        if np.all(np.array(R_stat)<1.01):
-            print('Sampling process finsihed')
-            pred_samples = self._get_pred_samples(trace, model, gp)
-            with open(os.path.join(path, 'prediction.pkl'), 'wb') as buff:
-                pickle.dump({'pred_samples': pred_samples,
-                         'z_new': self.z_new}, buff)
-            raise KeyboardInterrupt    
+        Wm0 =  wm0*(100/H[0])**2
+        E = H/H[0]
+        
+        d = np.zeros(len(z_arr))
+        y = np.zeros(len(z_arr))
+        d[-1]= a_arr[-1]
+        y[-1]= E[0]*a_arr[-1]**3
+        for i in np.arange(1, len(z_arr)):
+            A0 = -1.5*Wm0/(a_arr[-i]*E[-i])
+            B0 = -1./(a_arr[-i]**2*E[-i])
+            A1 = -1.5*Wm0/(a_arr[-(i+1)]*E[-(i+1)])
+            B1 = -1./(a_arr[-(i+1)]**2*E[-(i+1)])
+            y[-(i+1)] = (1-0.5*dx**2*A0*B0)*y[-i]-0.5*(A0+A1)*dx*d[-i]
+            d[-(i+1)] = -0.5*(B0+B1)*dx*y[-i]+(1-0.5*dx**2*A0*B0)*d[-i]
+        
+        fs8 = s80*y/(a_arr**2*E*d[0])
+        s8 = s80*d/d[0]
+        
+        return s8, fs8
+    
+    def make_dM(self, H, x_arr):
+        z_arr = np.exp(x_arr)-1
+        a_arr = 1./(1+z_arr) 
+        dx = np.mean(np.diff(x_arr))
+        dM = np.zeros_like(z_arr)
+        dM[1:] = dx*np.cumsum((1+z_arr)/H)[:-1]
+        dM = 0.5*(dM[1:]+dM[:-1])-0.5*dM[1]
+        return dM

@@ -9,17 +9,17 @@ import make_data
 from scipy.linalg import block_diag
 
 #Load data
-dz = 0.01
-z_max = 2.5
-z_arr = np.arange(0.0, z_max+0.1, dz)
-a_arr = 1/(1+z_arr) 
-x_arr = np.log(a_arr)
+z_max = 1085
+res = 300
+x_arr = np.linspace(0, np.log(1+z_max), res)
+dx = np.mean(np.diff(x_arr))
+z_arr = np.exp(x_arr)-1
+a_arr = 1./(1+z_arr)
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/products'
 
 tools = utils.utils()
 c = tools.c
-data = make_data.make_data(z_max, 2, path)
-
+data = make_data.make_data(z_max, res , path)
 
 DESI = data.get_DESI(new=True)
 WFIRST = data.get_WFIRST(new=True)
@@ -29,10 +29,11 @@ BOSS = data.get_BOSS(new=True)
 eBOSS = data.get_eBOSS(new=True)
 Wigglez = data.get_Wigglez(new=True)
 DS17 = data.get_DS17(new=True)
+CMB = data.get_CMB(new=True)
+FCMB = data.get_FCMB(new=True)
 
-#Settings
-n_samples = 10000
-n_tune = 10000
+n_samples = 100
+n_tune = 100
 datadict = {'DESI': DESI,
             'WFIRST': WFIRST,
             'CC': CC,
@@ -40,23 +41,30 @@ datadict = {'DESI': DESI,
             'BOSS': BOSS,
             'eBOSS': eBOSS,
             'Wigglez': Wigglez,
-            'DSS': DSS}
+            'DSS': DSS,
+            'CMB': CMB, 
+            'FCMB': FCMB}
 
-#datasets = ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS']
-#datasets = ['BOSS', 'eBOSS']
-datasets = ['DESI']
-#datasets = ['WFIRST']
+datasets = ['CC', 'DS17', 'FCMB']
 
 need_dM = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DS17']
 need_fs8 = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DSS']
+need_rd = ['BOSS', 'eBOSS', 'CMB']
+
 if any(dataset in datasets for dataset in need_dM):
     get_dM=True 
 else:
     get_dM=False
+    
 if any(dataset in datasets for dataset in need_fs8):
     get_fs8=True
 else:
     get_fs8=False
+    
+if any(dataset in datasets for dataset in need_rd):
+    get_rd = True
+else:
+    get_rd = False
         
 #Data
 data = np.array([])
@@ -69,109 +77,34 @@ data_cov = data_cov [1:]
 
 #base model
 with pm.Model() as model:
-    ℓ = pm.InverseGamma("ℓ", alpha=1, beta=100) 
-    η = pm.Exponential("η", lam=1/20) 
-    H0 = pm.Normal('H0', mu=70 , sigma=5)
-    H1 = pm.Normal('H1', mu=35 , sigma=5)
-    H2 = pm.Normal('H2', mu=35 , sigma=5)
-    Wm0 = pm.Uniform("Wm0", 0., 1.) 
-    Df = pm.Normal("Df", mu=0, sigma=0.05) 
+    ℓ = pm.InverseGamma("ℓ", alpha=1, beta=2) 
+    η = pm.HalfNormal("η", sigma=10) 
+    wm0 = pm.Uniform("wm0", 0.1, 0.2) 
+    wL0 = pm.Uniform("wL0", 0.2, 0.4) 
     s80 = pm.Normal("s80", 0.8, 0.5)
     gp_cov = η ** 2 * pm.gp.cov.ExpQuad(1, ℓ) + pm.gp.cov.WhiteNoise(1e-3)
     gp = pm.gp.Latent(cov_func=gp_cov)
     
     #Mean of the gp
-    H_fit = pm.Deterministic('H_fit',
-               tt.as_tensor_variable(H0+H1*z_arr+(1/2)*H2*z_arr**2))
+    H = pm.Deterministic('H', 100*tt.sqrt(wm0*(1+z_arr)**3+wL0))
     
     #Set up Gaussian process
     DH_gp = gp.prior("DH_gp", X=z_arr[:, None]) 
-    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(DH_gp+H_fit)) 
+    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H+DH_gp))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
     
     if get_dM:
-        dH_gp = pm.Deterministic("dH", tt.as_tensor_variable((c/1000)/H_gp))
-        dM_gp = tt.zeros(len(z_arr))
-        dM_gp = tt.inc_subtensor(dM_gp[1:],
-                  tt.as_tensor_variable(dz*tt.cumsum(dH_gp)[:-1]))
-        dM_gp = pm.Deterministic('dM_gp', dM_gp)
-        dA_gp = pm.Deterministic('dA_gp', dM_gp/(1+z_arr))
-        dL_gp = pm.Deterministic('dL_gp', dM_gp*(1+z_arr))
-    
-    if get_fs8:
-        #Second order differentiation scheme
-        Wm =  pm.Deterministic("Wm", Wm0*(H0_gp/H_gp)**2*(1+z_arr)**3)
-        comf_H = pm.Deterministic("comf_H", a_arr*H_gp)
-        diff_comf_H = tt.zeros(len(z_arr))
-        diff_comf_H = tt.inc_subtensor(diff_comf_H[0], (comf_H[1]-comf_H[0])/(x_arr[1]-x_arr[0]))
-        diff_comf_H = tt.inc_subtensor(diff_comf_H[1:-1], (comf_H[2:]-comf_H[:-2])/(x_arr[2:]-x_arr[:-2]))
-        diff_comf_H = tt.inc_subtensor(diff_comf_H[-1], (comf_H[-1]-comf_H[-2])/(x_arr[-1]-x_arr[-2]))
-        diff_comf_H  = pm.Deterministic("diff_comf_H", diff_comf_H)
-        q = 1+(diff_comf_H/comf_H)
-
-        #Implement second Order Runge-Kutta method
-        f0 = pm.Deterministic('f0', 1-Df) 
-        f_gp = tt.zeros(len(z_arr))
-        f_gp = tt.inc_subtensor(f_gp[-1], f0)
-        for i in np.arange(1, len(z_arr)):
-            k0 = (-1/(1+z_arr[-i]))*((3/2)*Wm[-i]-f_gp[-i]**2-q[-i]*f_gp[-i])
-            f1 = f_gp[-i]-dz*k0
-            k1 = (-1/(1+z_arr[-(i+1)]))*((3/2)*Wm[-(i+1)]-f1**2-q[-(i+1)]*f1)
-            f_gp = tt.inc_subtensor(f_gp[-(i+1)], f_gp[-i]-dz*(k1+k0)/2)
-        f_gp = pm.Deterministic("f_gp", f_gp) 
-
-        #integrate for s8 method2
-        s8_gp = tt.zeros(len(z_arr))
-        s8_gp = tt.inc_subtensor(s8_gp[0], s80)
-        for i in np.arange(1, len(z_arr)):
-            k0 = -1*(f_gp[i-1]*s8_gp[i-1])/(1+z_arr[i-1])
-            s8_gp = tt.inc_subtensor(s8_gp[i], s8_gp[i-1] + dz*(k0))
-        s8_gp = pm.Deterministic("s8_gp", s8_gp) 
-
-        fs8_gp = f_gp*s8_gp
-        fs8_gp = pm.Deterministic("fs8_gp", fs8_gp)
-    
-    theory = tt.as_tensor_variable([])
-    
-#Modules
-if 'DESI' in datasets:
-    print('Adding DESI')
-    with model:
-        DESI_H = pm.Deterministic('DESI_H', tt.as_tensor_variable(H_gp[DESI['idx']]))
-        DESI_dA = pm.Deterministic('DESI_dA', tt.as_tensor_variable(dA_gp[DESI['idx']]))
-        DESI_fs8 = pm.Deterministic('DESI_fs8', tt.as_tensor_variable(fs8_gp[DESI['idx']]))
-        theory = tt.concatenate([theory, DESI_H, DESI_dA, DESI_fs8])
+        dH_gp = pm.Deterministic("dH", tt.as_tensor_variable((c/1000)*(1+z_arr)/H_gp))
+        dM_rec_gp = tt.zeros(len(z_arr))
+        dM_rec_gp = tt.inc_subtensor(dM_rec_gp[1:],
+                  tt.as_tensor_variable(dx*tt.cumsum(dH_gp)[:-1]))
+        dM_trap_gp = tt.as_tensor_variable(0.5*(dM_rec_gp[1:]+dM_rec_gp[:-1]))
+        dM_gp = pm.Deterministic('dM_gp', dM_trap_gp+0.5*dM_rec_gp[1]*tt.ones_like(dM_trap_gp))
+        dA_gp = pm.Deterministic('dA_gp', dM_gp/(1+(z_arr[1:]+z_arr[:-1])/2))
+        dL_gp = pm.Deterministic('dL_gp', dM_gp*(1+(z_arr[1:]+z_arr[:-1])/2))
         
-if 'WFIRST' in datasets:
-    print('Adding WFIRST')
-    with model:
-        E_gp = pm.Deterministic("E_gp", tt.as_tensor_variable(H_gp/H0_gp)) 
-        WFIRST_E = pm.Deterministic('WFIRST_E', tt.as_tensor_variable(E_gp[WFIRST['idx']]))
-        theory = tt.concatenate([theory, WFIRST_E])
-
-if 'CC' in datasets:
-    print('Adding CCs')
-    with model:
-        CC_H = pm.Deterministic("CC_H",
-               tt.as_tensor_variable(H_gp_f[CC['idx']]+(H_gp[CC['idx']+1]-H_gp[CC['idx']])*(CC['z']-z_arr[CC['idx']])/dz))
-        theory = tt.concatenate([theory, CC_H])
-        
-if 'DS17' in datasets:
-    print('Adding Pantheon')
-    with model:
-        M = pm.Normal('M', mu=-19.0, sigma=1)
-        u_gp = pm.Deterministic('u_gp', tt.as_tensor_variable(5*tt.log10(dL_gp)+25+M))
-        DS17_u = pm.Deterministic("DS17_u",
-                 tt.as_tensor_variable(u_gp_f[DS17['idx']]+(u_gp[DS17['idx']+1]-u_gp[DS17['idx']])*(DS17['z']-z_arr[DS17['idx']])/dz))
-        theory = tt.concatenate([theory, DS17_u])
-        
-if 'BOSS' in datasets:
-    print('Adding BOSS')
-    with model:
-        Wb0 = pm.Uniform("Wb0", 0., 1.) 
-        h = pm.Deterministic('h', H0_gp/100) 
-        wm0 = pm.Deterministic("wm0", Wm0*h**2)
-        wb0 = pm.Deterministic("wb0", Wb0*h**2)
+    if get_rd:
+        wb0 = pm.Normal("wb0", 0.02226, sigma=0.00023)
         theta27 = 2.755/2.7 
         zeq =  2.5 * 10**4 * wm0 * theta27**-4 
         keq = 7.46 * 10**-2 * wm0 * theta27**-2
@@ -181,30 +114,99 @@ if 'BOSS' in datasets:
         Rd = 31.5 * wb0 * theta27**-4 * (zd/10*3)**-1
         Req = 31.5 * wb0 * theta27**-4 * (zeq/10*3)**-1
         rd_gp = pm.Deterministic('rd_gp',(2/(3*keq))*tt.sqrt(6/Req)*tt.log((tt.sqrt(1+Rd)+tt.sqrt(Rd+Req))/(1+tt.sqrt(Req))))
-
-        #Get alpha_perp and alpha_para 
-        BOSS_para_f = pm.Deterministic("BOSS_para_f", H_gp*rd_gp/BOSS['rd'])
-        BOSS_perp_f = pm.Deterministic("BOSS_perp_f", dM_gp*BOSS['rd']/rd_gp)
         
-        BOSS_para = pm.Deterministic("BOSS_para", tt.as_tensor_variable(BOSS_para_f[BOSS['idx']]))
-        BOSS_perp = pm.Deterministic("BOSS_perp", tt.as_tensor_variable(BOSS_perp_f[BOSS['idx']]))
-        BOSS_fs8 = pm.Deterministic("fs8_BOSS", tt.as_tensor_variable(fs8_gp[BOSS['idx']]))
-        theory = tt.concatenate([theory, BOSS_para, BOSS_perp, BOSS_fs8])
+    if get_fs8:
+        Wm0 =  pm.Deterministic('Wm0', wm0*(100/H_gp[0])**2)
+        E_gp = pm.Deterministic('E_gp', H_gp/H_gp[0])
+        
+        d = tt.zeros(len(z_arr))
+        y = tt.zeros(len(z_arr))
+        d = tt.inc_subtensor(d[-1], a_arr[-1])
+        y = tt.inc_subtensor(y[-1], E_gp[0]*a_arr[-1]**3)
+        for i in np.arange(1, len(z_arr)):
+            A0 = -1.5*Wm0/(a_arr[-i]*E_gp[-i])
+            B0 = -1./(a_arr[-i]**2*E_gp[-i])
+            A1 = -1.5*Wm0/(a_arr[-(i+1)]*E_gp[-(i+1)])
+            B1 = -1./(a_arr[-(i+1)]**2*E_gp[-(i+1)])
+            y = tt.inc_subtensor(y[-(i+1)], (1-0.5*dx**2*A0*B0)*y[-i]-0.5*(A0+A1)*dx*d[-i])
+            d = tt.inc_subtensor(d[-(i+1)], -0.5*(B0+B1)*dx*y[-i]+(1-0.5*dx**2*A0*B0)*d[-i])
+        
+        fs8 = pm.Deterministic('fs8', s80*y/(a_arr**2*E_gp*d[0]))
+        s8 = pm.Deterministic('s8', s80*d/d[0])
+    
+    theory = tt.as_tensor_variable([])
+    
+#Modules
+if 'DESI' in datasets:
+    print('Adding DESI')
+    with model:
+        DESI_H = pm.Deterministic('DESI_H',
+                 tt.as_tensor_variable(H_gp[DESI['idx']]+(H_gp[DESI['idx']+1]-H_arr[DESI['idx']])*DESI['U']))
+        DESI_dA = pm.Deterministic('DESI_dA',
+                  tt.as_tensor_variable(dA_gp[DESI['idx']]+(dA_gp[DESI['idx']+1]-dA_gp[DESI['idx']])*DESI['U']))
+        DESI_fs8 = pm.Deterministic('DESI_fs8',
+                   tt.as_tensor_variable(fs8_gp[DESI['idx']]+(fs8_gp[DESI['idx']+1]-fs8_gp[DESI['idx']])*DESI['U']))
+        theory = tt.concatenate([theory, DESI_H, DESI_dA, DESI_fs8])
+        
+if 'WFIRST' in datasets:
+    print('Adding WFIRST')
+    with model:
+        WFIRST_E = pm.Deterministic('WFIRST_E',
+                   tt.as_tensor_variable(E_gp[WFIRST['idx']]+(E_gp[WFIRST['idx']+1]-E_gp[WFIRST['idx']])*WFIRST['U']))
+        theory = tt.concatenate([theory, WFIRST_E])
+
+if 'CC' in datasets:
+    print('Adding CCs')
+    with model:
+        CC_H = pm.Deterministic("CC_H",
+               tt.as_tensor_variable(H_gp[CC['idx']]+(H_gp[CC['idx']+1]-H_gp[CC['idx']])*CC['U']))
+        theory = tt.concatenate([theory, CC_H])
+        
+if 'DS17' in datasets:
+    print('Adding Pantheon')
+    with model:
+        M = pm.Normal('M', mu=-19.0, sigma=1)
+        u_gp = pm.Deterministic('u_gp', tt.as_tensor_variable(5*tt.log10(dL_gp)+25+M))
+        DS17_u = pm.Deterministic("DS17_u",
+                 tt.as_tensor_variable(u_gp[DS17['idx']]+(u_gp[DS17['idx']+1]-u_gp[DS17['idx']])*DS17['U']))
+        theory = tt.concatenate([theory, DS17_u])
+        
+if 'BOSS' in datasets:
+    print('Adding BOSS')
+    with model:
+        #Get alpha_perp and alpha_para 
+        B_para_f = pm.Deterministic("B_para_f", H_gp*rd_gp/BOSS['rd'])
+        B_perp_f = pm.Deterministic("B_perp_f", dM_gp*BOSS['rd']/rd_gp)
+        
+        B_para = pm.Deterministic("B_para", 
+                    tt.as_tensor_variable(B_para_f[BOSS['idx']]+(B_para_f[BOSS['idx']+1]-B_para_f[BOSS['idx']])*BOSS['U']))
+        B_perp = pm.Deterministic("B_perp", 
+                tt.as_tensor_variable(B_perp_f[BOSS['idx']]+(B_perp_f[BOSS['idx']+1]-B_perp_f[BOSS['idx']])*BOSS['U']))
+        B_fs8 = pm.Deterministic("B_fs8", 
+                   tt.as_tensor_variable(fs8_gp[BOSS['idx']]+(fs8_gp[BOSS['idx']+1]-fs8_gp[BOSS['idx']])*BOSS['U']))
+        
+        theory = tt.concatenate([theory, B_para, B_perp, B_fs8])
         
 if 'eBOSS' in datasets:
     print('Adding eBOSS')
     with model:
-        eBOSS_para = pm.Deterministic("eBOSS_para",
-                                    tt.as_tensor_variable((dH_gp/eBOSS['rd'])[eBOSS['idx']]))
-        eBOSS_perp = pm.Deterministic("eBOSS_perp",
-                                    tt.as_tensor_variable((dM_gp/eBOSS['rd'])[eBOSS['idx']]))
-        eBOSS_fs8 = pm.Deterministic("eBOSS_fs8", tt.as_tensor_variable(fs8_gp[eBOSS['idx']]))
-        theory = tt.concatenate([theory, eBOSS_para, eBOSS_perp, eBOSS_fs8])
+        eB_para_f = pm.Deterministic("eB_para_f", dH_gp/rd_gp)
+        eB_perp_f = pm.Deterministic("eB_perp_f", dM_gp/rd_gp)
+        
+        eB_para = pm.Deterministic("eB_para", 
+                    tt.as_tensor_variable(eB_para_f[eBOSS['idx']]+(eB_para_f[eBOSS['idx']+1]-eB_para_f[eBOSS['idx']])*eBOSS['U']))
+        eB_perp = pm.Deterministic("eB_perp", 
+                tt.as_tensor_variable(eB_perp_f[eBOSS['idx']]+(eB_perp_f[BOSS['idx']+1]-eB_perp_f[eBOSS['idx']])*eBOSS['U']))
+        eB_fs8 = pm.Deterministic("eB_fs8", 
+                   tt.as_tensor_variable(fs8_gp[eBOSS['idx']]+(fs8_gp[eBOSS['idx']+1]-fs8_gp[eBOSS['idx']])*eBOSS['U']))
+        
+        theory = tt.concatenate([theory, eB_para, eB_perp, eB_fs8])
 
 if 'Wigglez' in datasets:
     print('Adding Wigglez')
     with model:
-        Wigglez_fs8 = pm.Deterministic("Wigglez_fs8", tt.as_tensor_variable(fs8_gp[Wigglez['idx']]))
+        Wigglez_fs8 = pm.Deterministic("Wigglez_fs8",
+                    tt.as_tensor_variable(fs8_gp[Wigglez['idx']]+(fs8_gp[Wigglez['idx']+1]-fs8_gp[Wigglez['idx']])*Wigglez['U']))
         theory = tt.concatenate([theory, Wigglez_fs8])
 
 if 'DSS' in datasets:
@@ -212,6 +214,21 @@ if 'DSS' in datasets:
     with model:
         DSS_fs8 = pm.Deterministic("fs8_eBOSS", tt.as_tensor_variable(fs8_gp[DSS['idx']]))
         theory = tt.concatenate([theory, DSS_fs8])
+
+if 'CMB' in datasets:
+    print('Adding CMB')
+    with model:
+        CMB_dM = pm.Deterministic('CMB_dM',
+                  tt.as_tensor_variable(dM_gp[CMB['idx']]+(dM_gp[CMB['idx']+1]-dM_gp[CMB['idx']])*CMB['U']))
+        t100 = pm.Deterministic("theta100", tt.as_tensor_variable(100*rd_gp/CMB_dM))
+        theory = tt.concatenate([theory, theta100])
+        
+if 'FCMB' in datasets:
+    print('Adding FCMB')
+    with model:
+        CMB_H = pm.Deterministic('CMB_H',
+                  tt.as_tensor_variable(H_gp[FCMB['idx']]+(H_gp[FCMB['idx']+1]-H_gp[FCMB['idx']])*FCMB['U']))
+        theory = tt.concatenate([theory, CMB_H])
     
 #Sampling
 with model:
@@ -221,7 +238,6 @@ with model:
 #print r-stat
 print(pm.summary(trace)['r_hat'][["ℓ","η"]])
 
-    
 #Save
 filename = ''
 for dataset in datasets:
@@ -243,8 +259,6 @@ else:
     dMz = None
     
 if get_fs8:
-    fz = np.array(trace.posterior["f_gp"])
-    fz= fz.reshape(-1, fz.shape[-1])
     s8z = np.array(trace.posterior["s8_gp"])
     s8z = s8z.reshape(-1, s8z.shape[-1])
     fs8z = np.array(trace.posterior["fs8_gp"])
@@ -252,22 +266,12 @@ if get_fs8:
     Omega_m = np.array(trace.posterior["Wm0"]).flatten()
     s80 = np.array(trace.posterior["s80"]).flatten()
     S80 = s80*np.sqrt(Omega_m/0.3)
-    Df = np.array(trace.posterior["Df"]).flatten()
-else:
-    fz = None  
+else: 
     s8z = None 
     fs8z = None
     Omega_m = None 
     s80 = None
     S80 = None
-    Df = None
-
-if 'BOSS' in datasets:
-    Omega_b = np.array(trace.posterior["Wb0"]).flatten()
-    rd = np.array(trace.posterior["rd_gp"]).flatten()
-else:
-    Omega_b = None
-    rd = None
 
 if 'DS17' in datasets:
     M = np.array(trace.posterior["M"]).flatten()
@@ -282,14 +286,10 @@ np.savez(os.path.join(path,'samples.npz'),
          DHz = DHz,
          Hz=Hz,
          dMz=dMz,
-         fz=fz,
          s8z=s8z,
          fs8z=fs8z,
          H0=H0,
          Omega_m=Omega_m,
          Omega_b=Omega_b,
          s80=s80,
-         S80=S80, 
-         rd=rd,
-         Df=Df,
-         M=M)
+         S80=S80)

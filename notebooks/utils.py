@@ -120,5 +120,3 @@ class utils():
         dM = 0.5*(dM[1:]+dM[:-1])-0.5*dM[1]
         return dM
     
-    def H_model(self, z, coeffs):
-        return coeffs[0] + coeffs[1]*z  + (1/2)*coeffs[2]*z**2
