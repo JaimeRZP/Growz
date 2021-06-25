@@ -9,12 +9,13 @@ import make_data
 from scipy.linalg import block_diag
 
 #Load data
-z_max = 1095
+z_max = 1110
 res = 300
 x_arr = np.linspace(0, np.log(1+z_max), res)
 dx = np.mean(np.diff(x_arr))
 z_arr = np.exp(x_arr)-1
 a_arr = 1./(1+z_arr)
+
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/products'
 
 tools = utils.utils()

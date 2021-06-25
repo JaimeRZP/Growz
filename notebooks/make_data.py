@@ -4,6 +4,7 @@ import pandas as pd
 import os
 import utils
 from pandas import read_table
+
 class make_data():
     def __init__(self, z_max, res, path):
         self.path = path
