@@ -16,7 +16,7 @@ class make_data():
         self.a_arr = 1./(1+self.z_arr) 
         self.dx = np.mean(np.diff(self.x_arr))
         self.dz = np.diff(self.z_arr)
-        self.Planck = self.tools.get_preds(self.z_arr, mode='Planck')
+        self.Planck = self.tools.get_preds(self.z_arr[self.z_arr<1085], mode='Planck')
 
     def make_idx(self, z_data):
         idxs = np.array([])
@@ -85,9 +85,11 @@ class make_data():
             DESI_U = self.make_U(z_DESI, DESI_idx)
 
             H_arr = self.Planck['Hkms_arr']
-            dA_arr = self.tools.make_dM((1000/self.tools.c)*H_arr, self.x_arr)
-            dA_arr /= (1+(self.z_arr[1:]+self.z_arr[:-1])/2)
-            s8_arr, fs8_arr = self.tools.make_fs8(H_arr, self.x_arr, 0.131, 0.805)
+            x_arr = self.x_arr[self.z_arr<1085]
+            z_arr = self.z_arr[self.z_arr<1085]
+            dA_arr = self.tools.make_dM((1000/self.tools.c)*H_arr, x_arr)
+            dA_arr /= (1+(z_arr[1:]+z_arr[:-1])/2)
+            s8_arr, fs8_arr = self.tools.make_fs8(H_arr, x_arr, 0.131, 0.805)
             
             
             H_DESI = H_arr[DESI_idx]+(H_arr[DESI_idx+1]-H_arr[DESI_idx])*DESI_U
@@ -256,7 +258,7 @@ class make_data():
             print('Found file for '+ dataset_name)
             pass
         else:
-            z_CMB = np.array([1080.30]) #1090.3
+            z_CMB = np.array([1090.30]) #1090.3
             perp_CMB = np.array([1.04097])
             CMB_cov = np.array([[0.00046**2]])
             CMB_err = np.array([0.00046])
@@ -283,12 +285,10 @@ class make_data():
             print('Found file for '+ dataset_name)
             pass
         else:
-            z_FCMB = np.array([1080.30])
+            z_FCMB = np.array([1090.30])
             para_FCMB = np.array([1541677.34])
             FCMB_cov = np.array([[1541.67**2]])
             FCMB_err = np.array([1541.67])
-            #CMB_idx = np.array([int(x) for x in np.array([1080.3])/(0.1)])
-            #CMB_idx += 251-25
             FCMB_idx =  self.make_idx(z_FCMB) 
             FCMB_U = self.make_U(z_FCMB, FCMB_idx)
             np.savez(os.path.join(self.path, dataset_name),  

@@ -9,7 +9,7 @@ import make_data
 from scipy.linalg import block_diag
 
 #Load data
-z_max = 1085
+z_max = 1095
 res = 300
 x_arr = np.linspace(0, np.log(1+z_max), res)
 dx = np.mean(np.diff(x_arr))
@@ -47,7 +47,7 @@ datadict = {'DESI': DESI,
 
 datasets = ['CC', 'DS17', 'FCMB']
 
-need_dM = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DS17']
+need_dM = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DS17', 'CMB']
 need_fs8 = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DSS']
 need_rd = ['BOSS', 'eBOSS', 'CMB']
 
@@ -77,7 +77,7 @@ data_cov = data_cov [1:]
 
 #base model
 with pm.Model() as model:
-    ℓ = pm.InverseGamma("ℓ", alpha=1, beta=2) 
+    ℓ = pm.InverseGamma("ℓ", alpha=10, beta=2) 
     η = pm.HalfNormal("η", sigma=10) 
     wm0 = pm.Uniform("wm0", 0.1, 0.2) 
     wL0 = pm.Uniform("wL0", 0.2, 0.4) 
@@ -104,7 +104,7 @@ with pm.Model() as model:
         dL_gp = pm.Deterministic('dL_gp', dM_gp*(1+(z_arr[1:]+z_arr[:-1])/2))
         
     if get_rd:
-        wb0 = pm.Normal("wb0", 0.02226, sigma=0.00023)
+        wb0 =  0.02226 #pm.Normal("wb0", 0.02226, sigma=0.00023)
         theta27 = 2.755/2.7 
         zeq =  2.5 * 10**4 * wm0 * theta27**-4 
         keq = 7.46 * 10**-2 * wm0 * theta27**-2
@@ -113,8 +113,7 @@ with pm.Model() as model:
         zd = 1291 * ((wm0**0.251)/(1+0.659*wm0**0.828)) * (1+ b1*wb0**b2)
         Rd = 31.5 * wb0 * theta27**-4 * (zd/10*3)**-1
         Req = 31.5 * wb0 * theta27**-4 * (zeq/10*3)**-1
-        rd_gp = pm.Deterministic('rd_gp',(2/(3*keq))*tt.sqrt(6/Req)*tt.log((tt.sqrt(1+Rd)+tt.sqrt(Rd+Req))/(1+tt.sqrt(Req))))
-        
+        rd_gp = tt.as_tensor_variable((2/(3*keq))*tt.sqrt(6/Req)*tt.log((tt.sqrt(1+Rd)+tt.sqrt(Rd+Req))/(1+tt.sqrt(Req))))        
     if get_fs8:
         Wm0 =  pm.Deterministic('Wm0', wm0*(100/H_gp[0])**2)
         E_gp = pm.Deterministic('E_gp', H_gp/H_gp[0])
@@ -131,8 +130,8 @@ with pm.Model() as model:
             y = tt.inc_subtensor(y[-(i+1)], (1-0.5*dx**2*A0*B0)*y[-i]-0.5*(A0+A1)*dx*d[-i])
             d = tt.inc_subtensor(d[-(i+1)], -0.5*(B0+B1)*dx*y[-i]+(1-0.5*dx**2*A0*B0)*d[-i])
         
-        fs8 = pm.Deterministic('fs8', s80*y/(a_arr**2*E_gp*d[0]))
-        s8 = pm.Deterministic('s8', s80*d/d[0])
+        fs8_gp = pm.Deterministic('fs8_gp', s80*y/(a_arr**2*E_gp*d[0]))
+        s8_gp = pm.Deterministic('s8_gp', s80*d/d[0])
     
     theory = tt.as_tensor_variable([])
     
@@ -141,7 +140,7 @@ if 'DESI' in datasets:
     print('Adding DESI')
     with model:
         DESI_H = pm.Deterministic('DESI_H',
-                 tt.as_tensor_variable(H_gp[DESI['idx']]+(H_gp[DESI['idx']+1]-H_arr[DESI['idx']])*DESI['U']))
+                 tt.as_tensor_variable(H_gp[DESI['idx']]+(H_gp[DESI['idx']+1]-H_gp[DESI['idx']])*DESI['U']))
         DESI_dA = pm.Deterministic('DESI_dA',
                   tt.as_tensor_variable(dA_gp[DESI['idx']]+(dA_gp[DESI['idx']+1]-dA_gp[DESI['idx']])*DESI['U']))
         DESI_fs8 = pm.Deterministic('DESI_fs8',
@@ -165,7 +164,7 @@ if 'CC' in datasets:
 if 'DS17' in datasets:
     print('Adding Pantheon')
     with model:
-        M = pm.Normal('M', mu=-19.0, sigma=1)
+        M = pm.Normal('M', mu=-19.0, sigma=3)
         u_gp = pm.Deterministic('u_gp', tt.as_tensor_variable(5*tt.log10(dL_gp)+25+M))
         DS17_u = pm.Deterministic("DS17_u",
                  tt.as_tensor_variable(u_gp[DS17['idx']]+(u_gp[DS17['idx']+1]-u_gp[DS17['idx']])*DS17['U']))
@@ -218,10 +217,9 @@ if 'DSS' in datasets:
 if 'CMB' in datasets:
     print('Adding CMB')
     with model:
-        CMB_dM = pm.Deterministic('CMB_dM',
-                  tt.as_tensor_variable(dM_gp[CMB['idx']]+(dM_gp[CMB['idx']+1]-dM_gp[CMB['idx']])*CMB['U']))
-        t100 = pm.Deterministic("theta100", tt.as_tensor_variable(100*rd_gp/CMB_dM))
-        theory = tt.concatenate([theory, theta100])
+        dM_star = tt.as_tensor_variable(dM_gp[CMB['idx']]+(dM_gp[CMB['idx']+1]-dM_gp[CMB['idx']])*CMB['U'])
+        t100 = pm.Deterministic('t100', 100*rd_gp/dM_star)        
+        theory = tt.concatenate([theory, t100])
         
 if 'FCMB' in datasets:
     print('Adding FCMB')

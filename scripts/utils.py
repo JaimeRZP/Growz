@@ -13,7 +13,6 @@ import pickle
 class utils():
     def __init__(self):
         self.c = 299792458.0
-        self.z_new = np.arange(0.0, 3+0.1, 0.01)[:, None]
     
     def read_light_curve_parameters(self, path):
         with open(path, 'r') as text:

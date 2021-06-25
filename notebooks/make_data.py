@@ -15,13 +15,13 @@ class make_data():
         self.a_arr = 1./(1+self.z_arr) 
         self.dx = np.mean(np.diff(self.x_arr))
         self.dz = np.diff(self.z_arr)
-        self.Planck = self.tools.get_preds(self.z_arr, mode='Planck')
+        self.Planck = self.tools.get_preds(self.z_arr[self.z_arr<1085], mode='Planck')
 
-    def make_idx(self, z_data):
+    def make_idx(self, z_data, z_arr):
         idxs = np.array([])
         for z in z_data:
-            closest_z = min(self.z_arr, key=lambda x:abs(x-z))
-            idx = np.array([int(i) for i in range(self.res) if self.z_arr[i]==closest_z])
+            closest_z = min(z_arr, key=lambda x:abs(x-z))
+            idx = np.array([int(i) for i in range(len(z_arr)) if z_arr[i]==closest_z])
             if closest_z > z:
                 idx += -1
             idxs = np.append(idxs, idx)
@@ -43,7 +43,7 @@ class make_data():
             z_WFIRST = np.array([0.07, 0.2, 0.35, 
                               0.6, 0.8, 1.0,
                               1.3, 1.7, 2.5])
-            WFIRST_idx =  self.make_idx(z_WFIRST) #np.array([int(x) for x in z_WFIRST/(self.dz)])
+            WFIRST_idx =  self.make_idx(z_WFIRST, self.z_arr) 
             WFIRST_U = self.make_U(z_WFIRST, WFIRST_idx)
             E_arr = self.Planck['Hkms_arr']/self.Planck['Hkms_arr'][0]
             WFIRST_err = E_arr[WFIRST_idx]*WFIRST_rels_E/100
@@ -80,13 +80,15 @@ class make_data():
                      1.47, 1.89, 3.06, 5.14, 7.66]
 
             z_DESI = np.arange(0.15, 1.85+0.1, 0.1)
-            DESI_idx =  self.make_idx(z_DESI) #np.array([int(x) for x in z_DESI/(self.dz)])
+            DESI_idx =  self.make_idx(z_DESI, self.z_arr)
             DESI_U = self.make_U(z_DESI, DESI_idx)
 
             H_arr = self.Planck['Hkms_arr']
-            dA_arr = self.tools.make_dM((1000/self.tools.c)*H_arr, self.x_arr)
-            dA_arr /= (1+(self.z_arr[1:]+self.z_arr[:-1])/2)
-            s8_arr, fs8_arr = self.tools.make_fs8(H_arr, self.x_arr, 0.131, 0.805)
+            x_arr = self.x_arr[self.z_arr<1085]
+            z_arr = self.z_arr[self.z_arr<1085]
+            dA_arr = self.tools.make_dM((1000/self.tools.c)*H_arr, x_arr)
+            dA_arr /= (1+(z_arr[1:]+z_arr[:-1])/2)
+            s8_arr, fs8_arr = self.tools.make_fs8(H_arr, x_arr, 0.131, 0.805)
             
             
             H_DESI = H_arr[DESI_idx]+(H_arr[DESI_idx+1]-H_arr[DESI_idx])*DESI_U
@@ -144,8 +146,7 @@ class make_data():
             SN = self.tools.read_light_curve_parameters('/home/jaimerz/PhD/Growz/data/raw/PantheonDS17/lcparam_DS17f.txt')
             SN_data = np.array(SN.mb)
             z_SN = np.array(SN.zcmb)
-            #SN_idx = np.array([int(x) for x in z_SN/(self.dz)])
-            SN_idx =  self.make_idx(z_SN) #np.array([int(x) for x in z_WFIRST/(self.dz)])
+            SN_idx =  self.make_idx(z_SN, self.z_arr) 
             SN_U = self.make_U(z_SN, SN_idx)
             SN_cov = np.genfromtxt('/home/jaimerz/PhD/Growz/data/raw/PantheonDS17/syscov_panth.txt') + np.diag(SN.dmb**2)
             SN_err = np.sqrt(np.diag(SN_cov))
@@ -182,8 +183,7 @@ class make_data():
                     23. ,   9. ,  62. ,   1.9,  13. ,   6.1,   2.1,   8. ,   7. ,
                     12. ,  17. ,  40. ,  23. ,  20. ,  17. ,  33.6,  18. ,  14. ,
                     40. ,  50.4,   7. ,   8. ])
-            #CC_idx = np.array([int(x) for x in z_CC/(self.dz)])
-            CC_idx =  self.make_idx(z_CC) #np.array([int(x) for x in z_WFIRST/(self.dz)])
+            CC_idx =  self.make_idx(z_CC, self.z_arr) 
             CC_U = self.make_U(z_CC, CC_idx)
             CC_cov = np.zeros([len(z_CC),len(z_CC)])
             for i in np.arange(len(z_CC)):
@@ -208,8 +208,7 @@ class make_data():
             z_Wigglez = np.array([0.44, 0.60, 0.73])
             fs8_Wigglez = np.array([0.413, 0.390, 0.437])
             data_Wigglez = np.concatenate([fs8_Wigglez])
-            #Wigglez_idx = np.array([int(x) for x in z_Wigglez/(self.dz)])
-            Wigglez_idx =  self.make_idx(z_Wigglez) #np.array([int(x) for x in z_WFIRST/(self.dz)])
+            Wigglez_idx =  self.make_idx(z_Wigglez, self.z_arr)
             Wigglez_U = self.make_U(z_Wigglez, Wigglez_idx)
             Wigglez_cov = 10**(-3)*np.array([[6.4, 2.57, 0], 
                                             [2.57, 3.969, 2.54], 
@@ -255,14 +254,13 @@ class make_data():
             print('Found file for '+ dataset_name)
             pass
         else:
-            z_CMB = np.array([1080.30]) #1090.3
+            z_CMB = np.array([1090.30]) #1090.3
             perp_CMB = np.array([1.04097])
             CMB_cov = np.array([[0.00046**2]])
             CMB_err = np.array([0.00046])
-            CMB_rd = 144.46 #+- 0.48
-            #CMB_idx = np.array([int(x) for x in np.array([1090.3])/(0.1)])
-            #CMB_idx += 251-25
-            CMB_idx =  self.make_idx(z_CMB) 
+            CMB_rd = 144.46 
+            z_midarr = 0.5*(self.z_arr[1:]+self.z_arr[:-1])
+            CMB_idx =  self.make_idx(z_CMB, z_midarr) 
             CMB_U = self.make_U(z_CMB, CMB_idx)
             np.savez(os.path.join(self.path, dataset_name),  
              data = perp_CMB,
@@ -282,13 +280,11 @@ class make_data():
             print('Found file for '+ dataset_name)
             pass
         else:
-            z_FCMB = np.array([1080.30])
+            z_FCMB = np.array([1090.30])
             para_FCMB = np.array([1541677.34])
             FCMB_cov = np.array([[1541.67**2]])
             FCMB_err = np.array([1541.67])
-            #CMB_idx = np.array([int(x) for x in np.array([1080.3])/(0.1)])
-            #CMB_idx += 251-25
-            FCMB_idx =  self.make_idx(z_FCMB) 
+            FCMB_idx =  self.make_idx(z_FCMB, self.z_arr) 
             FCMB_U = self.make_U(z_FCMB, FCMB_idx)
             np.savez(os.path.join(self.path, dataset_name),  
              data = para_FCMB,
@@ -312,9 +308,8 @@ class make_data():
             para_eBOSS = 13.23
             perp_eBOSS = 30.21
             fs8_eBOSS = 0.462
-            rd_eBOSS = 147.3 #double check
-            #eBOSS_idx = np.array([int(x) for x in z_eBOSS/(self.dz)])
-            eBOSS_idx =  self.make_idx(z_eBOSS) 
+            rd_eBOSS = 147.3 
+            eBOSS_idx =  self.make_idx(z_eBOSS, self.z_arr) 
             eBOSS_U = self.make_U(z_eBOSS, eBOSS_idx)
             data_eBOSS = np.array([13.11, 30.66, 0.439])
             eBOSS_cov = np.array([[0.7709, -0.05656, 0.01750],
@@ -356,8 +351,7 @@ class make_data():
             para_BOSS = np.array([81.2087, 90.9029, 98.9647])
             fs8_BOSS = np.array([0.49749, 0.457523, 0.436148])
             data_BOSS = np.concatenate([para_BOSS, perp_BOSS, fs8_BOSS])
-            #BOSS_idx = np.array([int(x) for x in z_BOSS/(self.dz)])
-            BOSS_idx =  self.make_idx(z_BOSS) 
+            BOSS_idx =  self.make_idx(z_BOSS, self.z_arr) 
             BOSS_U = self.make_U(z_BOSS, BOSS_idx)
             BOSS_cov = np.array([[3.63049e+00, 1.80306e+00, 9.19842e-01, 9.71342e+00, 7.75546e+00,
                     5.97897e+00, 2.79185e-02, 1.24050e-02, 4.75548e-03],
