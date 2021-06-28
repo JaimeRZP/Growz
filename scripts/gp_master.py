@@ -191,12 +191,12 @@ if 'eBOSS' in datasets:
     print('Adding eBOSS')
     with model:
         eB_para_f = pm.Deterministic("eB_para_f", dH_gp/rd_gp)
-        eB_perp_f = pm.Deterministic("eB_perp_f", dM_gp/rd_gp)
+        eB_perp_f = pm.Deterministic("eB_perp_f", dH_gp/rd_gp)
         
         eB_para = pm.Deterministic("eB_para", 
                     tt.as_tensor_variable(eB_para_f[eBOSS['idx']]+(eB_para_f[eBOSS['idx']+1]-eB_para_f[eBOSS['idx']])*eBOSS['U']))
         eB_perp = pm.Deterministic("eB_perp", 
-                tt.as_tensor_variable(eB_perp_f[eBOSS['idx']]+(eB_perp_f[BOSS['idx']+1]-eB_perp_f[eBOSS['idx']])*eBOSS['U']))
+                tt.as_tensor_variable(eB_perp_f[eBOSS['idx']]+(eB_perp_f[eBOSS['idx']+1]-eB_perp_f[eBOSS['idx']])*eBOSS['U']))
         eB_fs8 = pm.Deterministic("eB_fs8", 
                    tt.as_tensor_variable(fs8_gp[eBOSS['idx']]+(fs8_gp[eBOSS['idx']+1]-fs8_gp[eBOSS['idx']])*eBOSS['U']))
         
