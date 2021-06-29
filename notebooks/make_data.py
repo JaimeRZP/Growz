@@ -88,7 +88,7 @@ class make_data():
             x_arr = self.x_arr[self.z_arr<1085]
             z_arr = self.z_arr[self.z_arr<1085]
             dA_arr = self.tools.make_dM((1000/self.tools.c)*H_arr, x_arr)
-            dA_arr /= (1+(z_arr[1:]+z_arr[:-1])/2)
+            dA_arr /= (1+z_arr)
             s8_arr, fs8_arr = self.tools.make_fs8(H_arr, x_arr, 0.131, 0.805)
             
             

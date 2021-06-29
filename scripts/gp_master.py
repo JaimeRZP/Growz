@@ -99,13 +99,13 @@ with pm.Model() as model:
     
     if get_dM:
         dH_gp = pm.Deterministic("dH", tt.as_tensor_variable((c/1000)*(1+z_arr)/H_gp))
-        dM_rec_gp = tt.zeros(len(z_arr))
+        dM_rec_gp = tt.zeros(len(z_arr)+1)
         dM_rec_gp = tt.inc_subtensor(dM_rec_gp[1:],
-                  tt.as_tensor_variable(dx*tt.cumsum(dH_gp)[:-1]))
+                  tt.as_tensor_variable(dx*tt.cumsum(dH_gp)))
         dM_trap_gp = tt.as_tensor_variable(0.5*(dM_rec_gp[1:]+dM_rec_gp[:-1])+0.5*dM_rec_gp[1])
         dM_gp = pm.Deterministic('dM_gp', dM_trap_gp)
-        dA_gp = pm.Deterministic('dA_gp', dM_gp/(1+(z_arr[1:]+z_arr[:-1])/2))
-        dL_gp = pm.Deterministic('dL_gp', dM_gp*(1+(z_arr[1:]+z_arr[:-1])/2))
+        dA_gp = pm.Deterministic('dA_gp', dM_gp/(1+z_arr))
+        dL_gp = pm.Deterministic('dL_gp', dM_gp*(1+z_arr))
         
     if get_rd:
         wb0 =  0.02226 #pm.Normal("wb0", 0.02226, sigma=0.00023)

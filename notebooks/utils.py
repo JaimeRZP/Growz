@@ -115,8 +115,8 @@ class utils():
         z_arr = np.exp(x_arr)-1
         a_arr = 1./(1+z_arr) 
         dx = np.mean(np.diff(x_arr))
-        dM = np.zeros_like(z_arr)
-        dM[1:] = dx*np.cumsum((1+z_arr)/H)[:-1]
+        dM = np.zeros(len(z_arr)+1)
+        dM[1:] = dx*np.cumsum((1+z_arr)/H)
         dM = 0.5*(dM[1:]+dM[:-1])-0.5*dM[1]
         return dM
     
