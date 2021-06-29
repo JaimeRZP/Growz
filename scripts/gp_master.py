@@ -78,20 +78,23 @@ data_cov = data_cov [1:]
 
 #base model
 with pm.Model() as model:
-    ℓ = pm.InverseGamma("ℓ", alpha=10, beta=2) 
-    η = pm.HalfNormal("η", sigma=10) 
+    ℓ = pm.InverseGamma("ℓ", alpha=2, beta=500) 
+    #ℓ = 100*pm.InverseGamma("ℓ", alpha=1, beta=1) 
+    #ℓ = pm.Uniform("ℓ", 1, 1000) 
+    η = pm.HalfNormal("η", sigma=0.3) 
     wm0 = pm.Uniform("wm0", 0.1, 0.2) 
-    wL0 = pm.Uniform("wL0", 0.2, 0.4) 
+    wL0 = pm.Uniform("wL0", 0.25, 0.35) 
+    wr0 = 4.3*10**-5
     s80 = pm.Normal("s80", 0.8, 0.5)
     gp_cov = η ** 2 * pm.gp.cov.ExpQuad(1, ℓ) + pm.gp.cov.WhiteNoise(1e-3)
     gp = pm.gp.Latent(cov_func=gp_cov)
     
     #Mean of the gp
-    H = pm.Deterministic('H', 100*tt.sqrt(wm0*(1+z_arr)**3+wL0))
+    H = pm.Deterministic('H', 100*tt.sqrt(wm0*(1+z_arr)**3+wr0*(1+z_arr)**4+wL0))
     
     #Set up Gaussian process
     DH_gp = gp.prior("DH_gp", X=z_arr[:, None]) 
-    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H+DH_gp))
+    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H*(1+DH_gp)))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
     
     if get_dM:
@@ -99,8 +102,8 @@ with pm.Model() as model:
         dM_rec_gp = tt.zeros(len(z_arr))
         dM_rec_gp = tt.inc_subtensor(dM_rec_gp[1:],
                   tt.as_tensor_variable(dx*tt.cumsum(dH_gp)[:-1]))
-        dM_trap_gp = tt.as_tensor_variable(0.5*(dM_rec_gp[1:]+dM_rec_gp[:-1]))
-        dM_gp = pm.Deterministic('dM_gp', dM_trap_gp+0.5*dM_rec_gp[1]*tt.ones_like(dM_trap_gp))
+        dM_trap_gp = tt.as_tensor_variable(0.5*(dM_rec_gp[1:]+dM_rec_gp[:-1])+0.5*dM_rec_gp[1])
+        dM_gp = pm.Deterministic('dM_gp', dM_trap_gp)
         dA_gp = pm.Deterministic('dA_gp', dM_gp/(1+(z_arr[1:]+z_arr[:-1])/2))
         dL_gp = pm.Deterministic('dL_gp', dM_gp*(1+(z_arr[1:]+z_arr[:-1])/2))
         
@@ -219,7 +222,7 @@ if 'CMB' in datasets:
     print('Adding CMB')
     with model:
         dM_star = tt.as_tensor_variable(dM_gp[CMB['idx']]+(dM_gp[CMB['idx']+1]-dM_gp[CMB['idx']])*CMB['U'])
-        t100 = pm.Deterministic('t100', 100*rd_gp/dM_star)        
+        t100 = pm.Deterministic('t100', 100*rd_gp/dM_star) 
         theory = tt.concatenate([theory, t100])
         
 if 'FCMB' in datasets:
@@ -233,7 +236,7 @@ if 'FCMB' in datasets:
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
     trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune)
-
+    
 #print r-stat
 print(pm.summary(trace)['r_hat'][["ℓ","η"]])
 
