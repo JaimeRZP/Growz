@@ -16,6 +16,10 @@ class make_data():
         self.a_arr = 1./(1+self.z_arr) 
         self.dx = np.mean(np.diff(self.x_arr))
         self.dz = np.diff(self.z_arr)
+        if self.z_max > 1085:
+            self.z_planck = self.z_arr[self.z_arr<1085]
+        else:
+            self.z_planck = self.z_arr
         self.Planck = self.tools.get_preds(self.z_arr[self.z_arr<1085], mode='Planck')
 
     def make_idx(self, z_data, z_arr):
@@ -23,15 +27,16 @@ class make_data():
         for z in z_data:
             closest_z = min(z_arr, key=lambda x:abs(x-z))
             idx = np.array([int(i) for i in range(len(z_arr)) if z_arr[i]==closest_z])
-            if closest_z > z:
+            if closest_z >= z:
                 idx += -1
             idxs = np.append(idxs, idx)
         return np.array(idxs).astype(int)
             
-    def make_U(self, z_data, idxs):
-        return (z_data - self.z_arr[idxs])/self.dz[idxs]
+    def make_U(self, z_data, z_arr, idxs):
+        dz = np.diff(z_arr)[idxs]
+        return (z_data - z_arr[idxs])/dz
                 
-    def get_WFIRST(self, new='False'):
+    def get_WFIRST(self, z_arr, new='False'):
         dataset_name = 'WFIRST'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
@@ -44,8 +49,8 @@ class make_data():
             z_WFIRST = np.array([0.07, 0.2, 0.35, 
                               0.6, 0.8, 1.0,
                               1.3, 1.7, 2.5])
-            WFIRST_idx =  self.make_idx(z_WFIRST, self.z_arr) 
-            WFIRST_U = self.make_U(z_WFIRST, WFIRST_idx)
+            WFIRST_idx =  self.make_idx(z_WFIRST, z_arr) 
+            WFIRST_U = self.make_U(z_WFIRST, z_arr, WFIRST_idx)
             E_arr = self.Planck['Hkms_arr']/self.Planck['Hkms_arr'][0]
             WFIRST_err = E_arr[WFIRST_idx]*WFIRST_rels_E/100
             WFIRST_data = E_arr[WFIRST_idx]+ np.random.randn(len(z_WFIRST))*WFIRST_err
@@ -63,7 +68,7 @@ class make_data():
             
         return np.load(filepath)
         
-    def get_DESI(self, new='False'):
+    def get_DESI(self, z_arr, new='False'):
         dataset_name = 'DESI'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
@@ -81,15 +86,15 @@ class make_data():
                      1.47, 1.89, 3.06, 5.14, 7.66]
 
             z_DESI = np.arange(0.15, 1.85+0.1, 0.1)
-            DESI_idx =  self.make_idx(z_DESI, self.z_arr)
-            DESI_U = self.make_U(z_DESI, DESI_idx)
+            DESI_idx =  self.make_idx(z_DESI, z_arr)
+            DESI_U = self.make_U(z_DESI, z_arr, DESI_idx)
 
             H_arr = self.Planck['Hkms_arr']
             x_arr = self.x_arr[self.z_arr<1085]
             z_arr = self.z_arr[self.z_arr<1085]
             dA_arr = self.tools.make_dM((1000/self.tools.c)*H_arr, x_arr)
             dA_arr /= (1+z_arr)
-            s8_arr, fs8_arr = self.tools.make_fs8(H_arr, x_arr, 0.131, 0.805)
+            s8_arr, fs8_arr = self.tools.make_fs8(H_arr, x_arr, 0.131, 0.805, mode='jaime')
             
             
             H_DESI = H_arr[DESI_idx]+(H_arr[DESI_idx+1]-H_arr[DESI_idx])*DESI_U
@@ -137,7 +142,7 @@ class make_data():
         
         return np.load(filepath)
     
-    def get_DS17(self, new='False'):
+    def get_DS17(self, z_arr, new='False'):
         dataset_name = 'DS17'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
@@ -147,8 +152,8 @@ class make_data():
             SN = self.tools.read_light_curve_parameters('/home/jaimerz/PhD/Growz/data/raw/PantheonDS17/lcparam_DS17f.txt')
             SN_data = np.array(SN.mb)
             z_SN = np.array(SN.zcmb)
-            SN_idx =  self.make_idx(z_SN, self.z_arr) 
-            SN_U = self.make_U(z_SN, SN_idx)
+            SN_idx =  self.make_idx(z_SN, z_arr) 
+            SN_U = self.make_U(z_SN, z_arr, SN_idx)
             SN_cov = np.genfromtxt('/home/jaimerz/PhD/Growz/data/raw/PantheonDS17/syscov_panth.txt') + np.diag(SN.dmb**2)
             SN_err = np.sqrt(np.diag(SN_cov))
 
@@ -162,7 +167,7 @@ class make_data():
         
         return np.load(filepath)
     
-    def get_CC(self, new='False'):
+    def get_CC(self, z_arr, new='False'):
         dataset_name = 'CC'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
@@ -184,8 +189,8 @@ class make_data():
                     23. ,   9. ,  62. ,   1.9,  13. ,   6.1,   2.1,   8. ,   7. ,
                     12. ,  17. ,  40. ,  23. ,  20. ,  17. ,  33.6,  18. ,  14. ,
                     40. ,  50.4,   7. ,   8. ])
-            CC_idx =  self.make_idx(z_CC, self.z_arr) 
-            CC_U = self.make_U(z_CC, CC_idx)
+            CC_idx =  self.make_idx(z_CC, z_arr) 
+            CC_U = self.make_U(z_CC, z_arr, CC_idx)
             CC_cov = np.zeros([len(z_CC),len(z_CC)])
             for i in np.arange(len(z_CC)):
                 CC_cov[i,i] = CC_err[i]**2
@@ -199,7 +204,7 @@ class make_data():
         
         return np.load(filepath)
     
-    def get_Wigglez(self, new='False'):
+    def get_Wigglez(self, z_arr, new='False'):
         dataset_name = 'Wigglez'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
@@ -209,8 +214,8 @@ class make_data():
             z_Wigglez = np.array([0.44, 0.60, 0.73])
             fs8_Wigglez = np.array([0.413, 0.390, 0.437])
             data_Wigglez = np.concatenate([fs8_Wigglez])
-            Wigglez_idx =  self.make_idx(z_Wigglez, self.z_arr)
-            Wigglez_U = self.make_U(z_Wigglez, Wigglez_idx)
+            Wigglez_idx =  self.make_idx(z_Wigglez, z_arr)
+            Wigglez_U = self.make_U(z_Wigglez, z_arr, Wigglez_idx)
             Wigglez_cov = 10**(-3)*np.array([[6.4, 2.57, 0], 
                                             [2.57, 3.969, 2.54], 
                                             [0, 2.54, 5.184]])
@@ -225,7 +230,7 @@ class make_data():
         
         return np.load(filepath)
     
-    def get_DSS(self, new='False'):
+    def get_DSS(self, z_arr, new='False'):
         dataset_name = 'DSS'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
@@ -237,7 +242,7 @@ class make_data():
             DSS_cov = np.array([[0.022**2]])
             DSS_err = np.array([0.022])
             DSS_idx = [0]
-            DSS_U = self.make_U(z_DSS, DSS_idx)
+            DSS_U = self.make_U(z_DSS, z_arr, DSS_idx)
             np.savez(os.path.join(self.path, dataset_name),  
              data = fs8_DSS,
              z=z_DSS,
@@ -248,7 +253,7 @@ class make_data():
         
         return np.load(filepath)
     
-    def get_CMB(self, new='False'):
+    def get_CMB(self, z_arr, new='False'):
         dataset_name = 'CMB'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
@@ -260,9 +265,9 @@ class make_data():
             CMB_cov = np.array([[0.00046**2]])
             CMB_err = np.array([0.00046])
             CMB_rd = 144.46 
-            z_midarr = 0.5*(self.z_arr[1:]+self.z_arr[:-1])
+            z_midarr = 0.5*(z_arr[1:]+z_arr[:-1])
             CMB_idx =  self.make_idx(z_CMB, z_midarr) 
-            CMB_U = self.make_U(z_CMB, CMB_idx)
+            CMB_U = self.make_U(z_CMB, z_midarr, CMB_idx)
             np.savez(os.path.join(self.path, dataset_name),  
              data = perp_CMB,
              rd=CMB_rd,
@@ -274,7 +279,7 @@ class make_data():
         
         return np.load(filepath)
     
-    def get_FCMB(self, new='False'):
+    def get_FCMB(self, z_arr, new='False'):
         dataset_name = 'FCMB'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
@@ -285,8 +290,8 @@ class make_data():
             para_FCMB = np.array([1541677.34])
             FCMB_cov = np.array([[1541.67**2]])
             FCMB_err = np.array([1541.67])
-            FCMB_idx =  self.make_idx(z_FCMB, self.z_arr) 
-            FCMB_U = self.make_U(z_FCMB, FCMB_idx)
+            FCMB_idx =  self.make_idx(z_FCMB, z_arr) 
+            FCMB_U = self.make_U(z_FCMB, z_arr, FCMB_idx)
             np.savez(os.path.join(self.path, dataset_name),  
              data = para_FCMB,
              z=z_FCMB,
@@ -298,7 +303,7 @@ class make_data():
         return np.load(filepath)
     
     
-    def get_eBOSS(self, new='False'):
+    def get_eBOSS(self, z_arr, new='False'):
         dataset_name = 'eBOSS'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
@@ -310,8 +315,8 @@ class make_data():
             perp_eBOSS = 30.21
             fs8_eBOSS = 0.462
             rd_eBOSS = 147.3 
-            eBOSS_idx =  self.make_idx(z_eBOSS, self.z_arr) 
-            eBOSS_U = self.make_U(z_eBOSS, eBOSS_idx)
+            eBOSS_idx =  self.make_idx(z_eBOSS, z_arr) 
+            eBOSS_U = self.make_U(z_eBOSS, z_arr, eBOSS_idx)
             data_eBOSS = np.array([13.11, 30.66, 0.439])
             eBOSS_cov = np.array([[0.7709, -0.05656, 0.01750],
                                   [-0.05656, 0.2640, -0.006204],
@@ -337,7 +342,7 @@ class make_data():
         
         return np.load(filepath)
     
-    def get_BOSS(self, new='False'):
+    def get_BOSS(self, z_arr, new='False'):
         dataset_name = 'BOSS'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
@@ -352,8 +357,8 @@ class make_data():
             para_BOSS = np.array([81.2087, 90.9029, 98.9647])
             fs8_BOSS = np.array([0.49749, 0.457523, 0.436148])
             data_BOSS = np.concatenate([para_BOSS, perp_BOSS, fs8_BOSS])
-            BOSS_idx =  self.make_idx(z_BOSS, self.z_arr) 
-            BOSS_U = self.make_U(z_BOSS, BOSS_idx)
+            BOSS_idx =  self.make_idx(z_BOSS, z_arr) 
+            BOSS_U = self.make_U(z_BOSS, z_arr, BOSS_idx)
             BOSS_cov = np.array([[3.63049e+00, 1.80306e+00, 9.19842e-01, 9.71342e+00, 7.75546e+00,
                     5.97897e+00, 2.79185e-02, 1.24050e-02, 4.75548e-03],
                    [1.80306e+00, 3.77146e+00, 2.21471e+00, 4.85105e+00, 1.19729e+01,
