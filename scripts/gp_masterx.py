@@ -10,7 +10,7 @@ from scipy.linalg import block_diag
 
 #Load data
 z_max = 1110
-res = 300
+res = 200
 x_arr = np.linspace(0, np.log(1+z_max), res)
 dx = np.mean(np.diff(x_arr))
 z_arr = np.exp(x_arr)-1
@@ -46,7 +46,8 @@ datadict = {'DESI': DESI,
             'CMB': CMB, 
             'FCMB': FCMB}
 
-datasets = ['BOSS', 'eBOSS', 'CMB']
+#datasets = ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB']
+datasets = ['CC', 'DS17']
 
 need_dM = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DS17', 'CMB']
 need_fs8 = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DSS']
@@ -82,8 +83,8 @@ with pm.Model() as model:
     ℓ = pm.InverseGamma("ℓ", alpha=3, beta=0.5) 
     #ℓ = pm.Uniform("ℓ", 10, 1000) 
     η = pm.HalfNormal("η", sigma=0.3) 
-    wm0 = 0.138 #pm.Uniform("wm0", 0.1, 0.2) 
-    wL0 = 0.3 #pm.Uniform("wL0", 0.25, 0.35) 
+    wm0 = pm.Uniform("wm0", 0.1385, 0.1386) 
+    wL0 = pm.Uniform("wL0", 0.31, 0.315) 
     wr0 = 2.47*10**-5 + 1.71*10**-5
     gp_cov = η ** 2 * pm.gp.cov.ExpQuad(1, ℓ) + pm.gp.cov.WhiteNoise(1e-3)
     gp = pm.gp.Latent(cov_func=gp_cov)
@@ -93,7 +94,7 @@ with pm.Model() as model:
     
     #Set up Gaussian process
     DH_gp = gp.prior("DH_gp", X=x_arr[:, None]) 
-    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H))# *(1+DH_gp)))
+    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H*(1+DH_gp)))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
     
     if get_dM:
@@ -260,7 +261,7 @@ Hz =np.array(trace.posterior["H_gp"])
 Hz = Hz.reshape(-1, Hz.shape[-1])
 H0 = np.array(trace.posterior["H0_gp"]).flatten()
 omega_m = np.array(trace.posterior["wm0"]).flatten()
-omega_L = np.array(trace.posterior["wl0"]).flatten()
+omega_L = np.array(trace.posterior["wL0"]).flatten()
 
 if get_dM:
     dMz = np.array(trace.posterior["dM_gp"])

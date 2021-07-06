@@ -52,7 +52,7 @@ class utils():
               'Omega_b': 0.037,
               'n_s': 0.837,
               'ln10^{10}A_s': 3.138}
-        self.cosmo = ccl.boltzmann.classy.Class()
+        self.cosmo = classy.Class()
         self.cosmo.set({ 'output':'mPk', 'P_k_max_h/Mpc': 20, 'z_max_pk': 1085})
         self.cosmo.set(params)
         self.cosmo.compute()

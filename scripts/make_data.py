@@ -173,7 +173,7 @@ class make_data():
         
         return np.load(filepath)
     
-        def get_CC(self, z_arr=None, new='False'):
+    def get_CC(self, z_arr=None, new='False'):
         if z_arr is None:
             z_arr = self.z_arr
         dataset_name = 'CC'
