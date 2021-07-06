@@ -174,7 +174,9 @@ if 'DS17' in datasets:
     print('Adding Pantheon')
     with model:
         M = pm.Normal('M', mu=-19.0, sigma=3)
-        u_gp = pm.Deterministic('u_gp', tt.as_tensor_variable(5*tt.log10(dL_gp)+25+M))
+        u_gp = tt.zeros(len(z_arr))
+        u_gp = tt.inc_subtensor(u_gp[1:], tt.as_tensor_variable(5*tt.log10(dL_gp[1:])+25+M))
+        u_gp = tt.inc_subtensor(u_gp[0], tt.as_tensor_variable(5*tt.log10(dL_gp[1])+25+M))
         DS17_u = pm.Deterministic("DS17_u",
                  tt.as_tensor_variable(u_gp[DS17['idx']]+(u_gp[DS17['idx']+1]-u_gp[DS17['idx']])*DS17['U']))
         theory = tt.concatenate([theory, DS17_u])
