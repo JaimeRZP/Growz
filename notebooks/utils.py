@@ -93,15 +93,11 @@ class utils():
         E = H/H[0]
         
         if mode=='david':
+            Wm0 = wm0*(100/H[0])**2
             d = np.zeros(len(z_arr))
             y = np.zeros(len(z_arr))
-
-            if z_arr[-1] > 1085:
-                d[-1] = a_arr[-1]
-                y[-1] = E_gp[0]*a_arr[-1]**3
-            else:
-                d[-1] = 0.03838792345864925 #self.cosmo.scale_independent_growth_factor(z_arr[-1])
-                y[-1] = 0.005999783902586148 #H[-1]*(1/(1+z_arr[-1]))**2*d[-1]*self.cosmo.scale_independent_growth_factor_f(z_arr[-1])
+            d[-1] = a_arr[-1]
+            y[-1] = E[0]*a_arr[-1]**3
 
             for i in np.arange(1, len(z_arr)):
                 A0 = -1.5*Wm0/(a_arr[-i]*E[-i])
@@ -115,6 +111,7 @@ class utils():
             s8 = s80*d/d[0]
         
         if mode=='jaime':
+            
             comf_H = a_arr*H
             diff_comf_H = np.zeros(len(z_arr))
             diff_comf_H[0] = (comf_H[1]-comf_H[0])/(x_arr[1]-x_arr[0])
@@ -124,7 +121,7 @@ class utils():
 
             #Implement second Order Runge-Kutta method
             f = np.zeros(len(z_arr))
-            f[-1] = 0.96
+            f[-1] = 1
             for i in np.arange(1, len(z_arr)):
                 k0 = -1*((3/2)*Wm[-i]-f[-i]**2-q[-i]*f[-i])
                 f1 = f[-i]-dx*k0

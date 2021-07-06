@@ -36,7 +36,9 @@ class make_data():
         dz = np.diff(z_arr)[idxs]
         return (z_data - z_arr[idxs])/dz
                 
-    def get_WFIRST(self, z_arr, new='False'):
+    def get_WFIRST(self, z_arr=None, new='False'):
+        if z_arr is None:
+            z_arr = self.z_arr
         dataset_name = 'WFIRST'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
@@ -68,7 +70,9 @@ class make_data():
             
         return np.load(filepath)
         
-    def get_DESI(self, z_arr, new='False'):
+    def get_DESI(self, z_arr=None, new='False'):
+        if z_arr is None:
+            z_arr = self.z_arr
         dataset_name = 'DESI'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
@@ -94,7 +98,7 @@ class make_data():
             z_arr = self.z_arr[self.z_arr<1085]
             dA_arr = self.tools.make_dM((1000/self.tools.c)*H_arr, x_arr)
             dA_arr /= (1+z_arr)
-            s8_arr, fs8_arr = self.tools.make_fs8(H_arr, x_arr, 0.131, 0.805, mode='jaime')
+            s8_arr, fs8_arr = self.tools.make_fs8(H_arr, x_arr, 0.131, 0.805, mode='david')
             
             
             H_DESI = H_arr[DESI_idx]+(H_arr[DESI_idx+1]-H_arr[DESI_idx])*DESI_U
@@ -142,7 +146,9 @@ class make_data():
         
         return np.load(filepath)
     
-    def get_DS17(self, z_arr, new='False'):
+    def get_DS17(self, z_arr=None, new='False'):
+        if z_arr is None:
+            z_arr = self.z_arr
         dataset_name = 'DS17'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
@@ -167,7 +173,9 @@ class make_data():
         
         return np.load(filepath)
     
-    def get_CC(self, z_arr, new='False'):
+    def get_CC(self, z_arr=None, new='False'):
+        if z_arr is None:
+            z_arr = self.z_arr
         dataset_name = 'CC'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
@@ -204,7 +212,9 @@ class make_data():
         
         return np.load(filepath)
     
-    def get_Wigglez(self, z_arr, new='False'):
+    def get_Wigglez(self, z_arr=None, new='False'):
+        if z_arr is None:
+            z_arr = self.z_arr
         dataset_name = 'Wigglez'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
@@ -230,7 +240,9 @@ class make_data():
         
         return np.load(filepath)
     
-    def get_DSS(self, z_arr, new='False'):
+    def get_DSS(self, z_arr=None, new='False'):
+        if z_arr is None:
+            z_arr = self.z_arr
         dataset_name = 'DSS'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
@@ -253,21 +265,29 @@ class make_data():
         
         return np.load(filepath)
     
-    def get_CMB(self, z_arr, new='False'):
+    def get_CMB(self, z_arr=None, new='False'):
+        if z_arr is None:
+            z_arr = self.z_arr
         dataset_name = 'CMB'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
             print('Found file for '+ dataset_name)
             pass
         else:
-            z_CMB = np.array([1090.30]) #1090.3
-            perp_CMB = np.array([1.04097])
+            z_CMB = np.array([1090.30])
+            CMB_rd = 144.46 
+            CMB_idx =  self.make_idx(z_CMB, z_arr)
+            CMB_U = self.make_U(z_CMB, z_arr, CMB_idx)
+            
+            H_arr = 100*np.sqrt(0.138*(1+z_arr)**3+(2.47*10**-5)*(1+z_arr)**4+0.30)
+            dM_arr = self.tools.make_dM((1000/self.tools.c)*H_arr, self.x_arr)
+            dM_CMB = dM_arr[CMB_idx]+(dM_arr[CMB_idx+1]-dM_arr[CMB_idx])*CMB_U
+            perp_CMB = 100*(CMB_rd/dM_CMB)
+            
+            #perp_CMB = np.array([1.04097])
+            
             CMB_cov = np.array([[0.00046**2]])
             CMB_err = np.array([0.00046])
-            CMB_rd = 144.46 
-            z_midarr = 0.5*(z_arr[1:]+z_arr[:-1])
-            CMB_idx =  self.make_idx(z_CMB, z_midarr) 
-            CMB_U = self.make_U(z_CMB, z_midarr, CMB_idx)
             np.savez(os.path.join(self.path, dataset_name),  
              data = perp_CMB,
              rd=CMB_rd,
@@ -279,7 +299,9 @@ class make_data():
         
         return np.load(filepath)
     
-    def get_FCMB(self, z_arr, new='False'):
+    def get_FCMB(self, z_arr=None, new='False'):
+        if z_arr is None:
+            z_arr = self.z_arr
         dataset_name = 'FCMB'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
@@ -302,8 +324,9 @@ class make_data():
         
         return np.load(filepath)
     
-    
-    def get_eBOSS(self, z_arr, new='False'):
+    def get_eBOSS(self, z_arr=None, new='False'):
+        if z_arr is None:
+            z_arr = self.z_arr
         dataset_name = 'eBOSS'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
@@ -342,7 +365,9 @@ class make_data():
         
         return np.load(filepath)
     
-    def get_BOSS(self, z_arr, new='False'):
+    def get_BOSS(self, z_arr=None, new='False'):
+        if z_arr is None:
+            z_arr = self.z_arr
         dataset_name = 'BOSS'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
