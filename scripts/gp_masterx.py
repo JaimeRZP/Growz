@@ -34,7 +34,7 @@ CMB = data.get_CMB(new=True)
 FCMB = data.get_FCMB(new=True)
 
 n_samples = 1000
-n_tune = 1000
+n_tune = 2500
 datadict = {'DESI': DESI,
             'WFIRST': WFIRST,
             'CC': CC,
@@ -46,8 +46,8 @@ datadict = {'DESI': DESI,
             'CMB': CMB, 
             'FCMB': FCMB}
 
-#datasets = ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB']
-datasets = ['CC', 'DS17']
+datasets = ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB']
+#datasets = ['DESI', 'CMB']
 
 need_dM = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DS17', 'CMB']
 need_fs8 = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DSS']
@@ -78,13 +78,13 @@ for dataset_name in datasets:
 data_cov = data_cov[1:]
 
 #base model
-with pm.Model() as model:
-    #ℓ = pm.InverseGamma("ℓ", alpha=2, beta=z_max/2) 
-    ℓ = pm.InverseGamma("ℓ", alpha=3, beta=0.5) 
-    #ℓ = pm.Uniform("ℓ", 10, 1000) 
+with pm.Model() as model: 
+    ℓ = pm.InverseGamma("ℓ", alpha=1, beta=2)  
     η = pm.HalfNormal("η", sigma=0.3) 
-    wm0 = pm.Uniform("wm0", 0.1385, 0.1386) 
-    wL0 = pm.Uniform("wL0", 0.31, 0.315) 
+    wm0 = pm.Uniform("wm0", 0.13, 0.15) 
+    wL0 = pm.Uniform("wL0", 0.29, 0.31) 
+    #wm0 = pm.Uniform("wm0", 0.1, 0.2)
+    #wL0 = pm.Uniform("wL0", 0.2, 0.4)
     wr0 = 2.47*10**-5 + 1.71*10**-5
     gp_cov = η ** 2 * pm.gp.cov.ExpQuad(1, ℓ) + pm.gp.cov.WhiteNoise(1e-3)
     gp = pm.gp.Latent(cov_func=gp_cov)
@@ -110,7 +110,7 @@ with pm.Model() as model:
         
     if get_rd:
         #https://arxiv.org/pdf/2106.00428.pdf
-        wb0 =  0.02226 #pm.Normal("wb0", 0.02226, sigma=0.00023)
+        wb0 = pm.Uniform("wb0", 0.02224, 0.02228)
         a1 = 0.00785436
         a2 = 0.177084
         a3 = 0.00912388
@@ -260,8 +260,9 @@ DHz = DHz.reshape(-1, DHz.shape[-1])
 Hz =np.array(trace.posterior["H_gp"])
 Hz = Hz.reshape(-1, Hz.shape[-1])
 H0 = np.array(trace.posterior["H0_gp"]).flatten()
-omega_m = np.array(trace.posterior["wm0"]).flatten()
-omega_L = np.array(trace.posterior["wL0"]).flatten()
+h = H0/100
+Omega_m = np.array(trace.posterior["wm0"]).flatten()/h**2
+Omega_L = np.array(trace.posterior["wL0"]).flatten()/h**2
 
 if get_dM:
     dMz = np.array(trace.posterior["dM_gp"])
@@ -270,9 +271,9 @@ else:
     dMz = None
 
 if get_rd:
-    omega_b = np.array(trace.posterior["wb0"]).flatten()
+    Omega_b = np.array(trace.posterior["wb0"]).flatten()/h**2
 else:
-    omega_b = None
+    Omega_b = None
     
 if get_fs8:
     s8z = np.array(trace.posterior["s8_gp"])
@@ -303,8 +304,8 @@ np.savez(os.path.join(path,'samples.npz'),
          s8z=s8z,
          fs8z=fs8z,
          H0=H0,
-         omega_m=omega_m,
-         omega_b=omega_b,
-         omega_L=omega_L,
+         Omega_m=Omega_m,
+         Omega_b=Omega_b,
+         Omega_L=Omega_L,
          s80=s80,
          S80=S80)
