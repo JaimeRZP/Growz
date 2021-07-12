@@ -70,10 +70,13 @@ class make_data():
             
         return np.load(filepath)
         
-    def get_DESI(self, z_arr=None, new='False', mode='All'):
+    def get_DESI(self, z_arr=None, new='False', mode=None):
         if z_arr is None:
             z_arr = self.z_arr
-        dataset_name = 'DESI'
+        if mode is None:
+            dataset_name = 'DESI'
+        else:
+            dataset_name = mode + 'DESI'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
             print('Found file for '+ dataset_name)
@@ -130,7 +133,7 @@ class make_data():
                              [np.zeros_like(DESI_H_cov), np.zeros_like(DESI_H_cov), DESI_fs8_cov]])
 
             
-            if mode=='All':
+            if mode is None:
                 np.savez(os.path.join(self.path, dataset_name), 
                  data = DESI_data,
                  z=z_DESI,
@@ -140,7 +143,7 @@ class make_data():
                  U=DESI_U)
                 
             elif mode=='H':
-                np.savez(os.path.join(self.path, 'H_'+dataset_name), 
+                np.savez(os.path.join(self.path, dataset_name), 
                  data = DESI_H_data,
                  z=z_DESI,
                  cov=DESI_H_cov,
@@ -149,7 +152,7 @@ class make_data():
                  U=DESI_U)
                 
             elif mode=='dA':
-                np.savez(os.path.join(self.path, 'dA_'+dataset_name), 
+                np.savez(os.path.join(self.path, dataset_name), 
                  data = DESI_dA_data,
                  z=z_DESI,
                  cov=DESI_dA_cov,
@@ -158,7 +161,7 @@ class make_data():
                  U=DESI_U)
             
             elif mode=='fs8':
-                np.savez(os.path.join(self.path, 'fs8_'+dataset_name), 
+                np.savez(os.path.join(self.path, dataset_name), 
                  data = DESI_fs8_data,
                  z=z_DESI,
                  cov=DESI_fs8_cov,

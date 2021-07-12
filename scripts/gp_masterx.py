@@ -53,12 +53,13 @@ datadict = {'DESI': DESI,
             'CMB': CMB, 
             'FCMB': FCMB}
 
-datasets = ['H_DESI', 'dA_DESI', 'fs8_DESI']
-#datasets = ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB']
+datasets = ['H_DESI', 'dA_DESI', 'fs8_DESI', 'CMB']
+#datasets = ['BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB']
+#datasets = ['BOSS', 'CMB']
 #datasets = ['DESI', 'CMB']
 
-need_dM = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DS17', 'CMB']
-need_fs8 = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DSS']
+need_dM = ['DESI', 'dA_DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DS17', 'CMB']
+need_fs8 = ['DESI', 'fs8_DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DSS']
 need_rd = ['BOSS', 'eBOSS', 'CMB']
 
 if any(dataset in datasets for dataset in need_dM):
@@ -86,14 +87,15 @@ for dataset_name in datasets:
 data_cov = data_cov[1:]
 
 #base model
-with pm.Model() as model: 
-    ℓ = pm.InverseGamma("ℓ", alpha=1, beta=2)  
+with pm.Model() as model:
+    #ℓ = pm.InverseGamma("ℓ", alpha=1, beta=2) 
+    ℓ = pm.Uniform("ℓ", 0.001, 7) 
     η = pm.HalfNormal("η", sigma=0.3) 
-    wm0 = pm.Uniform("wm0", 0.13, 0.15) 
-    wL0 = pm.Uniform("wL0", 0.29, 0.31) 
-    #wm0 = pm.Uniform("wm0", 0.1, 0.2)
-    #wL0 = pm.Uniform("wL0", 0.2, 0.4)
-    wr0 = 2.47*10**-5 + 1.71*10**-5
+    #wm0 = 0.1422 
+    #wL0 = 0.307
+    wm0 = pm.Uniform("wm0", 0., 0.45) 
+    wL0 = pm.Uniform("wL0", 0., 0.45) 
+    wr0 = (2.47+1.71)*10**-5
     gp_cov = η ** 2 * pm.gp.cov.ExpQuad(1, ℓ) + pm.gp.cov.WhiteNoise(1e-3)
     gp = pm.gp.Latent(cov_func=gp_cov)
     
@@ -118,7 +120,8 @@ with pm.Model() as model:
         
     if get_rd:
         #https://arxiv.org/pdf/2106.00428.pdf
-        wb0 = pm.Uniform("wb0", 0.02224, 0.02228)
+        #wb0 =  0.02236
+        wb0 =  pm.Uniform("wb0", 0.02224, 0.02228)
         a1 = 0.00785436
         a2 = 0.177084
         a3 = 0.00912388
@@ -129,6 +132,7 @@ with pm.Model() as model:
         rd_gp = tt.as_tensor_variable(1/(a1*wb0**a2+a3*wm0**a4+a5*wb0**a6*wm0**a7))  
         
     if get_fs8:
+        #s80 = 0.812
         s80 = pm.Normal("s80", 0.8, 0.5)
         Wm0 =  pm.Deterministic('Wm0', wm0*(100/H_gp[0])**2)
         E_gp = pm.Deterministic('E_gp', H_gp/H_gp[0])
@@ -210,7 +214,8 @@ if 'BOSS' in datasets:
                 tt.as_tensor_variable(B_perp_f[BOSS['idx']]+(B_perp_f[BOSS['idx']+1]-B_perp_f[BOSS['idx']])*BOSS['U']))
         B_fs8 = pm.Deterministic("B_fs8", 
                    tt.as_tensor_variable(fs8_gp[BOSS['idx']]+(fs8_gp[BOSS['idx']+1]-fs8_gp[BOSS['idx']])*BOSS['U']))
-        
+        B_perp = tt.ones_like(B_perp)
+        B_fs8 = tt.ones_like(B_fs8)
         theory = tt.concatenate([theory, B_para, B_perp, B_fs8])
         
 if 'eBOSS' in datasets:
@@ -255,11 +260,9 @@ if 'FCMB' in datasets:
                   tt.as_tensor_variable(H_gp[FCMB['idx']]+(H_gp[FCMB['idx']+1]-H_gp[FCMB['idx']])*FCMB['U']))
         theory = tt.concatenate([theory, CMB_H])
         
-#sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
     trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune)
-
     
 #print r-stat
 print(pm.summary(trace)['r_hat'][["ℓ","η"]])
