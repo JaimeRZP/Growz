@@ -35,11 +35,11 @@ class utils():
     
     def get_preds(self, z_arr, mode='Planck'):
         if mode == 'Planck':
-            params = {'h': 0.67,
-              'Omega_cdm': 0.26,
+            params = {'h': 0.6727,
+              'Omega_cdm': 0.265,
               'Omega_b': 0.050,
-              'n_s': 0.9665,
-              'ln10^{10}A_s': 3.040}
+              'n_s': 0.965,
+              'ln10^{10}A_s': 3.045}
         if mode == 'Riess':
             params = {'h': 0.74,
               'Omega_cdm': 0.21,

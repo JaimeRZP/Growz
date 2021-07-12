@@ -22,7 +22,10 @@ tools = utils.utils()
 c = tools.c
 data = make_data.make_data(z_max, res , path)
 
-DESI = data.get_DESI(new=True)
+DESI = data.get_DESI(new=True, mode='All')
+H_DESI = data.get_DESI(new=True, mode='H')
+dA_DESI = data.get_DESI(new=True, mode='dA')
+fs8_DESI = data.get_DESI(new=True, mode='fs8')
 WFIRST = data.get_WFIRST(new=True)
 CC = data.get_CC(new=True)
 DSS = data.get_DSS(new=True)
@@ -35,7 +38,11 @@ FCMB = data.get_FCMB(new=True)
 
 n_samples = 1000
 n_tune = 2500
+
 datadict = {'DESI': DESI,
+            'H_DESI': H_DESI,
+            'dA_DESI': dA_DESI,
+            'fs8_DESI': fs8_DESI,
             'WFIRST': WFIRST,
             'CC': CC,
             'DS17': DS17, 
@@ -46,7 +53,8 @@ datadict = {'DESI': DESI,
             'CMB': CMB, 
             'FCMB': FCMB}
 
-datasets = ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB']
+datasets = ['H_DESI', 'dA_DESI', 'fs8_DESI']
+#datasets = ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB']
 #datasets = ['DESI', 'CMB']
 
 need_dM = ['DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DS17', 'CMB']
@@ -143,16 +151,26 @@ with pm.Model() as model:
     theory = tt.as_tensor_variable([])
     
 #Modules
-if 'DESI' in datasets:
-    print('Adding DESI')
+if 'H_DESI' in datasets:
+    print('Adding H DESI')
     with model:
         DESI_H = pm.Deterministic('DESI_H',
                  tt.as_tensor_variable(H_gp[DESI['idx']]+(H_gp[DESI['idx']+1]-H_gp[DESI['idx']])*DESI['U']))
+        theory = tt.concatenate([theory, DESI_H])
+
+if 'dA_DESI' in datasets:
+    print('Adding dA DESI')
+    with model:
         DESI_dA = pm.Deterministic('DESI_dA',
                   tt.as_tensor_variable(dA_gp[DESI['idx']]+(dA_gp[DESI['idx']+1]-dA_gp[DESI['idx']])*DESI['U']))
+        theory = tt.concatenate([theory, DESI_dA])
+
+if 'fs8_DESI' in datasets:
+    print('Adding fs8 DESI')
+    with model:
         DESI_fs8 = pm.Deterministic('DESI_fs8',
                    tt.as_tensor_variable(fs8_gp[DESI['idx']]+(fs8_gp[DESI['idx']+1]-fs8_gp[DESI['idx']])*DESI['U']))
-        theory = tt.concatenate([theory, DESI_H, DESI_dA, DESI_fs8])
+        theory = tt.concatenate([theory, DESI_fs8])
         
 if 'WFIRST' in datasets:
     print('Adding WFIRST')

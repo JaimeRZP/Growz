@@ -70,7 +70,7 @@ class make_data():
             
         return np.load(filepath)
         
-    def get_DESI(self, z_arr=None, new='False'):
+    def get_DESI(self, z_arr=None, new='False', mode='All'):
         if z_arr is None:
             z_arr = self.z_arr
         dataset_name = 'DESI'
@@ -98,7 +98,7 @@ class make_data():
             z_arr = self.z_arr[self.z_arr<1085]
             dA_arr = self.tools.make_dM((1000/self.tools.c)*H_arr, x_arr)
             dA_arr /= (1+z_arr)
-            s8_arr, fs8_arr = self.tools.make_fs8(H_arr, x_arr, 0.131, 0.805, mode='david')
+            s8_arr, fs8_arr = self.tools.make_fs8(H_arr, x_arr, 0.1422, 0.812, mode='david')
             
             
             H_DESI = H_arr[DESI_idx]+(H_arr[DESI_idx+1]-H_arr[DESI_idx])*DESI_U
@@ -129,20 +129,42 @@ class make_data():
                              [np.zeros_like(DESI_H_cov), DESI_dA_cov, np.zeros_like(DESI_H_cov)],
                              [np.zeros_like(DESI_H_cov), np.zeros_like(DESI_H_cov), DESI_fs8_cov]])
 
-            np.savez(os.path.join(self.path, dataset_name), 
-             data = DESI_data,
-             z=z_DESI,
-             cov=DESI_cov,
-             err=DESI_err, 
-             H_data = DESI_H_data, 
-             dA_data = DESI_dA_data,
-             fs8_data = DESI_fs8_data,
-             s8_data = s8_DESI,
-             H_err = DESI_H_err, 
-             dA_err = DESI_dA_err,
-             fs8_err = DESI_fs8_err, 
-             idx = DESI_idx,
-             U=DESI_U)
+            
+            if mode=='All':
+                np.savez(os.path.join(self.path, dataset_name), 
+                 data = DESI_data,
+                 z=z_DESI,
+                 cov=DESI_cov,
+                 err=DESI_err, 
+                 idx = DESI_idx,
+                 U=DESI_U)
+                
+            elif mode=='H':
+                np.savez(os.path.join(self.path, 'H_'+dataset_name), 
+                 data = DESI_H_data,
+                 z=z_DESI,
+                 cov=DESI_H_cov,
+                 err=DESI_H_err, 
+                 idx = DESI_idx,
+                 U=DESI_U)
+                
+            elif mode=='dA':
+                np.savez(os.path.join(self.path, 'dA_'+dataset_name), 
+                 data = DESI_dA_data,
+                 z=z_DESI,
+                 cov=DESI_dA_cov,
+                 err=DESI_dA_err,
+                 idx = DESI_idx,
+                 U=DESI_U)
+            
+            elif mode=='fs8':
+                np.savez(os.path.join(self.path, 'fs8_'+dataset_name), 
+                 data = DESI_fs8_data,
+                 z=z_DESI,
+                 cov=DESI_fs8_cov,
+                 err=DESI_fs8_err,
+                 idx = DESI_idx,
+                 U=DESI_U)
         
         return np.load(filepath)
     
@@ -279,7 +301,7 @@ class make_data():
             CMB_idx =  self.make_idx(z_CMB, z_arr)
             CMB_U = self.make_U(z_CMB, z_arr, CMB_idx)
             
-            H_arr = 100*np.sqrt(0.138*(1+z_arr)**3+((2.47+1.71)*10**-5)*(1+z_arr)**4+0.30)
+            H_arr = 100*np.sqrt(0.1422*(1+z_arr)**3+((2.47+1.71)*10**-5)*(1+z_arr)**4+0.30)
             dM_arr = self.tools.make_dM((1000/self.tools.c)*H_arr, self.x_arr)
             dM_CMB = dM_arr[CMB_idx]+(dM_arr[CMB_idx+1]-dM_arr[CMB_idx])*CMB_U
             perp_CMB = 100*(CMB_rd/dM_CMB)

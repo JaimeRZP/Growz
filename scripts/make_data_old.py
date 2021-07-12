@@ -46,7 +46,9 @@ class make_data():
             
         return np.load(filepath)
         
-    def get_DESI(self, new='False'):
+    def get_DESI(self, z_arr=None, new='False', mode='All'):
+        if z_arr is None:
+            z_arr = self.z_arr
         dataset_name = 'DESI'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
@@ -64,25 +66,31 @@ class make_data():
                      1.47, 1.89, 3.06, 5.14, 7.66]
 
             z_DESI = np.arange(0.15, 1.85+0.1, 0.1)
-            DESI_idx = np.array([int(x) for x in z_DESI/(self.dz)])
+            DESI_idx =  self.make_idx(z_DESI, z_arr)
+            DESI_U = self.make_U(z_DESI, z_arr, DESI_idx)
 
-            H_arr_f = self.Planck['Hkms_arr']
-            dA_arr_f = self.tools.make_dM((1000/self.tools.c)*H_arr_f, self.z_arr)
-            dA_arr_f[1:] /= (1+self.z_arr)[1:]
-            f_arr_f = self.tools.make_f(H_arr_f, self.z_arr, 0.31, 0.44)
-            s8_arr_f = self.tools.make_sigma8(f_arr_f, self.z_arr, 0.805)
-            fs8_arr = self.Planck['f_arr']*self.Planck['s8_arr']
-
-
-            DESI_H_err = H_arr_f[DESI_idx]*DESI_rels_H/100
-            DESI_dA_err = dA_arr_f[DESI_idx]*DESI_rels_dA/100
-            DESI_fs8_err = fs8_arr[DESI_idx]*DESI_rels_fs8/100
+            H_arr = self.Planck['Hkms_arr']
+            x_arr = self.x_arr[self.z_arr<1085]
+            z_arr = self.z_arr[self.z_arr<1085]
+            dA_arr = self.tools.make_dM((1000/self.tools.c)*H_arr, x_arr)
+            dA_arr /= (1+z_arr)
+            s8_arr, fs8_arr = self.tools.make_fs8(H_arr, x_arr, 0.1422, 0.812, mode='david')
+            
+            
+            H_DESI = H_arr[DESI_idx]+(H_arr[DESI_idx+1]-H_arr[DESI_idx])*DESI_U
+            dA_DESI = dA_arr[DESI_idx]+(dA_arr[DESI_idx+1]-dA_arr[DESI_idx])*DESI_U
+            s8_DESI = s8_arr[DESI_idx]+(s8_arr[DESI_idx+1]-s8_arr[DESI_idx])*DESI_U
+            fs8_DESI = fs8_arr[DESI_idx]+(fs8_arr[DESI_idx+1]-fs8_arr[DESI_idx])*DESI_U
+            
+            DESI_H_err = H_DESI*DESI_rels_H/100
+            DESI_dA_err = dA_DESI*DESI_rels_dA/100
+            DESI_fs8_err = fs8_DESI*DESI_rels_fs8/100
 
             DESI_err = np.concatenate([DESI_H_err, DESI_dA_err, DESI_fs8_err])
 
-            DESI_H_data = H_arr_f[DESI_idx] + np.random.randn(len(z_DESI))*DESI_H_err
-            DESI_dA_data = dA_arr_f[DESI_idx] + np.random.randn(len(z_DESI))*DESI_dA_err
-            DESI_fs8_data = fs8_arr[DESI_idx] + np.random.randn(len(z_DESI))*DESI_fs8_err
+            DESI_H_data = H_DESI + np.random.randn(len(z_DESI))*DESI_H_err
+            DESI_dA_data = dA_DESI + np.random.randn(len(z_DESI))*DESI_dA_err
+            DESI_fs8_data = fs8_DESI + np.random.randn(len(z_DESI))*DESI_fs8_err
             DESI_data = np.concatenate([DESI_H_data, DESI_dA_data, DESI_fs8_data])
 
             DESI_H_cov = np.zeros([len(z_DESI), len(z_DESI)])
@@ -97,18 +105,42 @@ class make_data():
                              [np.zeros_like(DESI_H_cov), DESI_dA_cov, np.zeros_like(DESI_H_cov)],
                              [np.zeros_like(DESI_H_cov), np.zeros_like(DESI_H_cov), DESI_fs8_cov]])
 
-            np.savez(os.path.join(self.path, dataset_name), 
-             data = DESI_data,
-             z=z_DESI,
-             cov=DESI_cov,
-             err=DESI_err, 
-             H_data = DESI_H_data, 
-             dA_data = DESI_dA_data,
-             fs8_data = DESI_fs8_data,
-             H_err = DESI_H_err, 
-             dA_err = DESI_dA_err,
-             fs8_err = DESI_fs8_err, 
-             idx = DESI_idx)
+            
+            if mode=='All':
+                np.savez(os.path.join(self.path, dataset_name), 
+                 data = DESI_data,
+                 z=z_DESI,
+                 cov=DESI_cov,
+                 err=DESI_err, 
+                 idx = DESI_idx,
+                 U=DESI_U)
+                
+            elif mode=='H':
+                np.savez(os.path.join(self.path, 'H_'+dataset_name), 
+                 data = DESI_H_data,
+                 z=z_DESI,
+                 cov=DESI_H_cov,
+                 err=DESI_H_err, 
+                 idx = DESI_idx,
+                 U=DESI_U)
+                
+            elif mode=='dA':
+                np.savez(os.path.join(self.path, 'dA_'+dataset_name), 
+                 data = DESI_dA_data,
+                 z=z_DESI,
+                 cov=DESI_dA_cov,
+                 err=DESI_dA_err,
+                 idx = DESI_idx,
+                 U=DESI_U)
+            
+            elif mode=='fs8':
+                np.savez(os.path.join(self.path, 'fs8_'+dataset_name), 
+                 data = DESI_fs8_data,
+                 z=z_DESI,
+                 cov=DESI_fs8_cov,
+                 err=DESI_fs8_err,
+                 idx = DESI_idx,
+                 U=DESI_U)
         
         return np.load(filepath)
     
