@@ -258,7 +258,7 @@ if 'FCMB' in datasets:
     print('Adding FCMB')
     with model:
         FCMB_dM = pm.Deterministic('FCMB_dM',
-                  tt.as_tensor_variable(dM_gp[FCMB['idx']]+(dM_gp[FCMB['idx']+1]-dM_gp[FCMB['idx']])*dM_CMB['U']))
+                  tt.as_tensor_variable(dM_gp[FCMB['idx']]+(dM_gp[FCMB['idx']+1]-dM_gp[FCMB['idx']])*FCMB['U']))
         theory = tt.concatenate([theory, FCMB_dM])
         
 with model:
