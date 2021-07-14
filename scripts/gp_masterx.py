@@ -156,6 +156,17 @@ with pm.Model() as model:
     theory = tt.as_tensor_variable([])
     
 #Modules
+if 'DESI' in datasets:
+    print('Adding DESI')
+    with model:
+        DESI_H = pm.Deterministic('DESI_H',
+                 tt.as_tensor_variable(H_gp[DESI['idx']]+(H_gp[DESI['idx']+1]-H_gp[DESI['idx']])*DESI['U']))
+        DESI_dA = pm.Deterministic('DESI_dA',
+                  tt.as_tensor_variable(dA_gp[DESI['idx']]+(dA_gp[DESI['idx']+1]-dA_gp[DESI['idx']])*DESI['U']))
+        DESI_fs8 = pm.Deterministic('DESI_fs8',
+                   tt.as_tensor_variable(fs8_gp[DESI['idx']]+(fs8_gp[DESI['idx']+1]-fs8_gp[DESI['idx']])*DESI['U']))
+        theory = tt.concatenate([theory, DESI_H, DESI_dA, DESI_fs8])
+        
 if 'H_DESI' in datasets:
     print('Adding H DESI')
     with model:
