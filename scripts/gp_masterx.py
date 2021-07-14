@@ -58,7 +58,7 @@ datasets = ['DESI', 'FCMB']
 #datasets = ['BOSS', 'CMB']
 #datasets = ['DESI', 'CMB']
 
-need_dM = ['DESI', 'dA_DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DS17', 'CMB']
+need_dM = ['DESI', 'dA_DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DS17', 'CMB', 'FCMB']
 need_fs8 = ['DESI', 'fs8_DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DSS']
 need_rd = ['BOSS', 'eBOSS', 'CMB']
 
