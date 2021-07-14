@@ -334,17 +334,24 @@ class make_data():
             pass
         else:
             z_FCMB = np.array([1090.30])
-            para_FCMB = np.array([1541677.34])
-            FCMB_cov = np.array([[1541.67**2]])
-            FCMB_err = np.array([1541.67])
-            FCMB_idx =  self.make_idx(z_FCMB, z_arr) 
+            FCMB_idx =  self.make_idx(z_FCMB, z_arr)
             FCMB_U = self.make_U(z_FCMB, z_arr, FCMB_idx)
+            
+            H_arr = 100*np.sqrt(0.1422*(1+z_arr)**3+((2.47+1.71)*10**-5)*(1+z_arr)**4+0.30)
+            dM_arr = self.tools.make_dM((1000/self.tools.c)*H_arr, self.x_arr)
+            dM_CMB = dM_arr[FCMB_idx]+(dM_arr[FCMB_idx+1]-dM_arr[FCMB_idx])*FCMB_U
+            
+            #perp_CMB = np.array([1.04097])
+            
+            FCMB_err = np.array([dM_CMB/2000])
+            FCMB_cov = np.array([FCMB_err**2])
+            FCMB_err = np.array([0.00046])
             np.savez(os.path.join(self.path, dataset_name),  
-             data = para_FCMB,
+             data = dM_CMB,
              z=z_FCMB,
              cov=FCMB_cov,
              err=FCMB_err, 
-             idx=FCMB_idx, 
+             idx=FCMB_idx,
              U=FCMB_U)
         
         return np.load(filepath)

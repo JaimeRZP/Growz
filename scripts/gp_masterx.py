@@ -22,7 +22,7 @@ tools = utils.utils()
 c = tools.c
 data = make_data.make_data(z_max, res , path)
 
-DESI = data.get_DESI(new=True, mode='All')
+DESI = data.get_DESI(new=True, mode='None')
 H_DESI = data.get_DESI(new=True, mode='H')
 dA_DESI = data.get_DESI(new=True, mode='dA')
 fs8_DESI = data.get_DESI(new=True, mode='fs8')
@@ -256,9 +256,9 @@ if 'CMB' in datasets:
 if 'FCMB' in datasets:
     print('Adding FCMB')
     with model:
-        CMB_H = pm.Deterministic('CMB_H',
-                  tt.as_tensor_variable(H_gp[FCMB['idx']]+(H_gp[FCMB['idx']+1]-H_gp[FCMB['idx']])*FCMB['U']))
-        theory = tt.concatenate([theory, CMB_H])
+        FCMB_dM = pm.Deterministic('FCMB_dM',
+                  tt.as_tensor_variable(dM_gp[FCMB['idx']]+(dM_gp[FCMB['idx']+1]-dM_gp[FCMB['idx']])*dM_CMB['U']))
+        theory = tt.concatenate([theory, FCMB_dM])
         
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
