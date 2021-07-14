@@ -343,7 +343,7 @@ class make_data():
             
             #perp_CMB = np.array([1.04097])
             
-            FCMB_err = np.array([dM_CMB/2000])
+            FCMB_err = np.array([dM_CMB[0]/2000])
             FCMB_cov = np.array([FCMB_err**2])
             FCMB_err = np.array([0.00046])
             np.savez(os.path.join(self.path, dataset_name),  

@@ -22,7 +22,7 @@ tools = utils.utils()
 c = tools.c
 data = make_data.make_data(z_max, res , path)
 
-DESI = data.get_DESI(new=True, mode='None')
+DESI = data.get_DESI(new=True, mode=None)
 H_DESI = data.get_DESI(new=True, mode='H')
 dA_DESI = data.get_DESI(new=True, mode='dA')
 fs8_DESI = data.get_DESI(new=True, mode='fs8')
@@ -37,8 +37,7 @@ CMB = data.get_CMB(new=True)
 FCMB = data.get_FCMB(new=True)
 
 n_samples = 1000
-n_tune = 2500
-
+n_tune = 1000
 datadict = {'DESI': DESI,
             'H_DESI': H_DESI,
             'dA_DESI': dA_DESI,
@@ -53,7 +52,8 @@ datadict = {'DESI': DESI,
             'CMB': CMB, 
             'FCMB': FCMB}
 
-datasets = ['H_DESI', 'dA_DESI', 'fs8_DESI', 'CMB']
+datasets = ['DESI', 'FCMB']
+#datasets = ['H_DESI', 'dA_DESI', 'fs8_DESI', 'CMB']
 #datasets = ['BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB']
 #datasets = ['BOSS', 'CMB']
 #datasets = ['DESI', 'CMB']
@@ -122,14 +122,15 @@ with pm.Model() as model:
         #https://arxiv.org/pdf/2106.00428.pdf
         #wb0 =  0.02236
         wb0 =  pm.Uniform("wb0", 0.02224, 0.02228)
-        a1 = 0.00785436
-        a2 = 0.177084
-        a3 = 0.00912388
-        a4 = 0.618711
-        a5 = 11.9611
-        a6 = 2.81343
-        a7 = 0.784719
-        rd_gp = tt.as_tensor_variable(1/(a1*wb0**a2+a3*wm0**a4+a5*wb0**a6*wm0**a7))  
+        #a1 = 0.00785436
+        #a2 = 0.177084
+        #a3 = 0.00912388
+        #a4 = 0.618711
+        #a5 = 11.9611
+        #a6 = 2.81343
+        #a7 = 0.784719
+        #rd_gp = tt.as_tensor_variable(1/(a1*wb0**a2+a3*wm0**a4+a5*wb0**a6*wm0**a7))  
+        rd_gp = 144.46
         
     if get_fs8:
         #s80 = 0.812
