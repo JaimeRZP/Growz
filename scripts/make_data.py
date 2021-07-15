@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os
+import classy
 import utils
 from pandas import read_table
 
@@ -56,7 +57,7 @@ class make_data():
               'Omega_b': 0.037,
               'n_s': 0.837,
               'ln10^{10}A_s': 3.138}
-        cosmo = ccl.boltzmann.classy.Class()
+        cosmo = classy.Class()
         cosmo.set({ 'output':'mPk', 'P_k_max_h/Mpc': 20, 'z_max_pk': 1085})
         cosmo.set(params)
         cosmo.compute()
@@ -213,12 +214,12 @@ class make_data():
             print('Found file for '+ dataset_name)
             pass
         else:
-            SN = utils.read_light_curve_parameters('/home/jaimerz/PhD/Growz/data/raw/PantheonDS17/lcparam_DS17f.txt')
+            SN = utils.read_light_curve_parameters('/mnt/zfsusers/jaimerz/PhD/Growz/data/raw/PantheonDS17/lcparam_DS17f.txt')
             SN_data = np.array(SN.mb)
             z_SN = np.array(SN.zcmb)
             SN_idx =  self.make_idx(z_SN, z_arr) 
             SN_U = self.make_U(z_SN, z_arr, SN_idx)
-            SN_cov = np.genfromtxt('/home/jaimerz/PhD/Growz/data/raw/PantheonDS17/syscov_panth.txt') + np.diag(SN.dmb**2)
+            SN_cov = np.genfromtxt('/mnt/zfsusers/jaimerz/PhD/Growz/data/raw/PantheonDS17/syscov_panth.txt') + np.diag(SN.dmb**2)
             SN_err = np.sqrt(np.diag(SN_cov))
 
             np.savez(os.path.join(self.path, dataset_name),  
