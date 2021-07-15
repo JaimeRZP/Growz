@@ -4,11 +4,12 @@ import pandas as pd
 import os
 import utils
 from pandas import read_table
+import pyccl as ccl
 
 class make_data():
     def __init__(self, z_max, res, path):
+        self.c = 299792458.0
         self.path = path
-        self.tools = utils.utils()
         self.res = res
         self.z_max = z_max
         self.x_arr = np.linspace(0, np.log(1+self.z_max), self.res)
@@ -16,12 +17,53 @@ class make_data():
         self.a_arr = 1./(1+self.z_arr) 
         self.dx = np.mean(np.diff(self.x_arr))
         self.dz = np.diff(self.z_arr)
+        self.cosmo = self.get_cosmo(mode='Planck')
+            
         if self.z_max > 1085:
             self.z_planck = self.z_arr[self.z_arr<1085]
         else:
             self.z_planck = self.z_arr
-        self.Planck = self.tools.get_preds(self.z_arr[self.z_arr<1085], mode='Planck')
+        self.Planck = utils.get_preds(self.z_arr[self.z_arr<1085], self.cosmo)
+        
+        bg = self.cosmo.get_background()
+        self.Omega_nu = bg['(.)rho_ur'][-1]/(bg['H [1/Mpc]'][-1])**2
+        self.wm0 = self.cosmo.Omega_m() * self.cosmo.h()**2
+        self.wb0 = self.cosmo.Omega_b() * self.cosmo.h()**2
+        self.wr0 = (self.cosmo.Omega_g()+self.Omega_nu) * self.cosmo.h()**2
+        self.wL0 = self.cosmo.Omega_Lambda() * self.cosmo.h()**2
+        
+        self.H_arr = 100*np.sqrt(self.wm0*(1+self.z_arr)**3+(self.wr0)*(1+self.z_arr)**4+self.wL0)
+        self.dM_arr = utils.make_dM((1000/self.c)*self.H_arr, self.x_arr)
+        self.dA_arr = self.dM_arr/(1+self.z_arr)
+        self.s8_arr, self.fs8_arr = utils.make_fs8(self.H_arr, self.x_arr,
+                                                   self.wm0, self.cosmo.sigma8())
 
+    def get_cosmo(self, mode):
+        if mode == 'Planck':
+            params = {'h': 0.6727,
+              'Omega_cdm': 0.265,
+              'Omega_b': 0.050,
+              'n_s': 0.965,
+              'ln10^{10}A_s': 3.045}
+        if mode == 'Riess':
+            params = {'h': 0.74,
+              'Omega_cdm': 0.21,
+              'Omega_b': 0.050,
+              'n_s': 0.9665,
+              'ln10^{10}A_s': 3.040}
+        if mode == 'Panth':
+            params = {'h': 0.724,
+              'Omega_cdm': 0.262,
+              'Omega_b': 0.037,
+              'n_s': 0.837,
+              'ln10^{10}A_s': 3.138}
+        cosmo = ccl.boltzmann.classy.Class()
+        cosmo.set({ 'output':'mPk', 'P_k_max_h/Mpc': 20, 'z_max_pk': 1085})
+        cosmo.set(params)
+        cosmo.compute()
+        self.cosmo = cosmo
+        return self.cosmo
+        
     def make_idx(self, z_data, z_arr):
         idxs = np.array([])
         for z in z_data:
@@ -53,7 +95,7 @@ class make_data():
                               1.3, 1.7, 2.5])
             WFIRST_idx =  self.make_idx(z_WFIRST, z_arr) 
             WFIRST_U = self.make_U(z_WFIRST, z_arr, WFIRST_idx)
-            E_arr = self.Planck['Hkms_arr']/self.Planck['Hkms_arr'][0]
+            E_arr = self.H_arr/self.H_arr[0]
             WFIRST_err = E_arr[WFIRST_idx]*WFIRST_rels_E/100
             WFIRST_data = E_arr[WFIRST_idx]+ np.random.randn(len(z_WFIRST))*WFIRST_err
             WFIRST_cov = np.zeros([len(z_WFIRST), len(z_WFIRST)])
@@ -96,18 +138,10 @@ class make_data():
             DESI_idx =  self.make_idx(z_DESI, z_arr)
             DESI_U = self.make_U(z_DESI, z_arr, DESI_idx)
 
-            H_arr = self.Planck['Hkms_arr']
-            x_arr = self.x_arr[self.z_arr<1085]
-            z_arr = self.z_arr[self.z_arr<1085]
-            dA_arr = self.tools.make_dM((1000/self.tools.c)*H_arr, x_arr)
-            dA_arr /= (1+z_arr)
-            s8_arr, fs8_arr = self.tools.make_fs8(H_arr, x_arr, 0.1422, 0.812, mode='david')
-            
-            
-            H_DESI = H_arr[DESI_idx]+(H_arr[DESI_idx+1]-H_arr[DESI_idx])*DESI_U
-            dA_DESI = dA_arr[DESI_idx]+(dA_arr[DESI_idx+1]-dA_arr[DESI_idx])*DESI_U
-            s8_DESI = s8_arr[DESI_idx]+(s8_arr[DESI_idx+1]-s8_arr[DESI_idx])*DESI_U
-            fs8_DESI = fs8_arr[DESI_idx]+(fs8_arr[DESI_idx+1]-fs8_arr[DESI_idx])*DESI_U
+            H_DESI = self.H_arr[DESI_idx]+(self.H_arr[DESI_idx+1]-self.H_arr[DESI_idx])*DESI_U
+            dA_DESI = self.dA_arr[DESI_idx]+(self.dA_arr[DESI_idx+1]-self.dA_arr[DESI_idx])*DESI_U
+            s8_DESI = self.s8_arr[DESI_idx]+(self.s8_arr[DESI_idx+1]-self.s8_arr[DESI_idx])*DESI_U
+            fs8_DESI = self.fs8_arr[DESI_idx]+(self.fs8_arr[DESI_idx+1]-self.fs8_arr[DESI_idx])*DESI_U
             
             DESI_H_err = H_DESI*DESI_rels_H/100
             DESI_dA_err = dA_DESI*DESI_rels_dA/100
@@ -180,7 +214,7 @@ class make_data():
             print('Found file for '+ dataset_name)
             pass
         else:
-            SN = self.tools.read_light_curve_parameters('/home/jaimerz/PhD/Growz/data/raw/PantheonDS17/lcparam_DS17f.txt')
+            SN = utils.read_light_curve_parameters('/home/jaimerz/PhD/Growz/data/raw/PantheonDS17/lcparam_DS17f.txt')
             SN_data = np.array(SN.mb)
             z_SN = np.array(SN.zcmb)
             SN_idx =  self.make_idx(z_SN, z_arr) 
@@ -299,16 +333,15 @@ class make_data():
             print('Found file for '+ dataset_name)
             pass
         else:
-            z_CMB = np.array([1090.30])
-            CMB_rd = 144.46 
+            z_CMB = np.array([1090.30]) 
+            CMB_rd = utils.make_rd(self.wm0, self.wb0) 
             CMB_idx =  self.make_idx(z_CMB, z_arr)
             CMB_U = self.make_U(z_CMB, z_arr, CMB_idx)
             
-            H_arr = 100*np.sqrt(0.1422*(1+z_arr)**3+((2.47+1.71)*10**-5)*(1+z_arr)**4+0.30)
-            dM_arr = self.tools.make_dM((1000/self.tools.c)*H_arr, self.x_arr)
-            dM_CMB = dM_arr[CMB_idx]+(dM_arr[CMB_idx+1]-dM_arr[CMB_idx])*CMB_U
+            dM_CMB = self.dM_arr[CMB_idx]+(self.dM_arr[CMB_idx+1]-self.dM_arr[CMB_idx])*CMB_U
             perp_CMB = 100*(CMB_rd/dM_CMB)
             
+            #CMB_rd = 144.46
             #perp_CMB = np.array([1.04097])
             
             CMB_cov = np.array([[0.00046**2]])
@@ -336,10 +369,7 @@ class make_data():
             z_FCMB = np.array([1090.30])
             FCMB_idx =  self.make_idx(z_FCMB, z_arr)
             FCMB_U = self.make_U(z_FCMB, z_arr, FCMB_idx)
-            
-            H_arr = 100*np.sqrt(0.1422*(1+z_arr)**3+((2.47+1.71)*10**-5)*(1+z_arr)**4+0.30)
-            dM_arr = self.tools.make_dM((1000/self.tools.c)*H_arr, self.x_arr)
-            dM_CMB = dM_arr[FCMB_idx]+(dM_arr[FCMB_idx+1]-dM_arr[FCMB_idx])*FCMB_U
+            dM_CMB = self.dM_arr[FCMB_idx]+(self.dM_arr[FCMB_idx+1]-self.dM_arr[FCMB_idx])*FCMB_U
             
             #perp_CMB = np.array([1.04097])
             

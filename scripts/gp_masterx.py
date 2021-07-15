@@ -1,5 +1,7 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pymc3 as pm
+import scipy as sp
 import classy
 import theano
 import theano.tensor as tt
@@ -18,9 +20,10 @@ a_arr = 1./(1+z_arr)
 
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/products'
 
-tools = utils.utils()
-c = tools.c
 data = make_data.make_data(z_max, res , path)
+Planck = data.Planck
+z_planck = data.z_planck
+c = data.c
 
 DESI = data.get_DESI(new=True, mode=None)
 H_DESI = data.get_DESI(new=True, mode='H')
@@ -37,7 +40,7 @@ CMB = data.get_CMB(new=True)
 FCMB = data.get_FCMB(new=True)
 
 n_samples = 1000
-n_tune = 1000
+n_tune = 2500
 datadict = {'DESI': DESI,
             'H_DESI': H_DESI,
             'dA_DESI': dA_DESI,
@@ -95,7 +98,7 @@ with pm.Model() as model:
     #wL0 = 0.307
     wm0 = pm.Uniform("wm0", 0., 0.45) 
     wL0 = pm.Uniform("wL0", 0., 0.45) 
-    wr0 = (2.47+1.71)*10**-5
+    wr0 = 4.183709411969532e-05
     gp_cov = η ** 2 * pm.gp.cov.ExpQuad(1, ℓ) + pm.gp.cov.WhiteNoise(1e-3)
     gp = pm.gp.Latent(cov_func=gp_cov)
     
@@ -104,7 +107,7 @@ with pm.Model() as model:
     
     #Set up Gaussian process
     DH_gp = gp.prior("DH_gp", X=x_arr[:, None]) 
-    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H*(1+DH_gp)))
+    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H)) #*(1+DH_gp)))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
     
     if get_dM:
@@ -120,35 +123,40 @@ with pm.Model() as model:
         
     if get_rd:
         #https://arxiv.org/pdf/2106.00428.pdf
-        #wb0 =  0.02236
-        wb0 =  pm.Uniform("wb0", 0.02224, 0.02228)
-        #a1 = 0.00785436
-        #a2 = 0.177084
-        #a3 = 0.00912388
-        #a4 = 0.618711
-        #a5 = 11.9611
-        #a6 = 2.81343
-        #a7 = 0.784719
-        #rd_gp = tt.as_tensor_variable(1/(a1*wb0**a2+a3*wm0**a4+a5*wb0**a6*wm0**a7))  
-        rd_gp = 144.46
+        wb0 =  pm.Uniform("wb0", 0.022, 0.023)
+        a1 = 0.00785436
+        a2 = 0.177084
+        a3 = 0.00912388
+        a4 = 0.618711
+        a5 = 11.9611
+        a6 = 2.81343
+        a7 = 0.784719
+        rd_gp = tt.as_tensor_variable(1/(a1*wb0**a2+a3*wm0**a4+a5*wb0**a6*wm0**a7))  
         
     if get_fs8:
         #s80 = 0.812
         s80 = pm.Normal("s80", 0.8, 0.5)
         Wm0 =  pm.Deterministic('Wm0', wm0*(100/H_gp[0])**2)
         E_gp = pm.Deterministic('E_gp', H_gp/H_gp[0])
+        xx = x_arr[::-1]
+        ee = E_gp[::-1]
+        aa = np.exp(-xx)
         
-        d = tt.zeros(len(z_arr))
-        y = tt.zeros(len(z_arr))
-        d = tt.inc_subtensor(d[-1], a_arr[-1])
-        y = tt.inc_subtensor(y[-1], E_gp[0]*a_arr[-1]**3)
-        for i in np.arange(1, len(z_arr)):
-            A0 = -1.5*Wm0/(a_arr[-i]*E_gp[-i])
-            B0 = -1./(a_arr[-i]**2*E_gp[-i])
-            A1 = -1.5*Wm0/(a_arr[-(i+1)]*E_gp[-(i+1)])
-            B1 = -1./(a_arr[-(i+1)]**2*E_gp[-(i+1)])
-            y = tt.inc_subtensor(y[-(i+1)], (1-0.5*dx**2*A0*B0)*y[-i]-0.5*(A0+A1)*dx*d[-i])
-            d = tt.inc_subtensor(d[-(i+1)], -0.5*(B0+B1)*dx*y[-i]+(1-0.5*dx**2*A0*B0)*d[-i])
+        dd = tt.zeros(len(z_arr))
+        yy = tt.zeros(len(z_arr))
+        dd = tt.inc_subtensor(dd[0], aa[0])
+        yy = tt.inc_subtensor(yy[0], aa[0]**3*E_gp[0])
+        
+        for i in range(len(z_arr)-1):
+            A0 = -1.5*Wm0/(aa[i]*ee[i])
+            B0 = -1./(aa[i]**2*ee[i])
+            A1 = -1.5*Wm0/(aa[i+1]*ee[i+1])
+            B1 = -1./(aa[i+1]**2*ee[i+1])
+            yy = tt.inc_subtensor(yy[i+1], (1+0.5*dx**2*A0*B0)*yy[i]+0.5*(A0+A1)*dx*dd[i])
+            dd = tt.inc_subtensor(dd[i+1], 0.5*(B0+B1)*dx*yy[i]+(1+0.5*dx**2*A0*B0)*dd[i])
+        
+        y = tt.as_tensor_variable(yy[::-1])
+        d = tt.as_tensor_variable(dd[::-1])
         
         fs8_gp = pm.Deterministic('fs8_gp', s80*y/(a_arr**2*E_gp*d[0]))
         s8_gp = pm.Deterministic('s8_gp', s80*d/d[0])
@@ -166,7 +174,7 @@ if 'DESI' in datasets:
         DESI_fs8 = pm.Deterministic('DESI_fs8',
                    tt.as_tensor_variable(fs8_gp[DESI['idx']]+(fs8_gp[DESI['idx']+1]-fs8_gp[DESI['idx']])*DESI['U']))
         theory = tt.concatenate([theory, DESI_H, DESI_dA, DESI_fs8])
-        
+
 if 'H_DESI' in datasets:
     print('Adding H DESI')
     with model:
@@ -271,10 +279,12 @@ if 'FCMB' in datasets:
         FCMB_dM = pm.Deterministic('FCMB_dM',
                   tt.as_tensor_variable(dM_gp[FCMB['idx']]+(dM_gp[FCMB['idx']+1]-dM_gp[FCMB['idx']])*FCMB['U']))
         theory = tt.concatenate([theory, FCMB_dM])
-        
+
+#Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
     trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune)
+
     
 #print r-stat
 print(pm.summary(trace)['r_hat'][["ℓ","η"]])
