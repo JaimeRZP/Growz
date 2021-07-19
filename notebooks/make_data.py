@@ -31,13 +31,18 @@ class make_data():
         self.wb0 = self.cosmo.Omega_b() * self.cosmo.h()**2
         self.wr0 = (self.cosmo.Omega_g()+self.Omega_nu) * self.cosmo.h()**2
         self.wL0 = self.cosmo.Omega_Lambda() * self.cosmo.h()**2
+        self.s80 = self.cosmo.sigma8()
         
         self.H_arr = 100*np.sqrt(self.wm0*(1+self.z_arr)**3+(self.wr0)*(1+self.z_arr)**4+self.wL0)
+        #self.H_arr *= (1+0.4*self.gaussian(self.z_arr, 0.8, 0.2)) 
         self.dM_arr = utils.make_dM((1000/self.c)*self.H_arr, self.x_arr)
         self.dA_arr = self.dM_arr/(1+self.z_arr)
         self.s8_arr, self.fs8_arr = utils.make_fs8(self.H_arr, self.x_arr,
-                                                   self.wm0, self.cosmo.sigma8())
+                                                   self.wm0, self.s80)
 
+    def gaussian(self, z_arr, mu, sig):
+        return np.exp(-np.power(z_arr - mu, 2.) / (2 * np.power(sig, 2.)))
+    
     def get_cosmo(self, mode):
         if mode == 'Planck':
             params = {'h': 0.6727,
