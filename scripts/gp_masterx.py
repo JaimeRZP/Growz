@@ -55,11 +55,14 @@ datadict = {'DESI': DESI,
             'CMB': CMB, 
             'FCMB': FCMB}
 
-datasets = ['DESI', 'FCMB']
-#datasets = ['H_DESI', 'dA_DESI', 'fs8_DESI', 'CMB']
-#datasets = ['BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB']
-#datasets = ['BOSS', 'CMB']
+datasets = ['DESI']
 #datasets = ['DESI', 'CMB']
+#datasets = ['CC', 'DS17', 'Wigglez', 'DSS']
+#datasets = ['CC', 'DS17', 'Wigglez', 'DSS', 'CMB']
+#datasets = ['BOSS', 'eBOSS']
+#datasets = ['BOSS', 'eBOSS', 'CMB']
+#datasets = ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS']
+#datasets = ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB']
 
 need_dM = ['DESI', 'dA_DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DS17', 'CMB', 'FCMB']
 need_fs8 = ['DESI', 'fs8_DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DSS']
@@ -107,7 +110,7 @@ with pm.Model() as model:
     
     #Set up Gaussian process
     DH_gp = gp.prior("DH_gp", X=x_arr[:, None]) 
-    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H)) #*(1+DH_gp)))
+    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H*(1+DH_gp)))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
     
     if get_dM:
@@ -294,7 +297,7 @@ print(pm.summary(trace)['mean'][["ℓ","η"]])
 filename = ''
 for dataset in datasets:
     filename+=dataset+'_'
-path = filename+'{}_{}_t'.format(n_samples, n_tune)
+path = filename+'{}_{}'.format(n_samples, n_tune)
 
 n = np.array(trace.posterior["η"]).flatten()
 l = np.array(trace.posterior["ℓ"]).flatten()
