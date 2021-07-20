@@ -7,7 +7,7 @@ import theano
 import theano.tensor as tt
 import os
 import utils
-import make_data
+from make_data import MakeData
 from scipy.linalg import block_diag
 from pymc3.gp.util import plot_gp_dist
 
@@ -21,24 +21,24 @@ a_arr = 1./(1+z_arr)
 
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/products'
 
-data = make_data.make_data(z_max, res , path)
-Planck = data.Planck
-z_planck = data.z_planck
-c = data.c
+data_class = MakeData(z_max, res , path)
+Planck = data_class.Planck
+z_planck = data_class.z_planck
+c = data_class.c
 
-DESI = data.get_DESI(new=True, mode=None)
-H_DESI = data.get_DESI(new=True, mode='H')
-dA_DESI = data.get_DESI(new=True, mode='dA')
-fs8_DESI = data.get_DESI(new=True, mode='fs8')
-WFIRST = data.get_WFIRST(new=True)
-CC = data.get_CC(new=True)
-DSS = data.get_DSS(new=True)
-BOSS = data.get_BOSS(new=True)
-eBOSS = data.get_eBOSS(new=True)
-Wigglez = data.get_Wigglez(new=True)
-DS17 = data.get_DS17(new=True)
-CMB = data.get_CMB(new=True)
-FCMB = data.get_FCMB(new=True)
+DESI = data_class.get_DESI(new=True, mode=None)
+H_DESI = data_class.get_DESI(new=True, mode='H')
+dA_DESI = data_class.get_DESI(new=True, mode='dA')
+fs8_DESI = data_class.get_DESI(new=True, mode='fs8')
+WFIRST = data_class.get_WFIRST(new=True)
+CC = data_class.get_CC(new=True)
+DSS = data_class.get_DSS(new=True)
+BOSS = data_class.get_BOSS(new=True)
+eBOSS = data_class.get_eBOSS(new=True)
+Wigglez = data_class.get_Wigglez(new=True)
+DS17 = data_class.get_DS17(new=True)
+CMB = data_class.get_CMB(new=True)
+FCMB = data_class.get_FCMB(new=True)
 
 n_samples = 1000
 n_tune = 2500
@@ -56,9 +56,12 @@ datadict = {'DESI': DESI,
             'CMB': CMB, 
             'FCMB': FCMB}
 
-datasets = ['DESI']
-#datasets = ['DESI', 'CMB']
-#datasets = ['CC', 'DS17', 'Wigglez', 'DSS']
+#datasets = ['CC', 'CMB']
+#datasets = ['DS17', 'CMB']
+#datasets = ['BOSS', 'CMB']
+#datasets = ['eBOSS', 'CMB']
+#datasets = ['Wigglez', 'CMB']
+#datasets = ['DSS', 'CMB']
 #datasets = ['CC', 'DS17', 'Wigglez', 'DSS', 'CMB']
 #datasets = ['BOSS', 'eBOSS']
 #datasets = ['BOSS', 'eBOSS', 'CMB']
@@ -107,7 +110,7 @@ with pm.Model() as model:
     gp = pm.gp.Latent(cov_func=gp_cov)
     
     #Mean of the gp
-    H = pm.Deterministic('H', 100*tt.sqrt(wm0*(1+z_arr)**3+wr0*(1+z_arr)**4+wL0))
+    H = pm.Deterministic('H', 100*tt.sqrt(data_class.wm0*(1+z_arr)**3+data_class.wr0*(1+z_arr)**4+data_class.wL0))
     
     #Set up Gaussian process
     DH_gp = gp.prior("DH_gp", X=x_arr[:, None]) 
@@ -115,10 +118,10 @@ with pm.Model() as model:
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
     
     if get_dM:
-        dH_gp = pm.Deterministic("dH", tt.as_tensor_variable((c/1000)*(1+z_arr)/H_gp))
+        dH_gp = pm.Deterministic("dH", tt.as_tensor_variable((c/1000)/H_gp))
         dM_rec_gp = tt.zeros(len(z_arr)+1)
         dM_rec_gp = tt.inc_subtensor(dM_rec_gp[1:],
-                  tt.as_tensor_variable(dx*tt.cumsum(dH_gp)))
+                  tt.as_tensor_variable(dx*tt.cumsum(dH_gp*(1+z_arr))))
         dM_trap_gp = tt.as_tensor_variable(0.5*(dM_rec_gp[1:]+dM_rec_gp[:-1])-0.5*dM_rec_gp[1])
         dM_gp = pm.Deterministic('dM_gp', dM_trap_gp)
         #dM_gp = pm.Deterministic('dM_gp', dM_rec_gp[:-1])
@@ -229,8 +232,8 @@ if 'BOSS' in datasets:
     print('Adding BOSS')
     with model:
         #Get alpha_perp and alpha_para 
-        B_para_f = pm.Deterministic("B_para_f", H_gp*rd_gp/BOSS['rd'])
-        B_perp_f = pm.Deterministic("B_perp_f", dM_gp*BOSS['rd']/rd_gp)
+        B_para_f = pm.Deterministic("B_para_f", H_gp) #*rd_gp/BOSS['rd'])
+        B_perp_f = pm.Deterministic("B_perp_f", dM_gp) #*BOSS['rd']/rd_gp)
         
         B_para = pm.Deterministic("B_para", 
                     tt.as_tensor_variable(B_para_f[BOSS['idx']]+(B_para_f[BOSS['idx']+1]-B_para_f[BOSS['idx']])*BOSS['U']))
@@ -246,7 +249,7 @@ if 'eBOSS' in datasets:
     print('Adding eBOSS')
     with model:
         eB_para_f = pm.Deterministic("eB_para_f", dH_gp/rd_gp)
-        eB_perp_f = pm.Deterministic("eB_perp_f", dH_gp/rd_gp)
+        eB_perp_f = pm.Deterministic("eB_perp_f", dM_gp/rd_gp)
         
         eB_para = pm.Deterministic("eB_para", 
                     tt.as_tensor_variable(eB_para_f[eBOSS['idx']]+(eB_para_f[eBOSS['idx']+1]-eB_para_f[eBOSS['idx']])*eBOSS['U']))
@@ -364,7 +367,7 @@ ax = fig.gca()
 
 plot_gp_dist(ax, trace.posterior["H_gp"][0, :, :], z_arr[:, None])
 ax.plot(z_planck, Planck['Hkms_arr'], "k--", label=r'$CLASS$')
-plt.plot(z_arr, data.H_arr, 'b-.', label='formula')
+plt.plot(z_arr, data_class.H_arr, 'b-.', label='formula')
 
 if 'CC' in datasets:
     plt.errorbar(CC['z'], CC['data'], yerr = CC['err'], fmt='bo', label='CC')
@@ -393,7 +396,7 @@ ax = fig.gca()
 plot_gp_dist(ax, trace.posterior["dM_gp"][0, :, :], z_arr[:, None])
 
 plt.plot(z_planck, Planck['dM_arr'], "k--", label='Planck')
-plt.plot(z_arr, data.dM_arr, 'b-.', label='formula')
+plt.plot(z_arr, data_class.dM_arr, 'b-.', label='formula')
 
 if 'DS17' in datasets:
     plt.errorbar(DS17['z'], (10**((DS17['data']-25+19.49)/5))/(1+DS17['z']),
@@ -424,7 +427,7 @@ ax = fig.gca()
 plot_gp_dist(ax, trace.posterior["fs8_gp"][0, :, :],
              z_arr[:, None])
 
-plt.plot(z_arr, data.fs8_arr, 'b-.', label='formula')
+plt.plot(z_arr, data_class.fs8_arr, 'b-.', label='formula')
 plt.plot(z_planck, Planck['fs8_arr'], "k--", label='Planck')
 if 'BOSS' in datasets:
     plt.errorbar(BOSS['z'], BOSS['fs8_data'], yerr=BOSS['fs8_err'], fmt='ro', label='BOSS')

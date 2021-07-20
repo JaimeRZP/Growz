@@ -6,7 +6,7 @@ import utils
 from pandas import read_table
 import pyccl as ccl
 
-class make_data():
+class MakeData():
     def __init__(self, z_max, res, path):
         self.c = 299792458.0
         self.path = path

@@ -6,7 +6,7 @@ import classy
 import utils
 from pandas import read_table
 
-class make_data():
+class MakeData():
     def __init__(self, z_max, res, path):
         self.c = 299792458.0
         self.path = path

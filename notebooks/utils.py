@@ -54,14 +54,8 @@ def make_fs8(H, x_arr, wm0, s80):
     z_arr = np.exp(x_arr)-1
     a_arr = 1./(1+z_arr) 
     dx = np.mean(np.diff(x_arr))
-    Wm = wm0*(100/H)**2*(1+z_arr)**3
     E = H/H[0]
     Om = wm0*(100/H[0])**2
-    d = np.zeros(len(z_arr))
-    y = np.zeros(len(z_arr))
-    d[-1] = a_arr[-1]
-    y[-1] = E[0]*a_arr[-1]**3
-
     xx = x_arr[::-1]
     ee = E[::-1]
     aa = np.exp(-xx)
