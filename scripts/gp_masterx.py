@@ -241,8 +241,6 @@ if 'BOSS' in datasets:
                 tt.as_tensor_variable(B_perp_f[BOSS['idx']]+(B_perp_f[BOSS['idx']+1]-B_perp_f[BOSS['idx']])*BOSS['U']))
         B_fs8 = pm.Deterministic("B_fs8", 
                    tt.as_tensor_variable(fs8_gp[BOSS['idx']]+(fs8_gp[BOSS['idx']+1]-fs8_gp[BOSS['idx']])*BOSS['U']))
-        B_perp = tt.ones_like(B_perp)
-        B_fs8 = tt.ones_like(B_fs8)
         theory = tt.concatenate([theory, B_para, B_perp, B_fs8])
         
 if 'eBOSS' in datasets:
