@@ -221,41 +221,32 @@ if 'DS17' in datasets:
     print('Adding Pantheon')
     with model:
         M = pm.Normal('M', mu=-19.0, sigma=3)
-        u_gp = tt.zeros(len(z_arr))
-        u_gp = tt.inc_subtensor(u_gp[1:], tt.as_tensor_variable(5*tt.log10(dL_gp[1:])+25+M))
-        u_gp = tt.inc_subtensor(u_gp[0], tt.as_tensor_variable(5*tt.log10(dL_gp[1])+25+M))
-        DS17_u = pm.Deterministic("DS17_u",
-                 tt.as_tensor_variable(u_gp[DS17['idx']]+(u_gp[DS17['idx']+1]-u_gp[DS17['idx']])*DS17['U']))
+        DS17_dL = tt.as_tensor_variable(dL_gp[DS17['idx']]+(dL_gp[DS17['idx']+1]-dL_gp[DS17['idx']])*DS17['U'])
+        DS17_u = pm.Deterministic("DS17_dL",
+                 tt.as_tensor_variable(5*tt.log10(DS17_dL)+25+M))
         theory = tt.concatenate([theory, DS17_u])
         
 if 'BOSS' in datasets:
     print('Adding BOSS')
     with model:
-        #Get alpha_perp and alpha_para 
-        B_para_f = pm.Deterministic("B_para_f", H_gp) #*rd_gp/BOSS['rd'])
-        B_perp_f = pm.Deterministic("B_perp_f", dM_gp) #*BOSS['rd']/rd_gp)
-        
-        B_para = pm.Deterministic("B_para", 
-                    tt.as_tensor_variable(B_para_f[BOSS['idx']]+(B_para_f[BOSS['idx']+1]-B_para_f[BOSS['idx']])*BOSS['U']))
-        B_perp = pm.Deterministic("B_perp", 
-                tt.as_tensor_variable(B_perp_f[BOSS['idx']]+(B_perp_f[BOSS['idx']+1]-B_perp_f[BOSS['idx']])*BOSS['U']))
+        B_H = tt.as_tensor_variable(H_gp[BOSS['idx']]+(H_gp[BOSS['idx']+1]-H_gp[BOSS['idx']])*BOSS['U'])
+        B_dM = tt.as_tensor_variable(dM_gp[BOSS['idx']]+(dM_gp[BOSS['idx']+1]-dM_gp[BOSS['idx']])*BOSS['U'])
         B_fs8 = pm.Deterministic("B_fs8", 
                    tt.as_tensor_variable(fs8_gp[BOSS['idx']]+(fs8_gp[BOSS['idx']+1]-fs8_gp[BOSS['idx']])*BOSS['U']))
+        #Get alpha_perp and alpha_para 
+        B_para = pm.Deterministic("B_para", B_H*rd_gp/BOSS['rd'])
+        B_perp = pm.Deterministic("B_perp", B_dM*BOSS['rd']/rd_gp)
         theory = tt.concatenate([theory, B_para, B_perp, B_fs8])
         
 if 'eBOSS' in datasets:
     print('Adding eBOSS')
     with model:
-        eB_para_f = pm.Deterministic("eB_para_f", dH_gp/eBOSS['rd'])
-        eB_perp_f = pm.Deterministic("eB_perp_f", dM_gp/eBOSS['rd'])
-        
-        eB_para = pm.Deterministic("eB_para", 
-                    tt.as_tensor_variable(eB_para_f[eBOSS['idx']]+(eB_para_f[eBOSS['idx']+1]-eB_para_f[eBOSS['idx']])*eBOSS['U']))
-        eB_perp = pm.Deterministic("eB_perp", 
-                tt.as_tensor_variable(eB_perp_f[eBOSS['idx']]+(eB_perp_f[eBOSS['idx']+1]-eB_perp_f[eBOSS['idx']])*eBOSS['U']))
+        eB_dH = tt.as_tensor_variable(dH_gp[eBOSS['idx']]+(dH_gp[eBOSS['idx']+1]-dH_gp[eBOSS['idx']])*eBOSS['U'])
+        eB_dM = tt.as_tensor_variable(dM_gp[eBOSS['idx']]+(dM_gp[eBOSS['idx']+1]-dM_gp[eBOSS['idx']])*eBOSS['U'])
         eB_fs8 = pm.Deterministic("eB_fs8", 
                    tt.as_tensor_variable(fs8_gp[eBOSS['idx']]+(fs8_gp[eBOSS['idx']+1]-fs8_gp[eBOSS['idx']])*eBOSS['U']))
-        
+        eB_para = pm.Deterministic("eB_para", eB_dH/rd_gp)# eBOSS['rd'])
+        eB_perp = pm.Deterministic("eB_perp", eB_dM/rd_gp)# eBOSS['rd'])
         theory = tt.concatenate([theory, eB_para, eB_perp, eB_fs8])
 
 if 'Wigglez' in datasets:
@@ -284,7 +275,7 @@ if 'FCMB' in datasets:
         FCMB_dM = pm.Deterministic('FCMB_dM',
                   tt.as_tensor_variable(dM_gp[FCMB['idx']]+(dM_gp[FCMB['idx']+1]-dM_gp[FCMB['idx']])*FCMB['U']))
         theory = tt.concatenate([theory, FCMB_dM])
-
+        
 #Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
