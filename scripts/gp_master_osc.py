@@ -56,17 +56,14 @@ datadict = {'DESI': DESI,
             'CMB': CMB, 
             'FCMB': FCMB}
 
-#datasets = ['CC', 'CMB']
-#datasets = ['DS17', 'CMB']
-#datasets = ['BOSS', 'CMB']
-#datasets = ['eBOSS', 'CMB']
-#datasets = ['Wigglez', 'CMB']
-#datasets = ['DSS', 'CMB']
-#datasets = ['CC', 'DS17', 'Wigglez', 'DSS', 'CMB']
-#datasets = ['BOSS', 'eBOSS']
-#datasets = ['BOSS', 'eBOSS', 'CMB']
-#datasets = ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS']
-#datasets = ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB']
+data_comb = None # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
+             'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
+             'SDSS': ['BOSS', 'eBOSS'],
+             'SDSS_CMB': ['BOSS', 'eBOSS', 'CMB'],
+             'Add': ['CC', 'DS17', 'Wigglez', 'DSS'],
+             'Add_CMB': ['CC', 'DS17', 'Wigglez', 'DSS', 'CMB']}
+datasets = data_combs[data_comb]
 
 need_dM = ['DESI', 'dA_DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DS17', 'CMB', 'FCMB']
 need_fs8 = ['DESI', 'fs8_DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DSS']
@@ -101,16 +98,14 @@ with pm.Model() as model:
     #ℓ = pm.InverseGamma("ℓ", alpha=1, beta=2) 
     ℓ = pm.Uniform("ℓ", 0.001, 7) 
     η = pm.HalfNormal("η", sigma=0.3) 
-    #wm0 = 0.1422 
-    #wL0 = 0.307
     wm0 = pm.Uniform("wm0", 0., 0.45) 
-    wL0 = pm.Uniform("wL0", 0., 0.45) 
-    wr0 = 4.183709411969532e-05
+    wL0 = data_class.wL0 
+    wr0 = data_class.wr0
     gp_cov = η ** 2 * pm.gp.cov.ExpQuad(1, ℓ) + pm.gp.cov.WhiteNoise(1e-3)
     gp = pm.gp.Latent(cov_func=gp_cov)
     
     #Mean of the gp
-    H = pm.Deterministic('H', 100*tt.sqrt(data_class.wm0*(1+z_arr)**3+data_class.wr0*(1+z_arr)**4+data_class.wL0))
+    H = pm.Deterministic('H', 100*tt.sqrt(data_class.wm0*(1+z_arr)**3+wr0*(1+z_arr)**4+wL0))
     
     #Set up Gaussian process
     DH_gp = gp.prior("DH_gp", X=x_arr[:, None]) 
@@ -181,27 +176,6 @@ if 'DESI' in datasets:
         DESI_fs8 = pm.Deterministic('DESI_fs8',
                    tt.as_tensor_variable(fs8_gp[DESI['idx']]+(fs8_gp[DESI['idx']+1]-fs8_gp[DESI['idx']])*DESI['U']))
         theory = tt.concatenate([theory, DESI_H, DESI_dA, DESI_fs8])
-
-if 'H_DESI' in datasets:
-    print('Adding H DESI')
-    with model:
-        DESI_H = pm.Deterministic('DESI_H',
-                 tt.as_tensor_variable(H_gp[DESI['idx']]+(H_gp[DESI['idx']+1]-H_gp[DESI['idx']])*DESI['U']))
-        theory = tt.concatenate([theory, DESI_H])
-
-if 'dA_DESI' in datasets:
-    print('Adding dA DESI')
-    with model:
-        DESI_dA = pm.Deterministic('DESI_dA',
-                  tt.as_tensor_variable(dA_gp[DESI['idx']]+(dA_gp[DESI['idx']+1]-dA_gp[DESI['idx']])*DESI['U']))
-        theory = tt.concatenate([theory, DESI_dA])
-
-if 'fs8_DESI' in datasets:
-    print('Adding fs8 DESI')
-    with model:
-        DESI_fs8 = pm.Deterministic('DESI_fs8',
-                   tt.as_tensor_variable(fs8_gp[DESI['idx']]+(fs8_gp[DESI['idx']+1]-fs8_gp[DESI['idx']])*DESI['U']))
-        theory = tt.concatenate([theory, DESI_fs8])
         
 if 'WFIRST' in datasets:
     print('Adding WFIRST')
@@ -287,10 +261,8 @@ print(pm.summary(trace)['r_hat'][["ℓ","η"]])
 print(pm.summary(trace)['mean'][["ℓ","η"]])
 
 #Save
-filename = ''
-for dataset in datasets:
-    filename+=dataset+'_'
-path = filename+'{}_{}'.format(n_samples, n_tune)
+filename = data_comb
+path = filename+'{}_{}_osc'.format(n_samples, n_tune)
 
 n = np.array(trace.posterior["η"]).flatten()
 l = np.array(trace.posterior["ℓ"]).flatten()
@@ -301,7 +273,6 @@ Hz = Hz.reshape(-1, Hz.shape[-1])
 H0 = np.array(trace.posterior["H0_gp"]).flatten()
 h = H0/100
 Omega_m = np.array(trace.posterior["wm0"]).flatten()/h**2
-Omega_L = np.array(trace.posterior["wL0"]).flatten()/h**2
 
 if get_dM:
     dMz = np.array(trace.posterior["dM_gp"])
