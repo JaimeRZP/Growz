@@ -139,30 +139,33 @@ with pm.Model() as model:
         rd_gp = tt.as_tensor_variable(1/(a1*wb0**a2+a3*wm0**a4+a5*wb0**a6*wm0**a7))  
         
     if get_fs8:
-        #s80 = 0.812
+        #s80 = data_class.s80
         s80 = pm.Normal("s80", 0.8, 0.5)
-        Wm0 =  pm.Deterministic('Wm0', wm0*(100/H_gp[0])**2)
+        E = H_gp/H_gp[0]
+        Om = wm0*(100/H[0])**2
         xx = x_arr[::-1]
-        ee = E_gp[::-1]
+        ee = E[::-1]
         aa = np.exp(-xx)
-        
-        dd = tt.zeros(len(z_arr))
-        yy = tt.zeros(len(z_arr))
+        dx = np.mean(np.diff(xx))
+
+        nz = len(aa)
+        dd = tt.zeros(nz)
+        yy = tt.zeros(nz)
         dd = tt.inc_subtensor(dd[0], aa[0])
-        yy = tt.inc_subtensor(yy[0], aa[0]**3*E_gp[0])
-        
-        for i in range(len(z_arr)-1):
-            A0 = -1.5*Wm0/(aa[i]*ee[i])
+        yy = tt.inc_subtensor(yy[0], aa[0]**3*E[0])
+
+        for i in range(nz-1):
+            A0 = -1.5*Om/(aa[i]*ee[i])
             B0 = -1./(aa[i]**2*ee[i])
-            A1 = -1.5*Wm0/(aa[i+1]*ee[i+1])
+            A1 = -1.5*Om/(aa[i+1]*ee[i+1])
             B1 = -1./(aa[i+1]**2*ee[i+1])
             yy = tt.inc_subtensor(yy[i+1], (1+0.5*dx**2*A0*B0)*yy[i]+0.5*(A0+A1)*dx*dd[i])
-            dd = tt.inc_subtensor(dd[i+1], 0.5*(B0+B1)*dx*yy[i]+(1+0.5*dx**2*A0*B0)*dd[i])
+            dd = tt.inc_subtensor(dd[i+1],0.5*(B0+B1)*dx*yy[i]+(1+0.5*dx**2*A0*B0)*dd[i])
         
         y = tt.as_tensor_variable(yy[::-1])
         d = tt.as_tensor_variable(dd[::-1])
         
-        fs8_gp = pm.Deterministic('fs8_gp', s80*y/(a_arr**2*E_gp*d[0]))
+        fs8_gp = pm.Deterministic('fs8_gp', s80*y/(a_arr**2*E*d[0]))
         s8_gp = pm.Deterministic('s8_gp', s80*d/d[0])
     
     theory = tt.as_tensor_variable([])
