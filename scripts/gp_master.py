@@ -56,7 +56,7 @@ datadict = {'DESI': DESI,
             'CMB': CMB, 
             'FCMB': FCMB}
 
-data_comb = None # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'WFIRST_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'SDSS': ['BOSS', 'eBOSS'],
@@ -113,7 +113,8 @@ with pm.Model() as model:
     DH_gp = gp.prior("DH_gp", X=x_arr[:, None]) 
     H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H*(1+DH_gp)))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
-    
+    E_gp = pm.Deterministic('E_gp', H_gp/H_gp[0])
+
     if get_dM:
         dH_gp = pm.Deterministic("dH", tt.as_tensor_variable((c/1000)/H_gp))
         dM_rec_gp = tt.zeros(len(z_arr)+1)
@@ -141,7 +142,6 @@ with pm.Model() as model:
         #s80 = 0.812
         s80 = pm.Normal("s80", 0.8, 0.5)
         Wm0 =  pm.Deterministic('Wm0', wm0*(100/H_gp[0])**2)
-        E_gp = pm.Deterministic('E_gp', H_gp/H_gp[0])
         xx = x_arr[::-1]
         ee = E_gp[::-1]
         aa = np.exp(-xx)

@@ -56,7 +56,7 @@ datadict = {'DESI': DESI,
             'CMB': CMB, 
             'FCMB': FCMB}
 
-data_comb = None # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'SDSS': ['BOSS', 'eBOSS'],
@@ -294,9 +294,6 @@ else:
 os.mkdir(path)
 np.savez(os.path.join(path,'samples.npz'), 
          z_arr = z_arr,
-         n=n,
-         l=l,
-         DHz = DHz,
          Hz=Hz,
          dMz=dMz,
          s8z=s8z,
