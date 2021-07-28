@@ -99,7 +99,7 @@ data_cov = data_cov[1:]
 with pm.Model() as model:
     #ℓ = pm.InverseGamma("ℓ", alpha=1, beta=2) 
     ℓ = pm.Uniform("ℓ", 0.001, 7) 
-    η = pm.HalfNormal("η", sigma=0.3) 
+    η = pm.HalfNormal("η", sigma=0.5) 
     wm0 = pm.Uniform("wm0", 0., 0.45) 
     wL0 = data_class.wL0 
     wr0 = data_class.wr0
@@ -135,7 +135,7 @@ with pm.Model() as model:
         a5 = 11.9611
         a6 = 2.81343
         a7 = 0.784719
-        rd_gp = tt.as_tensor_variable(1/(a1*wb0**a2+a3*wm0**a4+a5*wb0**a6*wm0**a7))  
+        rd_gp = pm.Deterministic("rd_gp", 1/(a1*wb0**a2+a3*wm0**a4+a5*wb0**a6*wm0**a7)) 
         
     if get_fs8:
         #s80 = data_class.s80
@@ -273,8 +273,7 @@ DHz = DHz.reshape(-1, DHz.shape[-1])
 Hz =np.array(trace.posterior["H_gp"])
 Hz = Hz.reshape(-1, Hz.shape[-1])
 H0 = np.array(trace.posterior["H0_gp"]).flatten()
-h = H0/100
-Omega_m = np.array(trace.posterior["wm0"]).flatten()/h**2
+omega_m = np.array(trace.posterior["wm0"]).flatten()
 
 if get_dM:
     dMz = np.array(trace.posterior["dM_gp"])
@@ -283,9 +282,11 @@ else:
     dMz = None
 
 if get_rd:
-    Omega_b = np.array(trace.posterior["wb0"]).flatten()/h**2
+    rd = np.array(trace.posterior["rd_gp"]).flatten()
+    omega_b = np.array(trace.posterior["wb0"]).flatten()
 else:
-    Omega_b = None
+    omega_b = None
+    rd = None
     
 if get_fs8:
     s8z = np.array(trace.posterior["s8_gp"])
@@ -316,8 +317,9 @@ np.savez(os.path.join(path,'samples.npz'),
          s8z=s8z,
          fs8z=fs8z,
          H0=H0,
-         Omega_m=Omega_m,
-         Omega_b=Omega_b,
+         omega_m=omega_m,
+         omega_b=omega_b,
+         rd=rd,
          s80=s80,
          S80=S80)
 
