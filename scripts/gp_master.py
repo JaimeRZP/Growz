@@ -56,7 +56,7 @@ datadict = {'DESI': DESI,
             'CMB': CMB, 
             'FCMB': FCMB}
 
-data_comb = 'WFIRST_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'CC' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'SDSS': ['BOSS', 'eBOSS'],
@@ -64,7 +64,8 @@ data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'Add': ['CC', 'DS17', 'Wigglez', 'DSS'],
              'Add_CMB': ['CC', 'DS17', 'Wigglez', 'DSS', 'CMB'],
              'DESI_CMB': ['DESI', 'CMB'], 
-             'WFIRST_CMB': ['WFIRST', 'CMB']}
+             'WFIRST_CMB': ['WFIRST', 'CMB'],
+             'CC': ['CC']}
 datasets = data_combs[data_comb]
 
 need_dM = ['DESI', 'dA_DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DS17', 'CMB', 'FCMB']
@@ -128,7 +129,8 @@ with pm.Model() as model:
         
     if get_rd:
         #https://arxiv.org/pdf/2106.00428.pdf
-        wb0 =  pm.Uniform("wb0", 0.022, 0.023)
+        #wb0 =  pm.Uniform("wb0", 0.022, 0.023)
+        wb0 = data_class.wb0 
         a1 = 0.00785436
         a2 = 0.177084
         a3 = 0.00912388
@@ -290,7 +292,7 @@ if get_rd:
     omega_b = np.array(trace.posterior["wb0"]).flatten()
 else:
     rd = None
-    Omega_b = None
+    omega_b = None
     
 if get_fs8:
     s8z = np.array(trace.posterior["s8_gp"])
@@ -298,7 +300,7 @@ if get_fs8:
     fs8z = np.array(trace.posterior["fs8_gp"])
     fs8z = fs8z.reshape(-1, fs8z.shape[-1])
     s80 = np.array(trace.posterior["s80"]).flatten()
-    S80 = s80*np.sqrt(Omega_m/0.3)
+    S80 = s80*np.sqrt((omega_m/(H0/100)**2)/0.3)
 else: 
     s8z = None 
     fs8z = None
