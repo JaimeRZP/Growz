@@ -56,7 +56,7 @@ datadict = {'DESI': DESI,
             'CMB': CMB, 
             'FCMB': FCMB}
 
-data_comb = 'CC' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'DESI_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'SDSS': ['BOSS', 'eBOSS'],
@@ -100,7 +100,7 @@ data_cov = data_cov[1:]
 with pm.Model() as model:
     #ℓ = pm.InverseGamma("ℓ", alpha=1, beta=2) 
     ℓ = pm.Uniform("ℓ", 0.001, 7) 
-    η = pm.HalfNormal("η", sigma=0.5) 
+    η = 0.5 #pm.HalfNormal("η", sigma=0.5) 
     wm0 = pm.Uniform("wm0", 0., 0.45) 
     wL0 = pm.Uniform("wL0", 0., 0.45) 
     wr0 = data_class.wr0
