@@ -97,8 +97,8 @@ data_cov = data_cov[1:]
 
 #base model
 with pm.Model() as model:
-    ℓ = pm.Uniform("ℓ", 0.001, 7) 
-    η = pm.HalfNormal("η", sigma=0.5) 
+    ℓ = 0.85 
+    η = 0.5 
     H0 = data_class.H0
     wm0 = pm.Uniform("wm0", 0., 0.45) 
     wm0_geo = data_class.wm0 
@@ -142,7 +142,7 @@ with pm.Model() as model:
         #s80 = data_class.s80
         s80 = pm.Normal("s80", 0.8, 0.5)
         E = H_gp/H_gp[0]
-        Om = wm0*(100/H0)**2
+        Om = wm0*(100/H[0])**2
         xx = x_arr[::-1]
         ee = E[::-1]
         aa = np.exp(-xx)
@@ -257,17 +257,17 @@ if 'FCMB' in datasets:
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
     trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune)
-
+    
 #print r-stat
-print(pm.summary(trace)['r_hat'][["wm0", "ℓ","η"]])
-print(pm.summary(trace)['mean'][["wm0", "ℓ","η"]])
+print(pm.summary(trace)['r_hat'][["wm0"]])
+print(pm.summary(trace)['mean'][["wm0"]])
 
 #Save
 filename = data_comb
-path = filename+'{}_{}'.format(n_samples, n_tune)
+path = filename+'_hp_{}_{}'.format(n_samples, n_tune)
 
-n = np.array(trace.posterior["η"]).flatten()
-l = np.array(trace.posterior["ℓ"]).flatten()
+n = None
+l = None
 DHz = np.array(trace.posterior["DH_gp"])
 DHz = DHz.reshape(-1, DHz.shape[-1])
 Hz =np.array(trace.posterior["H_gp"])

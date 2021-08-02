@@ -33,6 +33,7 @@ class MakeData():
         self.wL0 = self.cosmo.Omega_Lambda() * self.cosmo.h()**2
         
         self.H_arr = 100*np.sqrt(self.wm0*(1+self.z_arr)**3+(self.wr0)*(1+self.z_arr)**4+self.wL0)
+        self.H0 = self.H_arr[0]
         self.dM_arr = utils.make_dM((1000/self.c)*self.H_arr, self.x_arr)
         self.dA_arr = self.dM_arr/(1+self.z_arr)
         self.s8_arr, self.fs8_arr = utils.make_fs8(self.H_arr, self.x_arr,

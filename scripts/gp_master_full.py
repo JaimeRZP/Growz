@@ -56,7 +56,7 @@ datadict = {'DESI': DESI,
             'CMB': CMB, 
             'FCMB': FCMB}
 
-data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'DESI_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'SDSS': ['BOSS', 'eBOSS'],
@@ -64,7 +64,8 @@ data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'Add': ['CC', 'DS17', 'Wigglez', 'DSS'],
              'Add_CMB': ['CC', 'DS17', 'Wigglez', 'DSS', 'CMB'],
              'DESI_CMB': ['DESI', 'CMB'], 
-             'WFIRST_CMB': ['WFIRST', 'CMB']}
+             'WFIRST_CMB': ['WFIRST', 'CMB'],
+             'CC': ['CC']}
 datasets = data_combs[data_comb]
 
 need_dM = ['DESI', 'dA_DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DS17', 'CMB', 'FCMB']
@@ -98,23 +99,23 @@ data_cov = data_cov[1:]
 #base model
 with pm.Model() as model:
     ℓ = pm.Uniform("ℓ", 0.001, 7) 
-    η = pm.HalfNormal("η", sigma=0.5) 
-    H0 = data_class.H0
+    η = 0.5 #pm.HalfNormal("η", sigma=0.5) 
+    H0 = pm.Normal("H0", mu=70, sigma=5)
     wm0 = pm.Uniform("wm0", 0., 0.45) 
-    wm0_geo = data_class.wm0 
     wr0 = data_class.wr0
-    wL0 = pm.Deterministic("wL0", (H0/100)**2-wm0_geo-wr0) 
+    wL0 = pm.Deterministic("wL0", (H0/100)**2-wm0-wr0) 
     gp_cov = η ** 2 * pm.gp.cov.ExpQuad(1, ℓ) + pm.gp.cov.WhiteNoise(1e-3)
     gp = pm.gp.Latent(cov_func=gp_cov)
     
     #Mean of the gp
-    H = pm.Deterministic('H', 100*tt.sqrt(wm0_geo*(1+z_arr)**3+wr0*(1+z_arr)**4+wL0))
+    H = pm.Deterministic('H', 100*tt.sqrt(wm0*(1+z_arr)**3+wr0*(1+z_arr)**4+wL0))
     
     #Set up Gaussian process
     DH_gp = gp.prior("DH_gp", X=x_arr[:, None]) 
     H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H*(1+DH_gp)))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
-    
+    E_gp = pm.Deterministic('E_gp', H_gp/H_gp[0])
+
     if get_dM:
         dH_gp = pm.Deterministic("dH", tt.as_tensor_variable((c/1000)/H_gp))
         dM_rec_gp = tt.zeros(len(z_arr)+1)
@@ -128,7 +129,8 @@ with pm.Model() as model:
         
     if get_rd:
         #https://arxiv.org/pdf/2106.00428.pdf
-        wb0 =  pm.Uniform("wb0", 0.022, 0.023)
+        #wb0 =  pm.Uniform("wb0", 0.022, 0.023)
+        wb0 = data_class.wb0 
         a1 = 0.00785436
         a2 = 0.177084
         a3 = 0.00912388
@@ -136,7 +138,7 @@ with pm.Model() as model:
         a5 = 11.9611
         a6 = 2.81343
         a7 = 0.784719
-        rd_gp = pm.Deterministic("rd_gp", 1/(a1*wb0**a2+a3*wm0_geo**a4+a5*wb0**a6*wm0_geo**a7)) 
+        rd_gp = pm.Deterministic("rd_gp", 1/(a1*wb0**a2+a3*wm0**a4+a5*wb0**a6*wm0**a7))   
         
     if get_fs8:
         #s80 = data_class.s80
@@ -167,6 +169,8 @@ with pm.Model() as model:
         
         fs8_gp = pm.Deterministic('fs8_gp', s80*y/(a_arr**2*E*d[0]))
         s8_gp = pm.Deterministic('s8_gp', s80*d/d[0])
+    
+    theory = tt.as_tensor_variable([])
     
 #Modules
 if 'DESI' in datasets:
@@ -264,7 +268,7 @@ print(pm.summary(trace)['mean'][["wm0", "ℓ","η"]])
 
 #Save
 filename = data_comb
-path = filename+'{}_{}'.format(n_samples, n_tune)
+path = filename+'_full_{}_{}'.format(n_samples, n_tune)
 
 n = np.array(trace.posterior["η"]).flatten()
 l = np.array(trace.posterior["ℓ"]).flatten()
@@ -286,8 +290,8 @@ if get_rd:
     rd = np.array(trace.posterior["rd_gp"]).flatten()
     omega_b = np.array(trace.posterior["wb0"]).flatten()
 else:
-    omega_b = None
     rd = None
+    omega_b = None
     
 if get_fs8:
     s8z = np.array(trace.posterior["s8_gp"])

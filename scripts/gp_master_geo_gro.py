@@ -40,8 +40,8 @@ DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 FCMB = data_class.get_FCMB(new=True)
 
-n_samples = 1000
-n_tune = 2500
+n_samples = 100
+n_tune = 100
 datadict = {'DESI': DESI,
             'H_DESI': H_DESI,
             'dA_DESI': dA_DESI,
@@ -97,21 +97,21 @@ data_cov = data_cov[1:]
 
 #base model
 with pm.Model() as model:
-    #ℓ = pm.InverseGamma("ℓ", alpha=1, beta=2) 
     ℓ = pm.Uniform("ℓ", 0.001, 7) 
     η = pm.HalfNormal("η", sigma=0.5) 
+    H0 = pm.Normal("H0", mu=70, sigma=5)
     wm0 = pm.Uniform("wm0", 0., 0.45) 
-    wL0 = data_class.wL0 
+    wm0_geo = pm.Uniform("wm0", 0., 0.45) 
     wr0 = data_class.wr0
+    wL0 = pm.Deterministic("wL0", (H0/100)**2-wm0_geo-wr0) 
     gp_cov = η ** 2 * pm.gp.cov.ExpQuad(1, ℓ) + pm.gp.cov.WhiteNoise(1e-3)
     gp = pm.gp.Latent(cov_func=gp_cov)
     
     #Mean of the gp
-    H = pm.Deterministic('H', 100*tt.sqrt(data_class.wm0*(1+z_arr)**3+wr0*(1+z_arr)**4+wL0))
+    H = pm.Deterministic('H', H0*tt.sqrt(wm0_geo*(1+z_arr)**3+wr0*(1+z_arr)**4+wL0))
     
     #Set up Gaussian process
-    DH_gp = gp.prior("DH_gp", X=x_arr[:, None]) 
-    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H*(1+DH_gp)))
+    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
     
     if get_dM:
@@ -135,13 +135,13 @@ with pm.Model() as model:
         a5 = 11.9611
         a6 = 2.81343
         a7 = 0.784719
-        rd_gp = pm.Deterministic("rd_gp", 1/(a1*wb0**a2+a3*wm0**a4+a5*wb0**a6*wm0**a7)) 
+        rd_gp = pm.Deterministic("rd_gp", 1/(a1*wb0**a2+a3*wm0_geo**a4+a5*wb0**a6*wm0_geo**a7))   
         
     if get_fs8:
         #s80 = data_class.s80
         s80 = pm.Normal("s80", 0.8, 0.5)
         E = H_gp/H_gp[0]
-        Om = wm0*(100/H[0])**2
+        Om = wm0*(100/H0)**2
         xx = x_arr[::-1]
         ee = E[::-1]
         aa = np.exp(-xx)
@@ -167,6 +167,8 @@ with pm.Model() as model:
         fs8_gp = pm.Deterministic('fs8_gp', s80*y/(a_arr**2*E*d[0]))
         s8_gp = pm.Deterministic('s8_gp', s80*d/d[0])
     
+    theory = tt.as_tensor_variable([])
+    
 #Modules
 if 'DESI' in datasets:
     print('Adding DESI')
@@ -178,7 +180,7 @@ if 'DESI' in datasets:
         DESI_fs8 = pm.Deterministic('DESI_fs8',
                    tt.as_tensor_variable(fs8_gp[DESI['idx']]+(fs8_gp[DESI['idx']+1]-fs8_gp[DESI['idx']])*DESI['U']))
         theory = tt.concatenate([theory, DESI_H, DESI_dA, DESI_fs8])
-        
+
 if 'WFIRST' in datasets:
     print('Adding WFIRST')
     with model:
@@ -251,29 +253,29 @@ if 'FCMB' in datasets:
         FCMB_dM = pm.Deterministic('FCMB_dM',
                   tt.as_tensor_variable(dM_gp[FCMB['idx']]+(dM_gp[FCMB['idx']+1]-dM_gp[FCMB['idx']])*FCMB['U']))
         theory = tt.concatenate([theory, FCMB_dM])
-        
+
+
 #Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
     trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune)
 
-    
 #print r-stat
-print(pm.summary(trace)['r_hat'][["ℓ","η"]])
-print(pm.summary(trace)['mean'][["ℓ","η"]])
+print(pm.summary(trace)['r_hat'][["wm0", "ℓ","η"]])
+print(pm.summary(trace)['mean'][["wm0", "ℓ","η"]])
 
 #Save
 filename = data_comb
-path = filename+'{}_{}_osc'.format(n_samples, n_tune)
+path = filename+'_geo_gro_{}_{}'.format(n_samples, n_tune)
 
 n = np.array(trace.posterior["η"]).flatten()
 l = np.array(trace.posterior["ℓ"]).flatten()
-DHz = np.array(trace.posterior["DH_gp"])
-DHz = DHz.reshape(-1, DHz.shape[-1])
 Hz =np.array(trace.posterior["H_gp"])
 Hz = Hz.reshape(-1, Hz.shape[-1])
-H0 = np.array(trace.posterior["H0_gp"]).flatten()
+H0 = np.array(trace.posterior["H0"]).flatten()
+H0_gp = np.array(trace.posterior["H0_gp"]).flatten()
 omega_m = np.array(trace.posterior["wm0"]).flatten()
+omega_m_geo = np.array(trace.posterior["wm0_geo"]).flatten()
 
 if get_dM:
     dMz = np.array(trace.posterior["dM_gp"])
@@ -285,8 +287,8 @@ if get_rd:
     rd = np.array(trace.posterior["rd_gp"]).flatten()
     omega_b = np.array(trace.posterior["wb0"]).flatten()
 else:
-    omega_b = None
     rd = None
+    omega_b = None
     
 if get_fs8:
     s8z = np.array(trace.posterior["s8_gp"])
@@ -311,15 +313,16 @@ np.savez(os.path.join(path,'samples.npz'),
          z_arr = z_arr,
          n=n,
          l=l,
-         DHz = DHz,
          Hz=Hz,
          dMz=dMz,
          s8z=s8z,
          fs8z=fs8z,
          H0=H0,
+         H0_gp=H0_gp,
          omega_m=omega_m,
+         omega_m=omega_m_geo
          omega_b=omega_b,
-         rd=rd,
+         rd=rd, 
          s80=s80,
          S80=S80)
 
