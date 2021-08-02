@@ -103,7 +103,7 @@ with pm.Model() as model:
     wm0 = pm.Uniform("wm0", 0., 0.45) 
     wm0_geo = data_class.wm0 
     wr0 = data_class.wr0
-    wL0 = pm.Deterministic("wL0", (H0/100)**2-wm0_geo-wr0) 
+    wL0 = data_class.wL0 
     gp_cov = η ** 2 * pm.gp.cov.ExpQuad(1, ℓ) + pm.gp.cov.WhiteNoise(1e-3)
     gp = pm.gp.Latent(cov_func=gp_cov)
     
@@ -167,6 +167,8 @@ with pm.Model() as model:
         
         fs8_gp = pm.Deterministic('fs8_gp', s80*y/(a_arr**2*E*d[0]))
         s8_gp = pm.Deterministic('s8_gp', s80*d/d[0])
+        
+    theory = tt.as_tensor_variable([])
     
 #Modules
 if 'DESI' in datasets:
