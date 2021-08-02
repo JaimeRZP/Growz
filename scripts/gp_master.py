@@ -274,7 +274,6 @@ DHz = np.array(trace.posterior["DH_gp"])
 DHz = DHz.reshape(-1, DHz.shape[-1])
 Hz =np.array(trace.posterior["H_gp"])
 Hz = Hz.reshape(-1, Hz.shape[-1])
-H0 = np.array(trace.posterior["H0"]).flatten()
 H0_gp = np.array(trace.posterior["H0_gp"]).flatten()
 omega_m = np.array(trace.posterior["wm0"]).flatten()
 
@@ -319,7 +318,6 @@ np.savez(os.path.join(path,'samples.npz'),
          dMz=dMz,
          s8z=s8z,
          fs8z=fs8z,
-         H0=H0,
          H0_gp=H0_gp,
          omega_m=omega_m,
          omega_b=omega_b,

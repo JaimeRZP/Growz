@@ -101,7 +101,7 @@ with pm.Model() as model:
     η = pm.HalfNormal("η", sigma=0.5) 
     H0 = pm.Normal("H0", mu=70, sigma=5)
     wm0 = pm.Uniform("wm0", 0., 0.45) 
-    wm0_geo = pm.Uniform("wm0", 0., 0.45) 
+    wm0_geo = pm.Uniform("wm0_geo", 0., 0.45) 
     wr0 = data_class.wr0
     wL0 = pm.Deterministic("wL0", (H0/100)**2-wm0_geo-wr0) 
     gp_cov = η ** 2 * pm.gp.cov.ExpQuad(1, ℓ) + pm.gp.cov.WhiteNoise(1e-3)
@@ -320,7 +320,7 @@ np.savez(os.path.join(path,'samples.npz'),
          H0=H0,
          H0_gp=H0_gp,
          omega_m=omega_m,
-         omega_m=omega_m_geo
+         omega_m_geo=omega_m_geo,
          omega_b=omega_b,
          rd=rd, 
          s80=s80,

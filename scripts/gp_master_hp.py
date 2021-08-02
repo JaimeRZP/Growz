@@ -103,7 +103,7 @@ with pm.Model() as model:
     wm0 = pm.Uniform("wm0", 0., 0.45) 
     wm0_geo = data_class.wm0 
     wr0 = data_class.wr0
-    wL0 = pm.Deterministic("wL0", (H0/100)**2-wm0_geo-wr0) 
+    wL0 = data_class.wL0 
     gp_cov = η ** 2 * pm.gp.cov.ExpQuad(1, ℓ) + pm.gp.cov.WhiteNoise(1e-3)
     gp = pm.gp.Latent(cov_func=gp_cov)
     
@@ -274,7 +274,6 @@ DHz = np.array(trace.posterior["DH_gp"])
 DHz = DHz.reshape(-1, DHz.shape[-1])
 Hz =np.array(trace.posterior["H_gp"])
 Hz = Hz.reshape(-1, Hz.shape[-1])
-H0 = np.array(trace.posterior["H0"]).flatten()
 H0_gp = np.array(trace.posterior["H0_gp"]).flatten()
 omega_m = np.array(trace.posterior["wm0"]).flatten()
 
@@ -319,7 +318,6 @@ np.savez(os.path.join(path,'samples.npz'),
          dMz=dMz,
          s8z=s8z,
          fs8z=fs8z,
-         H0=H0,
          H0_gp=H0_gp,
          omega_m=omega_m,
          omega_b=omega_b,
