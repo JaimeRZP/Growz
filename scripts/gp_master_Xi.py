@@ -143,6 +143,7 @@ with pm.Model() as model:
         s80 = pm.Normal("s80", 0.8, 0.5)
         E = H_gp/H_gp[0]
         Om = tt.as_tensor_variable(Xi_gp*wm0*(100/H0)**2)
+        Omm = Om[::-1]
         xx = x_arr[::-1]
         ee = E[::-1]
         aa = np.exp(-xx)
@@ -155,9 +156,9 @@ with pm.Model() as model:
         yy = tt.inc_subtensor(yy[0], aa[0]**3*E[0])
 
         for i in range(nz-1):
-            A0 = -1.5*Om/(aa[i]*ee[i])
+            A0 = -1.5*Omm[i]/(aa[i]*ee[i])
             B0 = -1./(aa[i]**2*ee[i])
-            A1 = -1.5*Om/(aa[i+1]*ee[i+1])
+            A1 = -1.5*Omm[i]/(aa[i+1]*ee[i+1])
             B1 = -1./(aa[i+1]**2*ee[i+1])
             yy = tt.inc_subtensor(yy[i+1], (1+0.5*dx**2*A0*B0)*yy[i]+0.5*(A0+A1)*dx*dd[i])
             dd = tt.inc_subtensor(dd[i+1],0.5*(B0+B1)*dx*yy[i]+(1+0.5*dx**2*A0*B0)*dd[i])
