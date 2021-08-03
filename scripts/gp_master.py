@@ -266,7 +266,7 @@ print(pm.summary(trace)['mean'][["wm0", "ℓ","η"]])
 
 #Save
 filename = data_comb
-path = filename+'{}_{}'.format(n_samples, n_tune)
+path = filename+'_{}_{}'.format(n_samples, n_tune)
 
 n = np.array(trace.posterior["η"]).flatten()
 l = np.array(trace.posterior["ℓ"]).flatten()

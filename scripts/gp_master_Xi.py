@@ -168,7 +168,9 @@ with pm.Model() as model:
         
         fs8_gp = pm.Deterministic('fs8_gp', s80*y/(a_arr**2*E*d[0]))
         s8_gp = pm.Deterministic('s8_gp', s80*d/d[0])
-    
+
+    theory = tt.as_tensor_variable([])
+
 #Modules
 if 'DESI' in datasets:
     print('Adding DESI')
