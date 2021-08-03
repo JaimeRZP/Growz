@@ -111,7 +111,8 @@ with pm.Model() as model:
     H = pm.Deterministic('H', H0*tt.sqrt(wm0_geo*(1+z_arr)**3+wr0*(1+z_arr)**4+wL0))
     
     #Set up Gaussian process
-    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H))
+    DH_gp = gp.prior("DH_gp", X=x_arr[:, None]) 
+    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H*(1+DH_gp)))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
     
     if get_dM:
@@ -271,7 +272,7 @@ path = filename+'_geo_gro_{}_{}'.format(n_samples, n_tune)
 n = np.array(trace.posterior["η"]).flatten()
 l = np.array(trace.posterior["ℓ"]).flatten()
 DHz = np.array(trace.posterior["DH_gp"])
-DHz = DHz.reshape(-1, Hz.shape[-1])
+DHz = DHz.reshape(-1, DHz.shape[-1])
 Hz = np.array(trace.posterior["H_gp"])
 Hz = Hz.reshape(-1, Hz.shape[-1])
 H0 = np.array(trace.posterior["H0"]).flatten()
@@ -315,6 +316,7 @@ np.savez(os.path.join(path,'samples.npz'),
          z_arr = z_arr,
          n=n,
          l=l,
+         DHz=DHz,
          Hz=Hz,
          dMz=dMz,
          s8z=s8z,
