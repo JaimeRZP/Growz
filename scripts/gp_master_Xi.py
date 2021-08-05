@@ -110,7 +110,7 @@ with pm.Model() as model:
     #Mean of the gp
     H = pm.Deterministic('H', 100*tt.sqrt(wm0_geo*(1+z_arr)**3+wr0*(1+z_arr)**4+wL0))
     #Set up Gaussian process
-    DXi_gp = gp.prior("DH_gp", X=x_arr[:, None]) 
+    DXi_gp = gp.prior("DXi_gp", X=x_arr[:, None]) 
     Xi_gp = pm.Deterministic("Xi_gp", tt.as_tensor_variable(np.ones_like(z_arr)+DXi_gp)) 
     H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H)) #*(1+DH_gp)))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
@@ -267,15 +267,16 @@ print(pm.summary(trace)['mean'][["wm0", "ℓ","η"]])
 
 #Save
 filename = data_comb
-path = filename+'{}_{}'.format(n_samples, n_tune)
+path = filename+'_Xi_{}_{}'.format(n_samples, n_tune)
 
 n = np.array(trace.posterior["η"]).flatten()
 l = np.array(trace.posterior["ℓ"]).flatten()
-DHz = np.array(trace.posterior["DH_gp"])
-DHz = DHz.reshape(-1, DHz.shape[-1])
-Hz =np.array(trace.posterior["H_gp"])
+DXiz = np.array(trace.posterior["DXi_gp"])
+DXiz = DXiz.reshape(-1, DXiz.shape[-1])
+Xiz = np.array(trace.posterior["Xi_gp"])
+Xiz = Xiz.reshape(-1, Xiz.shape[-1])
+Hz = np.array(trace.posterior["H_gp"])
 Hz = Hz.reshape(-1, Hz.shape[-1])
-H0 = np.array(trace.posterior["H0"]).flatten()
 H0_gp = np.array(trace.posterior["H0_gp"]).flatten()
 omega_m = np.array(trace.posterior["wm0"]).flatten()
 
@@ -315,12 +316,12 @@ np.savez(os.path.join(path,'samples.npz'),
          z_arr = z_arr,
          n=n,
          l=l,
-         DHz = DHz,
+         DXiz=DXiz,
+         Xiz=Xiz,
          Hz=Hz,
          dMz=dMz,
          s8z=s8z,
          fs8z=fs8z,
-         H0=H0,
          H0_gp=H0_gp,
          omega_m=omega_m,
          omega_b=omega_b,

@@ -99,7 +99,7 @@ data_cov = data_cov[1:]
 #base model
 with pm.Model() as model:
     ℓ = pm.Uniform("ℓ", 0.001, 7) 
-    η = 0.5 #pm.HalfNormal("η", sigma=0.5) 
+    η = pm.HalfNormal("η", sigma=0.5) 
     H0 = pm.Normal("H0", mu=70, sigma=5)
     wm0 = pm.Uniform("wm0", 0., 0.45) 
     wr0 = data_class.wr0
@@ -129,8 +129,7 @@ with pm.Model() as model:
         
     if get_rd:
         #https://arxiv.org/pdf/2106.00428.pdf
-        #wb0 =  pm.Uniform("wb0", 0.022, 0.023)
-        wb0 = data_class.wb0 
+        wb0 =  pm.Uniform("wb0", 0.022, 0.023)
         a1 = 0.00785436
         a2 = 0.177084
         a3 = 0.00912388
@@ -263,8 +262,8 @@ with model:
     trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune)
 
 #print r-stat
-print(pm.summary(trace)['r_hat'][["wm0", "ℓ","η"]])
-print(pm.summary(trace)['mean'][["wm0", "ℓ","η"]])
+print(pm.summary(trace)['r_hat'][["wm0", "ℓ", "η"]])
+print(pm.summary(trace)['mean'][["wm0", "ℓ", "η"]])
 
 #Save
 filename = data_comb
@@ -276,6 +275,7 @@ DHz = np.array(trace.posterior["DH_gp"])
 DHz = DHz.reshape(-1, DHz.shape[-1])
 Hz =np.array(trace.posterior["H_gp"])
 Hz = Hz.reshape(-1, Hz.shape[-1])
+H0 = np.array(trace.posterior["H0"]).flatten()
 H0_gp = np.array(trace.posterior["H0_gp"]).flatten()
 omega_m = np.array(trace.posterior["wm0"]).flatten()
 
@@ -320,6 +320,7 @@ np.savez(os.path.join(path,'samples.npz'),
          dMz=dMz,
          s8z=s8z,
          fs8z=fs8z,
+         H0=H0,
          H0_gp=H0_gp,
          omega_m=omega_m,
          omega_b=omega_b,
