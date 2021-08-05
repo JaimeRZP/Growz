@@ -17,7 +17,7 @@ class MakeData():
         self.a_arr = 1./(1+self.z_arr) 
         self.dx = np.mean(np.diff(self.x_arr))
         self.dz = np.diff(self.z_arr)
-        self.cosmo = self.get_cosmo(mode='Planck')
+        self.cosmo = self.get_cosmo()
             
         if self.z_max > 1085:
             self.z_planck = self.z_arr[self.z_arr<1085]
@@ -44,25 +44,13 @@ class MakeData():
     def gaussian(self, z_arr, mu, sig):
         return np.exp(-np.power(z_arr - mu, 2.) / (2 * np.power(sig, 2.)))
     
-    def get_cosmo(self, mode):
-        if mode == 'Planck':
-            params = {'h': 0.6727,
-              'Omega_cdm': 0.265,
-              'Omega_b': 0.050,
-              'n_s': 0.965,
-              'ln10^{10}A_s': 3.045}
-        if mode == 'Riess':
-            params = {'h': 0.74,
-              'Omega_cdm': 0.21,
-              'Omega_b': 0.050,
-              'n_s': 0.9665,
-              'ln10^{10}A_s': 3.040}
-        if mode == 'Panth':
-            params = {'h': 0.724,
-              'Omega_cdm': 0.262,
-              'Omega_b': 0.037,
-              'n_s': 0.837,
-              'ln10^{10}A_s': 3.138}
+    def get_cosmo(self):
+        params = {'h': 0.6727,
+                  'Omega_cdm': 0.265621, #0.237153,
+                  'Omega_b': 0.0494116,
+                  'Omega_Lambda': 0.6834,
+                  'n_s': 0.9649,
+                  'ln10^{10}A_s': 3.045}
         cosmo = ccl.boltzmann.classy.Class()
         cosmo.set({ 'output':'mPk', 'P_k_max_h/Mpc': 20, 'z_max_pk': 1085})
         cosmo.set(params)

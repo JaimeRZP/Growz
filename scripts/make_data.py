@@ -17,7 +17,7 @@ class MakeData():
         self.a_arr = 1./(1+self.z_arr) 
         self.dx = np.mean(np.diff(self.x_arr))
         self.dz = np.diff(self.z_arr)
-        self.cosmo = self.get_cosmo(mode='Planck')
+        self.cosmo = self.get_cosmo()
             
         if self.z_max > 1085:
             self.z_planck = self.z_arr[self.z_arr<1085]
@@ -39,25 +39,13 @@ class MakeData():
         self.s8_arr, self.fs8_arr = utils.make_fs8(self.H_arr, self.x_arr,
                                                    self.wm0, self.cosmo.sigma8())
 
-    def get_cosmo(self, mode):
-        if mode == 'Planck':
-            params = {'h': 0.6727,
-              'Omega_cdm': 0.265,
-              'Omega_b': 0.050,
-              'n_s': 0.965,
-              'ln10^{10}A_s': 3.045}
-        if mode == 'Riess':
-            params = {'h': 0.74,
-              'Omega_cdm': 0.21,
-              'Omega_b': 0.050,
-              'n_s': 0.9665,
-              'ln10^{10}A_s': 3.040}
-        if mode == 'Panth':
-            params = {'h': 0.724,
-              'Omega_cdm': 0.262,
-              'Omega_b': 0.037,
-              'n_s': 0.837,
-              'ln10^{10}A_s': 3.138}
+    def get_cosmo(self):
+        params = {'h': 0.6727,
+                  'Omega_cdm': 0.265621, #0.237153,
+                  'Omega_b': 0.0494116,
+                  'Omega_Lambda': 0.6834,
+                  'n_s': 0.9649,
+                  'ln10^{10}A_s': 3.045}
         cosmo = classy.Class()
         cosmo.set({ 'output':'mPk', 'P_k_max_h/Mpc': 20, 'z_max_pk': 1085})
         cosmo.set(params)
@@ -334,7 +322,7 @@ class MakeData():
             print('Found file for '+ dataset_name)
             pass
         else:
-            z_CMB = np.array([1090.30]) 
+            z_CMB = np.array([1089.95]) 
             CMB_rd = utils.make_rd(self.wm0, self.wb0) 
             CMB_idx =  self.make_idx(z_CMB, z_arr)
             CMB_U = self.make_U(z_CMB, z_arr, CMB_idx)
