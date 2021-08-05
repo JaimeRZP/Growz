@@ -40,7 +40,7 @@ DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 FCMB = data_class.get_FCMB(new=True)
 
-n_samples = 10000
+n_samples = 1000
 n_tune = 10000
 datadict = {'DESI': DESI,
             'H_DESI': H_DESI,
@@ -114,8 +114,8 @@ with pm.Model() as model:
     #Mean of the gp
     H = pm.Deterministic('H', 100*tt.sqrt(wm0_geo*(1+z_arr)**3+wr0*(1+z_arr)**4+wL0))
     #Set up Gaussian process
-    DXi_gp = gp.prior("DXi_gp", X=x_arr[:, None]) 
-    DH_gp = gp.prior("DH_gp", X=x_arr[:, None]) 
+    DXi_gp = Xi_gp.prior("DXi_gp", X=x_arr[:, None]) 
+    DH_gp = H_gp.prior("DH_gp", X=x_arr[:, None]) 
     Xi_gp = pm.Deterministic("Xi_gp", tt.as_tensor_variable(np.ones_like(z_arr)+DXi_gp)) 
     H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H*(1+DH_gp)))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))

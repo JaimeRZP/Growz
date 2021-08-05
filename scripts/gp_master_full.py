@@ -40,8 +40,8 @@ DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 FCMB = data_class.get_FCMB(new=True)
 
-n_samples = 100
-n_tune = 100
+n_samples = 2500
+n_tune = 2500
 datadict = {'DESI': DESI,
             'H_DESI': H_DESI,
             'dA_DESI': dA_DESI,
