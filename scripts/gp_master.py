@@ -229,6 +229,23 @@ if 'BOSS' in datasets:
         B_perp = pm.Deterministic("B_perp", B_dM*BOSS['rd']/rd_gp)
         theory = tt.concatenate([theory, B_para, B_perp, B_fs8])
         
+if 'geo_BOSS' in datasets:
+    print('Adding geo_BOSS')
+    with model:
+        B_H = tt.as_tensor_variable(H_gp[BOSS['idx']]+(H_gp[BOSS['idx']+1]-H_gp[BOSS['idx']])*BOSS['U'])
+        B_dM = tt.as_tensor_variable(dM_gp[BOSS['idx']]+(dM_gp[BOSS['idx']+1]-dM_gp[BOSS['idx']])*BOSS['U'])
+        #Get alpha_perp and alpha_para 
+        B_para = pm.Deterministic("B_para", B_H*rd_gp/BOSS['rd'])
+        B_perp = pm.Deterministic("B_perp", B_dM*BOSS['rd']/rd_gp)
+        theory = tt.concatenate([theory, B_para, B_perp])
+        
+if 'fs8_BOSS' in datasets:
+    print('Adding fs8_BOSS')
+    with model:
+        B_fs8 = pm.Deterministic("B_fs8", 
+                   tt.as_tensor_variable(fs8_gp[BOSS['idx']]+(fs8_gp[BOSS['idx']+1]-fs8_gp[BOSS['idx']])*BOSS['U']))
+        theory = tt.concatenate([theory, B_fs8])
+        
 if 'eBOSS' in datasets:
     print('Adding eBOSS')
     with model:
@@ -236,9 +253,25 @@ if 'eBOSS' in datasets:
         eB_dM = tt.as_tensor_variable(dM_gp[eBOSS['idx']]+(dM_gp[eBOSS['idx']+1]-dM_gp[eBOSS['idx']])*eBOSS['U'])
         eB_fs8 = pm.Deterministic("eB_fs8", 
                    tt.as_tensor_variable(fs8_gp[eBOSS['idx']]+(fs8_gp[eBOSS['idx']+1]-fs8_gp[eBOSS['idx']])*eBOSS['U']))
-        eB_para = pm.Deterministic("eB_para", eB_dH/rd_gp)# eBOSS['rd'])
-        eB_perp = pm.Deterministic("eB_perp", eB_dM/rd_gp)# eBOSS['rd'])
+        eB_para = pm.Deterministic("eB_para", eB_dH/rd_gp)
+        eB_perp = pm.Deterministic("eB_perp", eB_dM/rd_gp)
         theory = tt.concatenate([theory, eB_para, eB_perp, eB_fs8])
+        
+if 'geo_eBOSS' in datasets:
+    print('Adding geo_eBOSS')
+    with model:
+        eB_dH = tt.as_tensor_variable(dH_gp[eBOSS['idx']]+(dH_gp[eBOSS['idx']+1]-dH_gp[eBOSS['idx']])*eBOSS['U'])
+        eB_dM = tt.as_tensor_variable(dM_gp[eBOSS['idx']]+(dM_gp[eBOSS['idx']+1]-dM_gp[eBOSS['idx']])*eBOSS['U'])
+        eB_para = pm.Deterministic("eB_para", eB_dH/rd_gp)
+        eB_perp = pm.Deterministic("eB_perp", eB_dM/rd_gp)
+        theory = tt.concatenate([theory, eB_para, eB_perp])
+
+if 'fs8_eBOSS' in datasets:
+    print('Adding fs8_eBOSS')
+    with model:
+        eB_fs8 = pm.Deterministic("eB_fs8", 
+                   tt.as_tensor_variable(fs8_gp[eBOSS['idx']]+(fs8_gp[eBOSS['idx']+1]-fs8_gp[eBOSS['idx']])*eBOSS['U']))
+        theory = tt.concatenate([theory, eB_fs8])
 
 if 'Wigglez' in datasets:
     print('Adding Wigglez')
