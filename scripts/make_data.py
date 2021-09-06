@@ -375,10 +375,13 @@ class MakeData():
         
         return np.load(filepath)
     
-    def get_eBOSS(self, z_arr=None, new='False'):
+    def get_eBOSS(self, z_arr=None, mode=None, new='False'):
         if z_arr is None:
             z_arr = self.z_arr
-        dataset_name = 'eBOSS'
+        if mode is None:
+            dataset_name = 'eBOSS'
+        else:
+            dataset_name = mode + 'eBOSS'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
             print('Found file for '+ dataset_name)
@@ -391,51 +394,78 @@ class MakeData():
             rd_eBOSS = 147.3 
             eBOSS_idx =  self.make_idx(z_eBOSS, z_arr) 
             eBOSS_U = self.make_U(z_eBOSS, z_arr, eBOSS_idx)
+            
             data_eBOSS = np.array([13.11, 30.66, 0.439])
+            data_geo_eBOSS = np.array([13.11, 30.66])
+            data_fs8_eBOSS = np.array([0.439])
+            
             eBOSS_cov = np.array([[0.7709, -0.05656, 0.01750],
                                   [-0.05656, 0.2640, -0.006204],
                                   [0.01750, -0.006204, 0.002308]])
-
+            eBOSS_geo_cov = np.array([[0.7709, -0.05656],
+                                      [-0.05656, 0.2640]])
+            eBOSS_fs8_cov = np.array([[0.002308]])
 
             eBOSS_H_err = np.sqrt(np.diag(eBOSS_cov))[0]
             eBOSS_dA_err = np.sqrt(np.diag(eBOSS_cov))[1]
             eBOSS_fs8_err = np.sqrt(np.diag(eBOSS_cov))[2]
-            np.savez(os.path.join(self.path, dataset_name),  
-             data = data_eBOSS,
-             z=z_eBOSS,
-             cov=eBOSS_cov,
-             para_data=para_eBOSS,
-             perp_data=perp_eBOSS,
-             fs8_data=fs8_eBOSS,
-             para_err=eBOSS_H_err,
-             perp_err=eBOSS_dA_err,
-             fs8_err=eBOSS_fs8_err, 
-             rd=rd_eBOSS, 
-             idx=eBOSS_idx,
-             U=eBOSS_U)
+            
+            if mode is None:
+                np.savez(os.path.join(self.path, dataset_name),  
+                 data = data_eBOSS,
+                 z=z_eBOSS,
+                 cov=eBOSS_cov,
+                 para_data=para_eBOSS,
+                 perp_data=perp_eBOSS,
+                 fs8_data=fs8_eBOSS,
+                 para_err=eBOSS_H_err,
+                 perp_err=eBOSS_dA_err,
+                 fs8_err=eBOSS_fs8_err, 
+                 rd=rd_eBOSS, 
+                 idx=eBOSS_idx,
+                 U=eBOSS_U)
+            elif mode=='geo':
+                np.savez(os.path.join(self.path, dataset_name),  
+                 data = data_geo_eBOSS,
+                 z=z_eBOSS,
+                 cov=eBOSS_geo_cov,
+                 rd=rd_eBOSS, 
+                 idx=eBOSS_idx,
+                 U=eBOSS_U)
+            elif mode=='fs8':
+                np.savez(os.path.join(self.path, dataset_name),  
+                 data = data_fs8_eBOSS,
+                 z=z_eBOSS,
+                 cov=eBOSS_fs8_cov,
+                 rd=rd_eBOSS, 
+                 idx=eBOSS_idx,
+                 U=eBOSS_U)
         
         return np.load(filepath)
     
-    def get_BOSS(self, z_arr=None, new='False'):
+    def get_BOSS(self, z_arr=None, mode=None, new='False'):
         if z_arr is None:
             z_arr = self.z_arr
-        dataset_name = 'BOSS'
+        if mode is None:
+            dataset_name = 'BOSS'
+        else:
+            dataset_name = mode + 'BOSS'
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
             print('Found file for '+ dataset_name)
             pass
         else:
             z_BOSS = np.array([0.38, 0.51, 0.61])
-            data_BOSS = np.array([1512.39, 81.2087, 0.49749,
-                             1975.22, 90.9029, 0.457523,
-                             2306.68, 98.9647,  0.436148])
             perp_BOSS = np.array([1512.39, 1975.22, 2306.68])
             para_BOSS = np.array([81.2087, 90.9029, 98.9647])
             fs8_BOSS = np.array([0.49749, 0.457523, 0.436148])
             data_BOSS = np.concatenate([para_BOSS, perp_BOSS, fs8_BOSS])
+            data_geo_BOSS = np.concatenate([para_BOSS, perp_BOSS])
+            data_fs8_BOSS = np.concatenate([fs8_BOSS])
             BOSS_idx =  self.make_idx(z_BOSS, z_arr) 
             BOSS_U = self.make_U(z_BOSS, z_arr, BOSS_idx)
-            BOSS_cov = np.array([[3.63049e+00, 1.80306e+00, 9.19842e-01, 9.71342e+00, 7.75546e+00,
+            BOSS_cov = np.array([
+                   [3.63049e+00, 1.80306e+00, 9.19842e-01, 9.71342e+00, 7.75546e+00,
                     5.97897e+00, 2.79185e-02, 1.24050e-02, 4.75548e-03],
                    [1.80306e+00, 3.77146e+00, 2.21471e+00, 4.85105e+00, 1.19729e+01,
                     9.73184e+00, 9.28354e-03, 2.22588e-02, 1.05956e-02],
@@ -453,6 +483,17 @@ class MakeData():
                     2.46111e-01, 8.11829e-04, 1.42289e-03, 6.62824e-04],
                    [4.75548e-03, 1.05956e-02, 2.14133e-02, 4.36366e-02, 1.81786e-01,
                     4.78570e-01, 2.64615e-04, 6.62824e-04, 1.18576e-03]])
+            BOSS_geo_cov = np.array([
+                   [3.63049e+00, 1.80306e+00, 9.19842e-01, 9.71342e+00, 7.75546e+00, 5.97897e+00],
+                   [1.80306e+00, 3.77146e+00, 2.21471e+00, 4.85105e+00, 1.19729e+01, 9.73184e+00],
+                   [9.19842e-01, 2.21471e+00, 4.37982e+00, 2.43394e+00, 6.71715e+00, 1.60709e+01],
+                   [9.71342e+00, 4.85105e+00, 2.43394e+00, 5.00049e+02, 2.94536e+02, 1.42011e+02],
+                   [7.75546e+00, 1.19729e+01, 6.71715e+00, 2.94536e+02, 7.02299e+02, 4.32750e+02],
+                   [5.97897e+00, 9.73184e+00, 1.60709e+01, 1.42011e+02, 4.32750e+02, 1.01718e+03]])
+            BOSS_fs8_cov = np.array([
+                   [2.03355e-03, 8.11829e-04, 2.64615e-04],
+                   [8.11829e-04, 1.42289e-03, 6.62824e-04],
+                   [2.64615e-04, 6.62824e-04, 1.18576e-03]])
 
             BOSS_err = np.sqrt(np.diag(BOSS_cov))
             BOSS_para_err = np.array([BOSS_err[0], BOSS_err[1], BOSS_err[2]])
@@ -460,19 +501,36 @@ class MakeData():
             BOSS_fs8_err = np.array([BOSS_err[6], BOSS_err[7], BOSS_err[8]])
 
             rd_BOSS = 147.78
-            np.savez(os.path.join(self.path, dataset_name),  
-             data = data_BOSS,
-             z=z_BOSS,
-             cov=BOSS_cov,
-             para_data=para_BOSS,
-             perp_data=perp_BOSS,
-             fs8_data=fs8_BOSS,
-             para_err=BOSS_para_err,
-             perp_err=BOSS_perp_err,
-             fs8_err=BOSS_fs8_err,
-             rd=rd_BOSS, 
-             idx=BOSS_idx, 
-             U=BOSS_U)
-        
+            if mode is None:
+                np.savez(os.path.join(self.path, dataset_name),  
+                 data = data_BOSS,
+                 z=z_BOSS,
+                 cov=BOSS_cov,
+                 para_data=para_BOSS,
+                 perp_data=perp_BOSS,
+                 fs8_data=fs8_BOSS,
+                 para_err=BOSS_para_err,
+                 perp_err=BOSS_perp_err,
+                 fs8_err=BOSS_fs8_err,
+                 rd=rd_BOSS, 
+                 idx=BOSS_idx, 
+                 U=BOSS_U)
+            elif mode=='geo':
+                np.savez(os.path.join(self.path, dataset_name),  
+                 data = data_geo_BOSS,
+                 z=z_BOSS,
+                 cov=BOSS_geo_cov,
+                 rd=rd_BOSS, 
+                 idx=BOSS_idx, 
+                 U=BOSS_U)
+            elif mode=='fs8':
+                np.savez(os.path.join(self.path, dataset_name),  
+                 data = data_fs8_BOSS,
+                 z=z_BOSS,
+                 cov=BOSS_fs8_cov,
+                 rd=rd_BOSS, 
+                 idx=BOSS_idx, 
+                 U=BOSS_U)
+                
         return np.load(filepath)
     

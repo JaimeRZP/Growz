@@ -34,14 +34,18 @@ WFIRST = data_class.get_WFIRST(new=True)
 CC = data_class.get_CC(new=True)
 DSS = data_class.get_DSS(new=True)
 BOSS = data_class.get_BOSS(new=True)
-eBOSS = data_class.get_eBOSS(new=True)
-Wigglez = data_class.get_Wigglez(new=True)
+geo_BOSS = data_class.get_BOSS(new=True)
+fs8_BOSS = data_class.get_BOSS(new=True, mode='geo')
+eBOSS = data_class.get_eBOSS(new=True, mode='fs8')
+geo_eBOSS = data_class.get_eBOSS(new=True)
+fs8_eBOSS = data_class.get_eBOSS(new=True, mode='geo')
+Wigglez = data_class.get_Wigglez(new=True, mode='fs8')
 DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 FCMB = data_class.get_FCMB(new=True)
 
-n_samples = 50000
-n_tune = 50000
+n_samples = 1000
+n_tune = 1000
 datadict = {'DESI': DESI,
             'H_DESI': H_DESI,
             'dA_DESI': dA_DESI,
@@ -50,7 +54,11 @@ datadict = {'DESI': DESI,
             'CC': CC,
             'DS17': DS17, 
             'BOSS': BOSS,
+            'geo_BOSS': geo_BOSS,
+            'fs8_BOSS': fs8_BOSS,
             'eBOSS': eBOSS,
+            'geo_eBOSS': geo_eBOSS,
+            'fs8_eBOSS': fs8_eBOSS,
             'Wigglez': Wigglez,
             'DSS': DSS,
             'CMB': CMB, 
@@ -59,6 +67,8 @@ datadict = {'DESI': DESI,
 data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
+             'All_CMB_geo': ['CC', 'DS17', 'geo_BOSS', 'geo_eBOSS', 'CMB'],
+             'All_CMB_fs8': ['fs8_BOSS', 'fs8_eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'SDSS': ['BOSS', 'eBOSS'],
              'SDSS_CMB': ['BOSS', 'eBOSS', 'CMB'],
              'Add': ['CC', 'DS17', 'Wigglez', 'DSS'],
@@ -67,9 +77,11 @@ data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'WFIRST_CMB': ['WFIRST', 'CMB']}
 datasets = data_combs[data_comb]
 
-need_dM = ['DESI', 'dA_DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DS17', 'CMB', 'FCMB']
-need_fs8 = ['DESI', 'fs8_DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DSS']
-need_rd = ['BOSS', 'eBOSS', 'CMB']
+need_dM = ['DESI', 'dA_DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
+           'Wigglez', 'DS17', 'CMB', 'FCMB']
+need_fs8 = ['DESI', 'fs8_DESI', 'BOSS', 'eBOSS', 'fs8_BOSS', 
+            'fs8_eBOSS', 'Wigglez', 'DSS']
+need_rd = ['BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS', 'CMB']
 
 if any(dataset in datasets for dataset in need_dM):
     get_dM=True 
@@ -185,7 +197,6 @@ if 'DESI' in datasets:
 if 'WFIRST' in datasets:
     print('Adding WFIRST')
     with model:
-        E_gp = H_gp/H_gp[0]
         WFIRST_E = pm.Deterministic('WFIRST_E',
                    tt.as_tensor_variable(E_gp[WFIRST['idx']]+(E_gp[WFIRST['idx']+1]-E_gp[WFIRST['idx']])*WFIRST['U']))
         theory = tt.concatenate([theory, WFIRST_E])
