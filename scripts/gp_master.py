@@ -34,12 +34,12 @@ WFIRST = data_class.get_WFIRST(new=True)
 CC = data_class.get_CC(new=True)
 DSS = data_class.get_DSS(new=True)
 BOSS = data_class.get_BOSS(new=True)
-geo_BOSS = data_class.get_BOSS(new=True)
-fs8_BOSS = data_class.get_BOSS(new=True, mode='geo')
-eBOSS = data_class.get_eBOSS(new=True, mode='fs8')
-geo_eBOSS = data_class.get_eBOSS(new=True)
-fs8_eBOSS = data_class.get_eBOSS(new=True, mode='geo')
-Wigglez = data_class.get_Wigglez(new=True, mode='fs8')
+geo_BOSS = data_class.get_BOSS(new=True, mode='geo')
+fs8_BOSS = data_class.get_BOSS(new=True, mode='fs8')
+eBOSS = data_class.get_eBOSS(new=True)
+geo_eBOSS = data_class.get_eBOSS(new=True, mode='geo')
+fs8_eBOSS = data_class.get_eBOSS(new=True, mode='fs8')
+Wigglez = data_class.get_Wigglez(new=True)
 DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 FCMB = data_class.get_FCMB(new=True)
@@ -64,7 +64,7 @@ datadict = {'DESI': DESI,
             'CMB': CMB, 
             'FCMB': FCMB}
 
-data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'All_CMB_geo' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_geo': ['CC', 'DS17', 'geo_BOSS', 'geo_eBOSS', 'CMB'],
