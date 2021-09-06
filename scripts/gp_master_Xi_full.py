@@ -40,8 +40,8 @@ DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 FCMB = data_class.get_FCMB(new=True)
 
-n_samples = 1000
-n_tune = 10000
+n_samples = 30000
+n_tune = 30000
 datadict = {'DESI': DESI,
             'H_DESI': H_DESI,
             'dA_DESI': dA_DESI,
@@ -323,8 +323,11 @@ else:
 os.mkdir(path)
 np.savez(os.path.join(path,'samples.npz'), 
          z_arr = z_arr,
-         n=n,
-         l=l,
+         n_Xi=n_Xi,
+         l_Xi=l_Xi,
+         n_H=n_H,
+         l_H=l_H,
+         DHz=DHz,
          DXiz=DXiz,
          Xiz=Xiz,
          Hz=Hz,
