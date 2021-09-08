@@ -34,7 +34,11 @@ WFIRST = data_class.get_WFIRST(new=True)
 CC = data_class.get_CC(new=True)
 DSS = data_class.get_DSS(new=True)
 BOSS = data_class.get_BOSS(new=True)
+geo_BOSS = data_class.get_BOSS(new=True, mode='geo')
+fs8_BOSS = data_class.get_BOSS(new=True, mode='fs8')
 eBOSS = data_class.get_eBOSS(new=True)
+geo_eBOSS = data_class.get_eBOSS(new=True, mode='geo')
+fs8_eBOSS = data_class.get_eBOSS(new=True, mode='fs8')
 Wigglez = data_class.get_Wigglez(new=True)
 DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
@@ -50,15 +54,21 @@ datadict = {'DESI': DESI,
             'CC': CC,
             'DS17': DS17, 
             'BOSS': BOSS,
+            'geo_BOSS': geo_BOSS,
+            'fs8_BOSS': fs8_BOSS,
             'eBOSS': eBOSS,
+            'geo_eBOSS': geo_eBOSS,
+            'fs8_eBOSS': fs8_eBOSS,
             'Wigglez': Wigglez,
             'DSS': DSS,
             'CMB': CMB, 
             'FCMB': FCMB}
 
-data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'All_CMB_fs8' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
+             'All_CMB_geo': ['CC', 'DS17', 'geo_BOSS', 'geo_eBOSS', 'CMB'],
+             'All_CMB_fs8': ['fs8_BOSS', 'fs8_eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'SDSS': ['BOSS', 'eBOSS'],
              'SDSS_CMB': ['BOSS', 'eBOSS', 'CMB'],
              'Add': ['CC', 'DS17', 'Wigglez', 'DSS'],
@@ -67,9 +77,11 @@ data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'WFIRST_CMB': ['WFIRST', 'CMB']}
 datasets = data_combs[data_comb]
 
-need_dM = ['DESI', 'dA_DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DS17', 'CMB', 'FCMB']
-need_fs8 = ['DESI', 'fs8_DESI', 'BOSS', 'eBOSS', 'Wigglez', 'DSS']
-need_rd = ['BOSS', 'eBOSS', 'CMB']
+need_dM = ['DESI', 'dA_DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
+           'Wigglez', 'DS17', 'CMB', 'FCMB']
+need_fs8 = ['DESI', 'fs8_DESI', 'BOSS', 'eBOSS', 'fs8_BOSS', 
+            'fs8_eBOSS', 'Wigglez', 'DSS']
+need_rd = ['BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS', 'CMB']
 
 if any(dataset in datasets for dataset in need_dM):
     get_dM=True 
@@ -217,6 +229,23 @@ if 'BOSS' in datasets:
         B_perp = pm.Deterministic("B_perp", B_dM*BOSS['rd']/rd_gp)
         theory = tt.concatenate([theory, B_para, B_perp, B_fs8])
         
+if 'geo_BOSS' in datasets:
+    print('Adding geo_BOSS')
+    with model:
+        B_H = tt.as_tensor_variable(H_gp[BOSS['idx']]+(H_gp[BOSS['idx']+1]-H_gp[BOSS['idx']])*BOSS['U'])
+        B_dM = tt.as_tensor_variable(dM_gp[BOSS['idx']]+(dM_gp[BOSS['idx']+1]-dM_gp[BOSS['idx']])*BOSS['U'])
+        #Get alpha_perp and alpha_para 
+        B_para = pm.Deterministic("B_para", B_H*rd_gp/BOSS['rd'])
+        B_perp = pm.Deterministic("B_perp", B_dM*BOSS['rd']/rd_gp)
+        theory = tt.concatenate([theory, B_para, B_perp])
+        
+if 'fs8_BOSS' in datasets:
+    print('Adding fs8_BOSS')
+    with model:
+        B_fs8 = pm.Deterministic("B_fs8", 
+                   tt.as_tensor_variable(fs8_gp[BOSS['idx']]+(fs8_gp[BOSS['idx']+1]-fs8_gp[BOSS['idx']])*BOSS['U']))
+        theory = tt.concatenate([theory, B_fs8])
+        
 if 'eBOSS' in datasets:
     print('Adding eBOSS')
     with model:
@@ -228,6 +257,22 @@ if 'eBOSS' in datasets:
         eB_perp = pm.Deterministic("eB_perp", eB_dM/rd_gp)# eBOSS['rd'])
         theory = tt.concatenate([theory, eB_para, eB_perp, eB_fs8])
 
+if 'geo_eBOSS' in datasets:
+    print('Adding geo_eBOSS')
+    with model:
+        eB_dH = tt.as_tensor_variable(dH_gp[eBOSS['idx']]+(dH_gp[eBOSS['idx']+1]-dH_gp[eBOSS['idx']])*eBOSS['U'])
+        eB_dM = tt.as_tensor_variable(dM_gp[eBOSS['idx']]+(dM_gp[eBOSS['idx']+1]-dM_gp[eBOSS['idx']])*eBOSS['U'])
+        eB_para = pm.Deterministic("eB_para", eB_dH/rd_gp)
+        eB_perp = pm.Deterministic("eB_perp", eB_dM/rd_gp)
+        theory = tt.concatenate([theory, eB_para, eB_perp])
+
+if 'fs8_eBOSS' in datasets:
+    print('Adding fs8_eBOSS')
+    with model:
+        eB_fs8 = pm.Deterministic("eB_fs8", 
+                   tt.as_tensor_variable(fs8_gp[eBOSS['idx']]+(fs8_gp[eBOSS['idx']+1]-fs8_gp[eBOSS['idx']])*eBOSS['U']))
+        theory = tt.concatenate([theory, eB_fs8])
+        
 if 'Wigglez' in datasets:
     print('Adding Wigglez')
     with model:
