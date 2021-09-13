@@ -44,8 +44,8 @@ DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 FCMB = data_class.get_FCMB(new=True)
 
-n_samples = 30000
-n_tune = 30000
+n_samples = 10000
+n_tune = 10000
 datadict = {'DESI': DESI,
             'H_DESI': H_DESI,
             'dA_DESI': dA_DESI,
@@ -341,12 +341,11 @@ if get_fs8:
     fs8z = np.array(trace.posterior["fs8_gp"])
     fs8z = fs8z.reshape(-1, fs8z.shape[-1])
     s80 = np.array(trace.posterior["s80"]).flatten()
-    S80 = s80*np.sqrt((omega_m/(H0/100)**2)/0.3)
+
 else: 
     s8z = None 
     fs8z = None
     s80 = None
-    S80 = None
 
 if 'DS17' in datasets:
     M = np.array(trace.posterior["M"]).flatten()
@@ -366,8 +365,7 @@ np.savez(os.path.join(path,'samples.npz'),
          H0_gp=H0_gp,
          omega_b=omega_b,
          rd=rd,
-         s80=s80,
-         S80=S80)
+         s80=s80)
 
 # plot the results
 ######
