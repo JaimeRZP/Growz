@@ -19,7 +19,7 @@ dx = np.mean(np.diff(x_arr))
 z_arr = np.exp(x_arr)-1
 a_arr = 1./(1+z_arr)
 
-challenge = 'cosmo2'
+challenge = 'cosmo4b'
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/'+challenge
 
 data_class = MakeData(z_max, res , path)

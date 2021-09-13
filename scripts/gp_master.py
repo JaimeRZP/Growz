@@ -64,12 +64,13 @@ datadict = {'DESI': DESI,
             'CMB': CMB, 
             'FCMB': FCMB}
 
-data_comb = 'All' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'All_gro' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
+             'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
              'All_CMB_geo': ['CC', 'DS17', 'geo_BOSS', 'geo_eBOSS', 'CMB'],
-             'All_CMB_gro': ['fs8_BOSS', 'fs8_eBOSS', 'Wigglez', 'DSS'],
-             'All_CMB_gro_CMB': ['fs8_BOSS', 'fs8_eBOSS', 'Wigglez', 'DSS', 'CMB'],
+             'All_gro': ['fs8_BOSS', 'fs8_eBOSS', 'Wigglez', 'DSS'],
+             'All_CMB_gro': ['fs8_BOSS', 'fs8_eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'SDSS': ['BOSS', 'eBOSS'],
              'SDSS_CMB': ['BOSS', 'eBOSS', 'CMB'],
              'Add': ['CC', 'DS17', 'Wigglez', 'DSS'],
@@ -111,7 +112,7 @@ data_cov = data_cov[1:]
 #base model
 with pm.Model() as model:
     ℓ = pm.Uniform("ℓ", 0.001, 7) 
-    η = pm.HalfNormal("η", sigma=0.5) 
+    η = pm.HalfNormal("η", sigma=0.1) 
     H0 = data_class.H0
     wm0 = pm.Uniform("wm0", 0., 0.45) 
     wm0_geo = data_class.wm0 
