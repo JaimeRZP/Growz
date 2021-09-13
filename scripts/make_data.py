@@ -142,6 +142,7 @@ class MakeData():
             DESI_dA_data = dA_DESI + np.random.randn(len(z_DESI))*DESI_dA_err
             DESI_fs8_data = fs8_DESI + np.random.randn(len(z_DESI))*DESI_fs8_err
             DESI_data = np.concatenate([DESI_H_data, DESI_dA_data, DESI_fs8_data])
+            DESI_geo_data = np.concatenate([DESI_H_data, DESI_dA_data])
 
             DESI_H_cov = np.zeros([len(z_DESI), len(z_DESI)])
             DESI_dA_cov = np.zeros([len(z_DESI), len(z_DESI)])
@@ -154,8 +155,10 @@ class MakeData():
             DESI_cov = np.block([[DESI_H_cov, np.zeros_like(DESI_H_cov), np.zeros_like(DESI_H_cov)],
                              [np.zeros_like(DESI_H_cov), DESI_dA_cov, np.zeros_like(DESI_H_cov)],
                              [np.zeros_like(DESI_H_cov), np.zeros_like(DESI_H_cov), DESI_fs8_cov]])
-
             
+            DESI_geo_cov = np.block([[DESI_H_cov, np.zeros_like(DESI_H_cov)],
+                             [np.zeros_like(DESI_H_cov), DESI_dA_cov]])
+
             if mode is None:
                 np.savez(os.path.join(self.path, dataset_name), 
                  data = DESI_data,
@@ -165,25 +168,15 @@ class MakeData():
                  idx = DESI_idx,
                  U=DESI_U)
                 
-            elif mode=='H':
+            elif mode=='geo':
                 np.savez(os.path.join(self.path, dataset_name), 
-                 data = DESI_H_data,
+                 data = DESI_geo_data,
                  z=z_DESI,
-                 cov=DESI_H_cov,
-                 err=DESI_H_err, 
-                 idx = DESI_idx,
-                 U=DESI_U)
-                
-            elif mode=='dA':
-                np.savez(os.path.join(self.path, dataset_name), 
-                 data = DESI_dA_data,
-                 z=z_DESI,
-                 cov=DESI_dA_cov,
-                 err=DESI_dA_err,
+                 cov=DESI_geo_cov,
                  idx = DESI_idx,
                  U=DESI_U)
             
-            elif mode=='fs8':
+            elif mode=='gro':
                 np.savez(os.path.join(self.path, dataset_name), 
                  data = DESI_fs8_data,
                  z=z_DESI,
