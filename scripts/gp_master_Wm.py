@@ -19,54 +19,71 @@ dx = np.mean(np.diff(x_arr))
 z_arr = np.exp(x_arr)-1
 a_arr = 1./(1+z_arr)
 
-challenge = 'cosmo3b'
-path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/'+challenge
+path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/products'
 
 data_class = MakeData(z_max, res , path)
 Planck = data_class.Planck
 z_planck = data_class.z_planck
 c = data_class.c
 
-DESI = data_class.get_DESI(new=False)
-WFIRST = data_class.get_WFIRST(new=False)
-CC = data_class.get_CC(new=False)
-DSS = data_class.get_DSS(new=False)
-BOSS = data_class.get_BOSS(new=False)
-eBOSS = data_class.get_eBOSS(new=False)
-Wigglez = data_class.get_Wigglez(new=False)
-DS17 = data_class.get_DS17(new=False)
-CMB = data_class.get_CMB(new=False)
-FCMB = data_class.get_FCMB(new=False)
+DESI = data_class.get_DESI(new=True, mode=None)
+geo_DESI = data_class.get_DESI(new=True, mode='geo')
+gro_DESI = data_class.get_DESI(new=True, mode='gro')
+WFIRST = data_class.get_WFIRST(new=True)
+CC = data_class.get_CC(new=True)
+DSS = data_class.get_DSS(new=True)
+BOSS = data_class.get_BOSS(new=True)
+geo_BOSS = data_class.get_BOSS(new=True, mode='geo')
+fs8_BOSS = data_class.get_BOSS(new=True, mode='fs8')
+eBOSS = data_class.get_eBOSS(new=True)
+geo_eBOSS = data_class.get_eBOSS(new=True, mode='geo')
+fs8_eBOSS = data_class.get_eBOSS(new=True, mode='fs8')
+Wigglez = data_class.get_Wigglez(new=True)
+DS17 = data_class.get_DS17(new=True)
+CMB = data_class.get_CMB(new=True)
+FCMB = data_class.get_FCMB(new=True)
 
-n_samples = 10000
-n_tune = 10000
+n_samples = 15000
+n_tune = 15000
 datadict = {'DESI': DESI,
+            'geo_DESI': geo_DESI,
+            'gro_DESI': gro_DESI,
             'WFIRST': WFIRST,
             'CC': CC,
             'DS17': DS17, 
             'BOSS': BOSS,
+            'geo_BOSS': geo_BOSS,
+            'fs8_BOSS': fs8_BOSS,
             'eBOSS': eBOSS,
+            'geo_eBOSS': geo_eBOSS,
+            'fs8_eBOSS': fs8_eBOSS,
             'Wigglez': Wigglez,
             'DSS': DSS,
             'CMB': CMB, 
             'FCMB': FCMB}
 
-data_comb = 'All_CMB' 
+data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
+             'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
+             'All_CMB_geo': ['CC', 'DS17', 'geo_BOSS', 'geo_eBOSS', 'CMB'],
+             'All_gro': ['fs8_BOSS', 'fs8_eBOSS', 'Wigglez', 'DSS'],
+             'All_CMB_gro': ['fs8_BOSS', 'fs8_eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'SDSS': ['BOSS', 'eBOSS'],
              'SDSS_CMB': ['BOSS', 'eBOSS', 'CMB'],
              'Add': ['CC', 'DS17', 'Wigglez', 'DSS'],
              'Add_CMB': ['CC', 'DS17', 'Wigglez', 'DSS', 'CMB'],
              'DESI_CMB': ['DESI', 'CMB'], 
+             'DESI_CMB_geo': ['geo_DESI', 'CMB'], 
+             'DESI_gro': ['gro_DESI'], 
              'WFIRST_CMB': ['WFIRST', 'CMB']}
 datasets = data_combs[data_comb]
 
-need_dM = ['DESI', 'dA_DESI', 'BOSS', 'eBOSS',
+need_dM = ['DESI', 'geo_DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
            'Wigglez', 'DS17', 'CMB', 'FCMB']
-need_fs8 = ['DESI', 'fs8_DESI', 'BOSS', 'eBOSS',
-            'Wigglez', 'DSS']
-need_rd = ['BOSS', 'eBOSS', 'CMB']
+need_fs8 = ['DESI', 'gro_DESI', 'BOSS', 'eBOSS', 'fs8_BOSS', 
+            'fs8_eBOSS', 'Wigglez', 'DSS']
+need_rd = ['BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS', 'CMB']
 
 if any(dataset in datasets for dataset in need_dM):
     get_dM=True 
@@ -97,7 +114,7 @@ with pm.Model() as model:
     ℓ = pm.Uniform("ℓ", 0.001, 7) 
     η = pm.HalfNormal("η", sigma=0.5) 
     H0 = data_class.H0
-    wm0 = pm.Uniform("wm0", 0., 0.45) 
+    Wm0 = pm.Uniform("Wm0", 0., 1.) 
     wm0_geo = data_class.wm0 
     wr0 = data_class.wr0
     wL0 = data_class.wL0 
@@ -139,7 +156,6 @@ with pm.Model() as model:
         #s80 = data_class.s80
         s80 = pm.Normal("s80", 0.8, 0.5)
         E = H_gp/H_gp[0]
-        Om = wm0*(100/H0)**2
         xx = x_arr[::-1]
         ee = E[::-1]
         aa = np.exp(-xx)
@@ -152,9 +168,9 @@ with pm.Model() as model:
         yy = tt.inc_subtensor(yy[0], aa[0]**3*E[0])
 
         for i in range(nz-1):
-            A0 = -1.5*Om/(aa[i]*ee[i])
+            A0 = -1.5*Wm0/(aa[i]*ee[i])
             B0 = -1./(aa[i]**2*ee[i])
-            A1 = -1.5*Om/(aa[i+1]*ee[i+1])
+            A1 = -1.5*Wm0/(aa[i+1]*ee[i+1])
             B1 = -1./(aa[i+1]**2*ee[i+1])
             yy = tt.inc_subtensor(yy[i+1], (1+0.5*dx**2*A0*B0)*yy[i]+0.5*(A0+A1)*dx*dd[i])
             dd = tt.inc_subtensor(dd[i+1],0.5*(B0+B1)*dx*yy[i]+(1+0.5*dx**2*A0*B0)*dd[i])
@@ -178,6 +194,22 @@ if 'DESI' in datasets:
         DESI_fs8 = pm.Deterministic('DESI_fs8',
                    tt.as_tensor_variable(fs8_gp[DESI['idx']]+(fs8_gp[DESI['idx']+1]-fs8_gp[DESI['idx']])*DESI['U']))
         theory = tt.concatenate([theory, DESI_H, DESI_dA, DESI_fs8])
+
+if 'gro_DESI' in datasets:
+    print('Adding DESI_gro')
+    with model:
+        DESI_fs8 = pm.Deterministic('DESI_fs8',
+                   tt.as_tensor_variable(fs8_gp[DESI['idx']]+(fs8_gp[DESI['idx']+1]-fs8_gp[DESI['idx']])*DESI['U']))
+        theory = tt.concatenate([theory, DESI_fs8])
+
+if 'geo_DESI' in datasets:
+    print('Adding DESI_geo')
+    with model:
+        DESI_H = pm.Deterministic('DESI_H',
+                 tt.as_tensor_variable(H_gp[DESI['idx']]+(H_gp[DESI['idx']+1]-H_gp[DESI['idx']])*DESI['U']))
+        DESI_dA = pm.Deterministic('DESI_dA',
+                  tt.as_tensor_variable(dA_gp[DESI['idx']]+(dA_gp[DESI['idx']+1]-dA_gp[DESI['idx']])*DESI['U']))
+        theory = tt.concatenate([theory, DESI_H, DESI_dA])
         
 if 'WFIRST' in datasets:
     print('Adding WFIRST')
@@ -291,13 +323,14 @@ with model:
     trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune)
 
 #print r-stat
-print(pm.summary(trace)['r_hat'][["wm0", "ℓ","η"]])
-print(pm.summary(trace)['mean'][["wm0", "ℓ","η"]])
+print(pm.summary(trace)['r_hat'][["Wm0", "ℓ","η"]])
+print(pm.summary(trace)['mean'][["Wm0", "ℓ","η"]])
 
 #Save
 filename = data_comb
-path = filename+'_'+challenge+ '_{}_{}'.format(n_samples, n_tune)
+path = filename+'_Wm'+'_{}_{}'.format(n_samples, n_tune)
 print(path)
+
 n = np.array(trace.posterior["η"]).flatten()
 l = np.array(trace.posterior["ℓ"]).flatten()
 DHz = np.array(trace.posterior["DH_gp"])
@@ -305,7 +338,7 @@ DHz = DHz.reshape(-1, DHz.shape[-1])
 Hz =np.array(trace.posterior["H_gp"])
 Hz = Hz.reshape(-1, Hz.shape[-1])
 H0_gp = np.array(trace.posterior["H0_gp"]).flatten()
-omega_m = np.array(trace.posterior["wm0"]).flatten()
+Omega_m = np.array(trace.posterior["Wm0"]).flatten()
 
 if get_dM:
     dMz = np.array(trace.posterior["dM_gp"])
@@ -326,7 +359,7 @@ if get_fs8:
     fs8z = np.array(trace.posterior["fs8_gp"])
     fs8z = fs8z.reshape(-1, fs8z.shape[-1])
     s80 = np.array(trace.posterior["s80"]).flatten()
-    S80 = s80*np.sqrt((omega_m/(H0/100)**2)/0.3)
+    S80 = s80*np.sqrt(Omega_m/0.3)
 else: 
     s8z = None 
     fs8z = None
@@ -349,7 +382,7 @@ np.savez(os.path.join(path,'samples.npz'),
          s8z=s8z,
          fs8z=fs8z,
          H0_gp=H0_gp,
-         omega_m=omega_m,
+         Omega_m=Omega_m,
          omega_b=omega_b,
          rd=rd,
          s80=s80,

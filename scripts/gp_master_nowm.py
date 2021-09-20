@@ -27,9 +27,8 @@ z_planck = data_class.z_planck
 c = data_class.c
 
 DESI = data_class.get_DESI(new=True, mode=None)
-H_DESI = data_class.get_DESI(new=True, mode='H')
-dA_DESI = data_class.get_DESI(new=True, mode='dA')
-fs8_DESI = data_class.get_DESI(new=True, mode='fs8')
+geo_DESI = data_class.get_DESI(new=True, mode='geo')
+gro_DESI = data_class.get_DESI(new=True, mode='gro')
 WFIRST = data_class.get_WFIRST(new=True)
 CC = data_class.get_CC(new=True)
 DSS = data_class.get_DSS(new=True)
@@ -47,9 +46,8 @@ FCMB = data_class.get_FCMB(new=True)
 n_samples = 10000
 n_tune = 10000
 datadict = {'DESI': DESI,
-            'H_DESI': H_DESI,
-            'dA_DESI': dA_DESI,
-            'fs8_DESI': fs8_DESI,
+            'geo_DESI': geo_DESI,
+            'gro_DESI': gro_DESI,
             'WFIRST': WFIRST,
             'CC': CC,
             'DS17': DS17, 
@@ -64,23 +62,25 @@ datadict = {'DESI': DESI,
             'CMB': CMB, 
             'FCMB': FCMB}
 
-data_comb = 'All_CMB_gro' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'DESI_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_geo': ['CC', 'DS17', 'geo_BOSS', 'geo_eBOSS', 'CMB'],
-             'All_CMB_gro': ['fs8_BOSS', 'fs8_eBOSS', 'Wigglez', 'DSS'],
-             'All_CMB_gro_CMB': ['fs8_BOSS', 'fs8_eBOSS', 'Wigglez', 'DSS', 'CMB'],
+             'All_gro': ['fs8_BOSS', 'fs8_eBOSS', 'Wigglez', 'DSS'],
+             'All_CMB_gro': ['fs8_BOSS', 'fs8_eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'SDSS': ['BOSS', 'eBOSS'],
              'SDSS_CMB': ['BOSS', 'eBOSS', 'CMB'],
              'Add': ['CC', 'DS17', 'Wigglez', 'DSS'],
              'Add_CMB': ['CC', 'DS17', 'Wigglez', 'DSS', 'CMB'],
              'DESI_CMB': ['DESI', 'CMB'], 
+             'DESI_gro': ['gro_DESI'],
+             'DESI_CMB_geo': ['geo_DESI', 'CMB'],
              'WFIRST_CMB': ['WFIRST', 'CMB']}
 datasets = data_combs[data_comb]
 
 need_dM = ['DESI', 'dA_DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
            'Wigglez', 'DS17', 'CMB', 'FCMB']
-need_fs8 = ['DESI', 'fs8_DESI', 'BOSS', 'eBOSS', 'fs8_BOSS', 
+need_fs8 = ['DESI', 'gro_DESI', 'BOSS', 'eBOSS', 'fs8_BOSS', 
             'fs8_eBOSS', 'Wigglez', 'DSS']
 need_rd = ['BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS', 'CMB']
 
@@ -194,7 +194,23 @@ if 'DESI' in datasets:
         DESI_fs8 = pm.Deterministic('DESI_fs8',
                    tt.as_tensor_variable(fs8_gp[DESI['idx']]+(fs8_gp[DESI['idx']+1]-fs8_gp[DESI['idx']])*DESI['U']))
         theory = tt.concatenate([theory, DESI_H, DESI_dA, DESI_fs8])
-        
+
+if 'gro_DESI' in datasets:
+    print('Adding DESI_gro')
+    with model:
+        DESI_fs8 = pm.Deterministic('DESI_fs8', 
+                  tt.as_tensor_variable(fs8_gp[DESI['idx']]+(fs8_gp[DESI['idx']+1]-fs8_gp[DESI['idx']])*DESI['U']))
+        theory = tt.concatenate([theory, DESI_fs8])
+
+if 'geo_DESI' in datasets:
+    print('Adding DESI')
+    with model:
+        DESI_H = pm.Deterministic('DESI_H',
+                 tt.as_tensor_variable(H_gp[DESI['idx']]+(H_gp[DESI['idx']+1]-H_gp[DESI['idx']])*DESI['U']))
+        DESI_dA = pm.Deterministic('DESI_dA',
+                  tt.as_tensor_variable(dA_gp[DESI['idx']]+(dA_gp[DESI['idx']+1]-dA_gp[DESI['idx']])*DESI['U']))
+        theory = tt.concatenate([theory, DESI_H, DESI_dA])
+
 if 'WFIRST' in datasets:
     print('Adding WFIRST')
     with model:

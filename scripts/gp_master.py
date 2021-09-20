@@ -46,9 +46,8 @@ FCMB = data_class.get_FCMB(new=True)
 n_samples = 10000
 n_tune = 10000
 datadict = {'DESI': DESI,
-            'H_DESI': H_DESI,
-            'dA_DESI': dA_DESI,
-            'fs8_DESI': fs8_DESI,
+            'geo_DESI': geo_DESI,
+            'gro_DESI': gro_DESI,
             'WFIRST': WFIRST,
             'CC': CC,
             'DS17': DS17, 
@@ -63,7 +62,7 @@ datadict = {'DESI': DESI,
             'CMB': CMB, 
             'FCMB': FCMB}
 
-data_comb = 'All_gro' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'DESI_gro' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
@@ -75,14 +74,14 @@ data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'Add': ['CC', 'DS17', 'Wigglez', 'DSS'],
              'Add_CMB': ['CC', 'DS17', 'Wigglez', 'DSS', 'CMB'],
              'DESI_CMB': ['DESI', 'CMB'], 
-             'DESI_geo': ['H_DESI', 'dA_DESI'], 
-             'DESI_gro': ['fs8_DESI'], 
+             'DESI_CMB_geo': ['geo_DESI', 'CMB'], 
+             'DESI_gro': ['gro_DESI'], 
              'WFIRST_CMB': ['WFIRST', 'CMB']}
 datasets = data_combs[data_comb]
 
-need_dM = ['DESI', 'dA_DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
+need_dM = ['DESI', 'geo_DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
            'Wigglez', 'DS17', 'CMB', 'FCMB']
-need_fs8 = ['DESI', 'fs8_DESI', 'BOSS', 'eBOSS', 'fs8_BOSS', 
+need_fs8 = ['DESI', 'gro_DESI', 'BOSS', 'eBOSS', 'fs8_BOSS', 
             'fs8_eBOSS', 'Wigglez', 'DSS']
 need_rd = ['BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS', 'CMB']
 
@@ -113,7 +112,7 @@ data_cov = data_cov[1:]
 #base model
 with pm.Model() as model:
     ℓ = pm.Uniform("ℓ", 0.001, 7) 
-    η = pm.HalfNormal("η", sigma=0.1) 
+    η = pm.HalfNormal("η", sigma=0.5) 
     H0 = data_class.H0
     wm0 = pm.Uniform("wm0", 0., 0.45) 
     wm0_geo = data_class.wm0 
@@ -195,23 +194,23 @@ if 'DESI' in datasets:
                   tt.as_tensor_variable(dA_gp[DESI['idx']]+(dA_gp[DESI['idx']+1]-dA_gp[DESI['idx']])*DESI['U']))
         DESI_fs8 = pm.Deterministic('DESI_fs8',
                    tt.as_tensor_variable(fs8_gp[DESI['idx']]+(fs8_gp[DESI['idx']+1]-fs8_gp[DESI['idx']])*DESI['U']))
-        theory = tt.concatenate([theory, DESI_H, DESI_dA])
+        theory = tt.concatenate([theory, DESI_H, DESI_dA, DESI_fs8])
 
-if 'DESI_gro' in datasets:
+if 'gro_DESI' in datasets:
     print('Adding DESI_gro')
     with model:
         DESI_fs8 = pm.Deterministic('DESI_fs8',
                    tt.as_tensor_variable(fs8_gp[DESI['idx']]+(fs8_gp[DESI['idx']+1]-fs8_gp[DESI['idx']])*DESI['U']))
         theory = tt.concatenate([theory, DESI_fs8])
 
-if 'DESI_geo' in datasets:
+if 'geo_DESI' in datasets:
     print('Adding DESI_geo')
     with model:
         DESI_H = pm.Deterministic('DESI_H',
                  tt.as_tensor_variable(H_gp[DESI['idx']]+(H_gp[DESI['idx']+1]-H_gp[DESI['idx']])*DESI['U']))
         DESI_dA = pm.Deterministic('DESI_dA',
                   tt.as_tensor_variable(dA_gp[DESI['idx']]+(dA_gp[DESI['idx']+1]-dA_gp[DESI['idx']])*DESI['U']))
-        theory = tt.concatenate([theory, DESI_H, DESI_dA, DESI_fs8])
+        theory = tt.concatenate([theory, DESI_H, DESI_dA])
         
 if 'WFIRST' in datasets:
     print('Adding WFIRST')
@@ -331,6 +330,7 @@ print(pm.summary(trace)['mean'][["wm0", "ℓ","η"]])
 #Save
 filename = data_comb
 path = filename+'_{}_{}'.format(n_samples, n_tune)
+print(path)
 
 n = np.array(trace.posterior["η"]).flatten()
 l = np.array(trace.posterior["ℓ"]).flatten()
