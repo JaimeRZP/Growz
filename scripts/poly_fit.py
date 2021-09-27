@@ -19,7 +19,7 @@ dx = np.mean(np.diff(x_arr))
 z_arr = np.exp(x_arr)-1
 a_arr = 1./(1+z_arr)
 
-challenge = 'cosmo2_seed1004'
+challenge = 'cosmo4_seed1004'
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/challenge/'+challenge
 #path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/products'
 
@@ -113,13 +113,16 @@ data_cov = data_cov[1:]
 
 #base model
 with pm.Model() as model:
-    Wm0 = pm.Uniform("Wm0", 0., 1.)
     H0 = pm.Normal("H0", mu=70, sigma=5)
-    Wr0 = data_class.cosmo.Omega_g()+data_class.Omega_nu
-    WL0 = pm.Deterministic("WL0", 1-Wm0-Wr0) 
+    W0 = pm.Uniform("W0", 0, 1)
+    W1 = pm.Uniform("W1", 0, 1)
+    W2 = pm.Uniform("W2", 0, 1)
+    W3 = pm.Uniform("W3", 0, 1)
+    W4 = pm.Uniform("W4", 0, 1)
     
     #Set up Gaussian process
-    H_gp = pm.Deterministic('H_gp', H0*tt.sqrt(Wm0*(1+z_arr)**3+Wr0*(1+z_arr)**4+WL0))
+    H2 = pm.Deterministic('H2', H0**2*(W0+W1*(1+z_arr)+W2*(1+z_arr)**2+W3*(1+z_arr)**3+W4*(1+z_arr)**4))
+    H_gp = pm.Deterministic('H_gp', tt.sqrt(H2))
     H0_gp = pm.Deterministic("H0_gp", H0)
     
     if get_dM:
@@ -322,13 +325,17 @@ print(pm.summary(trace)['mean'][["Wm0"]])
 
 #Save
 filename = data_comb
-path = 'LCDM_'+filename+'_{}_{}'.format(n_samples, n_tune)
+path = 'poly_fit_'+filename+'_{}_{}'.format(n_samples, n_tune)
 print(path)
 
 Hz =np.array(trace.posterior["H_gp"])
 Hz = Hz.reshape(-1, Hz.shape[-1])
 H0_gp = np.array(trace.posterior["H0_gp"]).flatten()
-Omega_m = np.array(trace.posterior["Wm0"]).flatten()
+W0 = np.array(trace.posterior["W0"]).flatten()
+W1 = np.array(trace.posterior["W1"]).flatten()
+W2 = np.array(trace.posterior["W2"]).flatten()
+W3 = np.array(trace.posterior["W3"]).flatten()
+W4 = np.array(trace.posterior["W4"]).flatten()
 
 if get_dM:
     dMz = np.array(trace.posterior["dM_gp"])
@@ -349,12 +356,11 @@ if get_fs8:
     fs8z = np.array(trace.posterior["fs8_gp"])
     fs8z = fs8z.reshape(-1, fs8z.shape[-1])
     s80 = np.array(trace.posterior["s80"]).flatten()
-    S80 = s80*np.sqrt(Omega_m/0.3)
+    
 else: 
     s8z = None 
     fs8z = None
     s80 = None
-    S80 = None
 
 if 'DS17' in datasets:
     M = np.array(trace.posterior["M"]).flatten()
@@ -369,11 +375,9 @@ np.savez(os.path.join(path,'samples.npz'),
          s8z=s8z,
          fs8z=fs8z,
          H0_gp=H0_gp,
-         Omega_m=Omega_m,
          omega_b=omega_b,
          rd=rd,
-         s80=s80,
-         S80=S80)
+         s80=s80)
 
 # plot the results
 ######

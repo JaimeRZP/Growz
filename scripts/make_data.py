@@ -66,6 +66,36 @@ class MakeData():
     def make_U(self, z_data, z_arr, idxs):
         dz = np.diff(z_arr)[idxs]
         return (z_data - z_arr[idxs])/dz
+    
+    def get_mean(path=None, mode='LCDM'):
+        if mode=='Planck':
+            H_mean = self.H_arr
+        elif mode=='LCDM':
+            params = self.get_LCDM_params(path)
+            H0 = np.mean(params['H0_gp'])
+            Wm0 = np.mean(params['Omega_m'])
+            Wr0 = np.mean(self.wr0/(self.H0/100)**2)
+            WL0 = 1-Wm0-Wr0
+            H_mean = H0**2*tt.sqrt(Wm0*(1+z_arr)**3+Wr0*(1+z_arr)**4+WL0)
+        elif mode=='poly':
+            params = self.get_LCDM_params(path)
+            H0 = np.mean(params['H0_gp'])
+            W0 = np.mean(params['W0'])
+            W1 = np.mean(params['W1'])
+            W2 = np.mean(params['W2'])
+            W3 = np.mean(params['W3'])
+            W4 = np.mean(params['W4'])
+            H2 = H0**2*(W0+W1*(1+z_arr)+W2*(1+z_arr)**2+W3*(1+z_arr)**3+W4*(1+z_arr)**4)
+            H_mean = np.sqrt(H2)
+        return H_mean
+    
+    def _get_LCDM_params(path):
+        path += '/samples.npz'
+        return np.load(path)
+    
+    def _get_poly_fit_params():
+        path += '/samples.npz'
+        return np.loadtxt(path)
                 
     def get_WFIRST(self, z_arr=None, new='False'):
         if z_arr is None:
@@ -181,7 +211,6 @@ class MakeData():
                  data = DESI_fs8_data,
                  z=z_DESI,
                  cov=DESI_fs8_cov,
-                 err=DESI_fs8_err,
                  idx = DESI_idx,
                  U=DESI_U)
         
