@@ -19,8 +19,8 @@ dx = np.mean(np.diff(x_arr))
 z_arr = np.exp(x_arr)-1
 a_arr = 1./(1+z_arr)
 
-challenge = 'cosmo3b'
-path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/'+challenge
+challenge = 'cosmo2_seed1004'
+path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/challenge/'+challenge
 
 data_class = MakeData(z_max, res , path)
 Planck = data_class.Planck

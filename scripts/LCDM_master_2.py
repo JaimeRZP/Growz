@@ -112,12 +112,13 @@ data_cov = data_cov[1:]
 #base model
 with pm.Model() as model:
     Wm0 = pm.Uniform("Wm0", 0., 1.)
+    Wm0_mean = data_class.wm0/(data_class.H0/100)**2
     H0 = pm.Normal("H0", mu=70, sigma=5)
     Wr0 = data_class.cosmo.Omega_g()+data_class.Omega_nu
-    WL0 = pm.Deterministic("WL0", 1-Wm0-Wr0) 
+    WL0 = data_class.wL0/(data_class.H0/100)**2
     
     #Set up Gaussian process
-    H_gp = pm.Deterministic('H_gp', H0*tt.sqrt(Wm0*(1+z_arr)**3+Wr0*(1+z_arr)**4+WL0))
+    H_gp = pm.Deterministic('H_gp', H0*tt.sqrt(Wm0_mean*(1+z_arr)**3+Wr0*(1+z_arr)**4+WL0))
     H0_gp = pm.Deterministic("H0_gp", H0)
     
     if get_dM:
@@ -134,7 +135,7 @@ with pm.Model() as model:
     if get_rd:
         #https://arxiv.org/pdf/2106.00428.pdf
         wb0 =  pm.Uniform("wb0", 0.022, 0.023)
-        wm0 = pm.Deterministic("wm0", Wm0*(H0/100)**2)
+        wm0 = pm.Deterministic("wm0", Wm0_mean*(H0/100)**2)
         a1 = 0.00785436
         a2 = 0.177084
         a3 = 0.00912388
@@ -320,7 +321,7 @@ print(pm.summary(trace)['mean'][["Wm0"]])
 
 #Save
 filename = data_comb
-path = 'LCDM_'+filename+'_{}_{}'.format(n_samples, n_tune)
+path = 'nogp_'+filename+'_{}_{}'.format(n_samples, n_tune)
 print(path)
 
 Hz =np.array(trace.posterior["H_gp"])
