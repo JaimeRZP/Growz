@@ -39,13 +39,21 @@ class MakeData():
         self.s8_arr, self.fs8_arr = utils.make_fs8(self.H_arr, self.x_arr,
                                                    self.wm0, self.cosmo.sigma8())
 
-    def get_cosmo(self):
-        params = {'h': 0.6727,
-                  'Omega_cdm': 0.265621, #0.237153,
-                  'Omega_b': 0.0494116,
-                  'Omega_Lambda': 0.6834,
-                  'n_s': 0.9649,
-                  'ln10^{10}A_s': 3.045}
+    def get_cosmo(self, mode='Planck'):
+        if mode=='Planck'
+            params = {'h': 0.6727,
+                      'Omega_cdm': 0.265621, #0.237153,
+                      'Omega_b': 0.0494116,
+                      'Omega_Lambda': 0.6834,
+                      'n_s': 0.9649,
+                      'ln10^{10}A_s': 3.045}
+        elif mode=='Best_fit':
+            params = {'h': 0.6833,
+                      'Omega_cdm': 0.250763, #0.237153,
+                      'Omega_b': 0.0479757,
+                      'Omega_Lambda': 0.6996939,
+                      'n_s': 0.9649,
+                      'ln10^{10}A_s': 3.045}
         cosmo = classy.Class()
         cosmo.set({ 'output':'mPk', 'P_k_max_h/Mpc': 20, 'z_max_pk': 1085})
         cosmo.set(params)
