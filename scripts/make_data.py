@@ -67,18 +67,19 @@ class MakeData():
         dz = np.diff(z_arr)[idxs]
         return (z_data - z_arr[idxs])/dz
     
-    def get_mean(path=None, mode='LCDM'):
+    def get_H_mean(self, path=None, mode='LCDM'):
+        z_arr = self.z_arr
         if mode=='Planck':
             H_mean = self.H_arr
         elif mode=='LCDM':
-            params = self.get_LCDM_params(path)
+            params = self._get_LCDM_params(path)
             H0 = np.mean(params['H0_gp'])
             Wm0 = np.mean(params['Omega_m'])
             Wr0 = np.mean(self.wr0/(self.H0/100)**2)
             WL0 = 1-Wm0-Wr0
-            H_mean = H0**2*tt.sqrt(Wm0*(1+z_arr)**3+Wr0*(1+z_arr)**4+WL0)
+            H_mean = H0**2*np.sqrt(Wm0*(1+z_arr)**3+Wr0*(1+z_arr)**4+WL0)
         elif mode=='poly':
-            params = self.get_LCDM_params(path)
+            params = self._get_poly_fit_params(path)
             H0 = np.mean(params['H0_gp'])
             W0 = np.mean(params['W0'])
             W1 = np.mean(params['W1'])
@@ -88,12 +89,23 @@ class MakeData():
             H2 = H0**2*(W0+W1*(1+z_arr)+W2*(1+z_arr)**2+W3*(1+z_arr)**3+W4*(1+z_arr)**4)
             H_mean = np.sqrt(H2)
         return H_mean
-    
-    def _get_LCDM_params(path):
+
+    def get_Wm_mean(self, path=None, mode='LCDM'):
+        if mode=='Planck':
+            Wm0_mean = self.cosmo.Omega_m
+            wm0_mean = self.wm0
+        elif mode=='LCDM':
+            params = self._get_LCDM_params(path)
+            Wm0_mean = np.mean(params['Omega_m'])
+            H0_mean = np.mean(params['H0_gp'])
+            wm0_mean = Wm0_mean*(H0_mean/100)**2
+        return Wm0_mean, wm0_mean
+        
+    def _get_LCDM_params(self, path):
         path += '/samples.npz'
         return np.load(path)
     
-    def _get_poly_fit_params():
+    def _get_poly_fit_params(self, path):
         path += '/samples.npz'
         return np.loadtxt(path)
                 

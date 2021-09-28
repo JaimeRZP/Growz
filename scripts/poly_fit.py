@@ -113,6 +113,7 @@ data_cov = data_cov[1:]
 
 #base model
 with pm.Model() as model:
+    Wm0 = pm.Uniform('Wm0', 0, 1)
     H0 = pm.Normal("H0", mu=70, sigma=5)
     W0 = pm.Uniform("W0", 0, 1)
     W1 = pm.Uniform("W1", 0, 1)
@@ -139,7 +140,7 @@ with pm.Model() as model:
     if get_rd:
         #https://arxiv.org/pdf/2106.00428.pdf
         wb0 =  pm.Uniform("wb0", 0.022, 0.023)
-        wm0 = pm.Deterministic("wm0", Wm0*(H0/100)**2)
+        wm0 = pm.Deterministic("wm0", Wm0/(H0/100)**2)
         a1 = 0.00785436
         a2 = 0.177084
         a3 = 0.00912388
@@ -325,7 +326,7 @@ print(pm.summary(trace)['mean'][["Wm0"]])
 
 #Save
 filename = data_comb
-path = 'poly_fit_'+filename+'_{}_{}'.format(n_samples, n_tune)
+path = 'poly_fit_'+challenge+'_'+filename+'_{}_{}'.format(n_samples, n_tune)
 print(path)
 
 Hz =np.array(trace.posterior["H_gp"])

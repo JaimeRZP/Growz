@@ -19,7 +19,7 @@ dx = np.mean(np.diff(x_arr))
 z_arr = np.exp(x_arr)-1
 a_arr = 1./(1+z_arr)
 
-challenge = 'cosmo2_seed1004'
+challenge = 'cosmo4_seed1004'
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/challenge/'+challenge
 #path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/products'
 
@@ -322,7 +322,7 @@ print(pm.summary(trace)['mean'][["Wm0"]])
 
 #Save
 filename = data_comb
-path = 'LCDM_'+filename+'_{}_{}'.format(n_samples, n_tune)
+path = 'LCDM_'+challenge+'_'+filename+'_{}_{}'.format(n_samples, n_tune)
 print(path)
 
 Hz =np.array(trace.posterior["H_gp"])
