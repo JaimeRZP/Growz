@@ -27,6 +27,7 @@ class MakeData():
         
         bg = self.cosmo.get_background()
         self.Omega_nu = bg['(.)rho_ur'][-1]/(bg['H [1/Mpc]'][-1])**2
+        self.Wm0 = self.cosmo.Omega_m() 
         self.wm0 = self.cosmo.Omega_m() * self.cosmo.h()**2
         self.wb0 = self.cosmo.Omega_b() * self.cosmo.h()**2
         self.wr0 = (self.cosmo.Omega_g()+self.Omega_nu) * self.cosmo.h()**2
@@ -487,7 +488,7 @@ class MakeData():
                  rd=rd_eBOSS, 
                  idx=eBOSS_idx,
                  U=eBOSS_U)
-            elif mode=='fs8':
+            elif mode=='gro':
                 np.savez(os.path.join(self.path, dataset_name),  
                  data = data_fs8_eBOSS,
                  z=z_eBOSS,
@@ -578,7 +579,7 @@ class MakeData():
                  rd=rd_BOSS, 
                  idx=BOSS_idx, 
                  U=BOSS_U)
-            elif mode=='fs8':
+            elif mode=='gro':
                 np.savez(os.path.join(self.path, dataset_name),  
                  data = data_fs8_BOSS,
                  z=z_BOSS,

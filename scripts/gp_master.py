@@ -21,7 +21,7 @@ a_arr = 1./(1+z_arr)
 
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/products'
 
-data_class = MakeData(z_max, res , path, cosmo='best_fit')
+data_class = MakeData(z_max, res , path)
 Planck = data_class.Planck
 z_planck = data_class.z_planck
 c = data_class.c
@@ -43,8 +43,8 @@ DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 FCMB = data_class.get_FCMB(new=True)
 
-n_samples = 10000
-n_tune = 10000
+n_samples = 30000
+n_tune = 30000
 datadict = {'DESI': DESI,
             'geo_DESI': geo_DESI,
             'gro_DESI': gro_DESI,
@@ -62,7 +62,7 @@ datadict = {'DESI': DESI,
             'CMB': CMB, 
             'FCMB': FCMB}
 
-data_comb = 'DESI_gro' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'Add_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
@@ -114,15 +114,15 @@ with pm.Model() as model:
     ℓ = pm.Uniform("ℓ", 0.001, 7) 
     η = pm.HalfNormal("η", sigma=0.5) 
     H0 = data_class.H0
-    wm0 = pm.Uniform("wm0", 0., 0.45) 
-    wm0_geo = data_class.wm0 
+    Wm0 = pm.Uniform("Wm0", 0., 1.) 
+    wm0_mean = data_class.wm0 
     wr0 = data_class.wr0
     wL0 = data_class.wL0 
     gp_cov = η ** 2 * pm.gp.cov.ExpQuad(1, ℓ) + pm.gp.cov.WhiteNoise(1e-3)
     gp = pm.gp.Latent(cov_func=gp_cov)
     
     #Mean of the gp
-    H = pm.Deterministic('H', 100*tt.sqrt(wm0_geo*(1+z_arr)**3+wr0*(1+z_arr)**4+wL0))
+    H = pm.Deterministic('H', 100*tt.sqrt(wm0_mean*(1+z_arr)**3+wr0*(1+z_arr)**4+wL0))
     
     #Set up Gaussian process
     DH_gp = gp.prior("DH_gp", X=x_arr[:, None]) 
@@ -150,13 +150,12 @@ with pm.Model() as model:
         a5 = 11.9611
         a6 = 2.81343
         a7 = 0.784719
-        rd_gp = pm.Deterministic("rd_gp", 1/(a1*wb0**a2+a3*wm0_geo**a4+a5*wb0**a6*wm0_geo**a7)) 
+        rd_gp = pm.Deterministic("rd_gp", 1/(a1*wb0**a2+a3*wm0_mean**a4+a5*wb0**a6*wm0_mean**a7)) 
         
     if get_fs8:
         #s80 = data_class.s80
         s80 = pm.Normal("s80", 0.8, 0.5)
         E = H_gp/H_gp[0]
-        Om = wm0*(100/H0)**2
         xx = x_arr[::-1]
         ee = E[::-1]
         aa = np.exp(-xx)
@@ -169,9 +168,9 @@ with pm.Model() as model:
         yy = tt.inc_subtensor(yy[0], aa[0]**3*E[0])
 
         for i in range(nz-1):
-            A0 = -1.5*Om/(aa[i]*ee[i])
+            A0 = -1.5*Wm0/(aa[i]*ee[i])
             B0 = -1./(aa[i]**2*ee[i])
-            A1 = -1.5*Om/(aa[i+1]*ee[i+1])
+            A1 = -1.5*Wm0/(aa[i+1]*ee[i+1])
             B1 = -1./(aa[i+1]**2*ee[i+1])
             yy = tt.inc_subtensor(yy[i+1], (1+0.5*dx**2*A0*B0)*yy[i]+0.5*(A0+A1)*dx*dd[i])
             dd = tt.inc_subtensor(dd[i+1],0.5*(B0+B1)*dx*yy[i]+(1+0.5*dx**2*A0*B0)*dd[i])
@@ -324,12 +323,12 @@ with model:
     trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune)
 
 #print r-stat
-print(pm.summary(trace)['r_hat'][["wm0", "ℓ","η"]])
-print(pm.summary(trace)['mean'][["wm0", "ℓ","η"]])
+print(pm.summary(trace)['r_hat'][["Wm0", "ℓ","η"]])
+print(pm.summary(trace)['mean'][["Wm0", "ℓ","η"]])
 
 #Save
 filename = data_comb
-path = filename+'_{}_{}'.format(n_samples, n_tune)
+path = filename+'_Wm'+'_{}_{}'.format(n_samples, n_tune)
 print(path)
 
 n = np.array(trace.posterior["η"]).flatten()
@@ -339,7 +338,7 @@ DHz = DHz.reshape(-1, DHz.shape[-1])
 Hz =np.array(trace.posterior["H_gp"])
 Hz = Hz.reshape(-1, Hz.shape[-1])
 H0_gp = np.array(trace.posterior["H0_gp"]).flatten()
-omega_m = np.array(trace.posterior["wm0"]).flatten()
+Omega_m = np.array(trace.posterior["Wm0"]).flatten()
 
 if get_dM:
     dMz = np.array(trace.posterior["dM_gp"])
@@ -360,7 +359,7 @@ if get_fs8:
     fs8z = np.array(trace.posterior["fs8_gp"])
     fs8z = fs8z.reshape(-1, fs8z.shape[-1])
     s80 = np.array(trace.posterior["s80"]).flatten()
-    S80 = s80*np.sqrt((omega_m/(H0/100)**2)/0.3)
+    S80 = s80*np.sqrt(Omega_m/0.3)
 else: 
     s8z = None 
     fs8z = None
@@ -383,9 +382,10 @@ np.savez(os.path.join(path,'samples.npz'),
          s8z=s8z,
          fs8z=fs8z,
          H0_gp=H0_gp,
-         omega_m=omega_m,
+         Omega_m=Omega_m,
          omega_b=omega_b,
          rd=rd,
+         M=M,
          s80=s80,
          S80=S80)
 
