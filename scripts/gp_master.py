@@ -21,7 +21,7 @@ a_arr = 1./(1+z_arr)
 
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/products'
 
-data_class = MakeData(z_max, res , path)
+data_class = MakeData(z_max, res , path, cosmo='best_fit')
 Planck = data_class.Planck
 z_planck = data_class.z_planck
 c = data_class.c

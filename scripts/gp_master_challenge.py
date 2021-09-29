@@ -21,8 +21,11 @@ a_arr = 1./(1+z_arr)
 
 challenge = 'cosmo4_seed1004'
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/challenge/'+challenge
+cosmo_path = 'LCDM_cosmo44_10000_10000'
 
-data_class = MakeData(z_max, res , path)
+data_class = MakeData(z_max, res, path,
+                      cosmo_mode='other',
+                      cosmo_path=cosmo_path)
 Planck = data_class.Planck
 z_planck = data_class.z_planck
 c = data_class.c
@@ -38,8 +41,8 @@ DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=False)
 FCMB = data_class.get_FCMB(new=False)
 
-n_samples = 10000
-n_tune = 10000
+n_samples = 100
+n_tune = 100
 datadict = {'DESI': DESI,
             'WFIRST': WFIRST,
             'CC': CC,
@@ -93,22 +96,29 @@ for dataset_name in datasets:
 data_cov = data_cov[1:]
 
 #Get mean
-mean_path = 'LCDM_cosmo44_10000_10000' 
-mean_mode = 'Planck'
-H_mean = data_class.get_H_mean(path=mean_path, mode=mean_mode)
-Wm0_mean, wm0_mean = data_class.get_Wm_mean(path=mean_path, mode=mean_mode) 
+#mean_path = 'LCDM_cosmo44_10000_10000' 
+#mean_mode = 'Planck'
+#H_mean = data_class.get_H_mean(path=mean_path, mode=mean_mode)
+#Wm0_mean, wm0_mean = data_class.get_Wm_mean(path=mean_path, mode=mean_mode) 
 
 #base model
 with pm.Model() as model:
     ℓ = pm.Uniform("ℓ", 0.001, 7) 
     η = pm.HalfNormal("η", sigma=0.5) 
-    Wm0 = pm.Uniform("Wm0", 0., 1) 
+    Wm0 = pm.Uniform("Wm0", 0., 1)
+    H0 = data_class.H0 
+    wm0_geo = data_class.wm0 
+    wr0 = data_class.wr0
+    wL0 = data_class.wL0
     gp_cov = η ** 2 * pm.gp.cov.ExpQuad(1, ℓ) + pm.gp.cov.WhiteNoise(1e-3)
     gp = pm.gp.Latent(cov_func=gp_cov)
+
+    #Mean of the gp
+    H = pm.Deterministic('H', 100*tt.sqrt(wm0_geo*(1+z_arr)**3+wr0*(1+z_arr)**4+wL0))
     
     #Set up Gaussian process
     DH_gp = gp.prior("DH_gp", X=x_arr[:, None]) 
-    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H_mean*(1+DH_gp)))
+    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H*(1+DH_gp)))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
     
     if get_dM:
@@ -132,7 +142,7 @@ with pm.Model() as model:
         a5 = 11.9611
         a6 = 2.81343
         a7 = 0.784719
-        rd_gp = pm.Deterministic("rd_gp", 1/(a1*wb0**a2+a3*wm0_mean**a4+a5*wb0**a6*wm0_mean**a7)) 
+        rd_gp = pm.Deterministic("rd_gp", 1/(a1*wb0**a2+a3*wm0_geo**a4+a5*wb0**a6*wm0_geo**a7)) 
         
     if get_fs8:
         #s80 = data_class.s80

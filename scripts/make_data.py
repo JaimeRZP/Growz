@@ -7,7 +7,7 @@ import utils
 from pandas import read_table
 
 class MakeData():
-    def __init__(self, z_max, res, path):
+    def __init__(self, z_max, res, path, cosmo_mode='Planck', cosmo_path=None):
         self.c = 299792458.0
         self.path = path
         self.res = res
@@ -17,7 +17,7 @@ class MakeData():
         self.a_arr = 1./(1+self.z_arr) 
         self.dx = np.mean(np.diff(self.x_arr))
         self.dz = np.diff(self.z_arr)
-        self.cosmo = self.get_cosmo()
+        self.cosmo = self.get_cosmo(mode=cosmo_mode, path=cosmo_path)
             
         if self.z_max > 1085:
             self.z_planck = self.z_arr[self.z_arr<1085]
@@ -39,19 +39,32 @@ class MakeData():
         self.s8_arr, self.fs8_arr = utils.make_fs8(self.H_arr, self.x_arr,
                                                    self.wm0, self.cosmo.sigma8())
 
-    def get_cosmo(self, mode='Planck'):
-        if mode=='Planck'
+    def get_cosmo(self, mode='Planck', path=None):
+        if mode=='Planck':
             params = {'h': 0.6727,
                       'Omega_cdm': 0.265621, #0.237153,
                       'Omega_b': 0.0494116,
                       'Omega_Lambda': 0.6834,
                       'n_s': 0.9649,
                       'ln10^{10}A_s': 3.045}
-        elif mode=='Best_fit':
+        elif mode=='best_fit':
             params = {'h': 0.6833,
                       'Omega_cdm': 0.250763, #0.237153,
                       'Omega_b': 0.0479757,
                       'Omega_Lambda': 0.6996939,
+                      'n_s': 0.9649,
+                      'ln10^{10}A_s': 3.045}
+        elif mode=='other':
+            params = self._get_LCDM_params(path)
+            H0 = np.mean(params['H0_gp'])
+            Wm0 = np.mean(params['Omega_m'])
+            Wb0 = np.mean(params['omega_b']/(params['H0_gp']/100)**2)
+            Wc0 = Wm0 - Wb0
+            WL0 = 1-Wm0-0.0015674
+            params = {'h': H0/100,
+                      'Omega_cdm': Wc0, 
+                      'Omega_b': Wb0,
+                      'Omega_Lambda': WL0,
                       'n_s': 0.9649,
                       'ln10^{10}A_s': 3.045}
         cosmo = classy.Class()
