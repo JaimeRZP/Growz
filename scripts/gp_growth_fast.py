@@ -19,8 +19,10 @@ dx = np.mean(np.diff(x_arr))
 z_arr = np.exp(x_arr)-1
 a_arr = 1./(1+z_arr)
 
+path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/'
 challenge = None #'challenge/cosmo4_seed1004'
-path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/'+challenge
+if challenge is not None:
+    path += challenge 
 
 mean_path = None #'LCDM_cosmo44_10000_10000'
 mean_mode = None #'other'
@@ -144,8 +146,13 @@ print(pm.summary(trace)['mean'][["Wm0", "ℓ","η"]])
 
 #Save
 filename = data_comb
-path = filename+'_'+mean_mode+'_'+challenge+ '_{}_{}'.format(n_samples, n_tune)
-print(path)
+if mean_mode is not None:
+    filename += '_'+mean_mode
+if challenge is not None:
+    filename += '_'+challenge
+
+filename += '_{}_{}'.format(n_samples, n_tune)
+print(filename)
 
 n = np.array(trace.posterior["η"]).flatten()
 l = np.array(trace.posterior["ℓ"]).flatten()
@@ -162,8 +169,8 @@ fs8z = fs8z.reshape(-1, fs8z.shape[-1])
 s80 = np.array(trace.posterior["s80"]).flatten()
 S80 = s80*np.sqrt(Omega_m/0.3)
 
-os.mkdir(path)
-np.savez(os.path.join(path,'samples.npz'), 
+os.mkdir(filename)
+np.savez(os.path.join(filename,'samples.npz'), 
          z_arr = z_arr,
          n=n,
          l=l,

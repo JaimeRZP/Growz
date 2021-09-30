@@ -19,11 +19,13 @@ dx = np.mean(np.diff(x_arr))
 z_arr = np.exp(x_arr)-1
 a_arr = 1./(1+z_arr)
 
-challenge = 'challenge/cosmo4_seed1004'
-path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/'+challenge
+path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/'
+challenge = None #'challenge/cosmo4_seed1004'
+if challenge is not None:
+    path += challenge 
 
 mean_path = None #'LCDM_cosmo44_10000_10000'
-mean_mode = None #'other'
+mean_mode = 'Planck' #'other'
 data_class = MakeData(z_max, res, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
@@ -160,8 +162,13 @@ print(pm.summary(trace)['mean'][["Wm0", "ℓ","η"]])
 
 #Save
 filename = data_comb
-path = filename+'_'+mean_mode+'_'+challenge+ '_{}_{}'.format(n_samples, n_tune)
-print(path)
+if mean_mode is not None:
+    filename += '_'+mean_mode
+if challenge is not None:
+    filename += '_'+challenge
+
+filename += '_{}_{}'.format(n_samples, n_tune)
+print(filename)
 
 n = np.array(trace.posterior["η"]).flatten()
 l = np.array(trace.posterior["ℓ"]).flatten()
@@ -178,8 +185,8 @@ omega_b = np.array(trace.posterior["wb0"]).flatten()
 M = np.array(trace.posterior["M"]).flatten()
 
 
-os.mkdir(path)
-np.savez(os.path.join(path,'samples.npz'), 
+os.mkdir(filename)
+np.savez(os.path.join(filename,'samples.npz'), 
          z_arr = z_arr,
          n=n,
          l=l,
