@@ -19,7 +19,7 @@ dx = np.mean(np.diff(x_arr))
 z_arr = np.exp(x_arr)-1
 a_arr = 1./(1+z_arr)
 
-challenge = 'challenge/cosmo4_seed1004'
+challenge = #'challenge/cosmo4_seed1004'
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/'+challenge
 
 mean_path = None #'LCDM_cosmo44_10000_10000'

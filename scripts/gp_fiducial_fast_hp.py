@@ -19,11 +19,13 @@ dx = np.mean(np.diff(x_arr))
 z_arr = np.exp(x_arr)-1
 a_arr = 1./(1+z_arr)
 
-challenge = 'challenge/cosmo4_seed1004'
-path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/'+challenge
+path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/'
+challenge = None #'challenge/cosmo4_seed1004'
+if challenge is not None:
+    path += challenge 
 
 mean_path = None #'LCDM_cosmo44_10000_10000'
-mean_mode = None #'other'
+mean_mode = 'Planck' #'other'
 data_class = MakeData(z_max, res, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
@@ -31,18 +33,19 @@ Planck = data_class.Planck
 z_planck = data_class.z_planck
 c = data_class.c
 
-DESI = data_class.get_CC(new=True)
-WFIRST = data_class.get_CC(new=True)
-CC = data_class.get_CC(new=True)
-DSS = data_class.get_DSS(new=True)
-BOSS = data_class.get_BOSS(new=True)
-eBOSS = data_class.get_eBOSS(new=True)
-Wigglez = data_class.get_Wigglez(new=True)
-DS17 = data_class.get_DS17(new=True)
-CMB = data_class.get_CMB(new=True)
+DESI = data_class.get_DESI(new=False)
+WFIRST = data_class.get_WFIRST(new=False)
+CC = data_class.get_CC(new=False)
+DSS = data_class.get_DSS(new=False)
+BOSS = data_class.get_BOSS(new=False)
+eBOSS = data_class.get_eBOSS(new=False)
+Wigglez = data_class.get_Wigglez(new=False)
+DS17 = data_class.get_DS17(new=False)
+CMB = data_class.get_CMB(new=False)
 
 n_samples = 10000
 n_tune = 10000
+
 datadict = {'DESI': DESI,
             'WFIRST': WFIRST,
             'CC': CC,
@@ -53,7 +56,7 @@ datadict = {'DESI': DESI,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'DESI_gro' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
@@ -93,7 +96,7 @@ with pm.Model() as model:
     
     #Mean of the gp
     H = pm.Deterministic('H', 100*tt.sqrt(wm0_mean*(1+z_arr)**3+wr0*(1+z_arr)**4+wL0))
-    
+
     #Set up Gaussian process
     DH_gp = gp.prior("DH_gp", X=x_arr[:, None]) 
     H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H*(1+DH_gp)))
@@ -207,8 +210,13 @@ print(pm.summary(trace)['mean'][["Wm0"]])
 
 #Save
 filename = data_comb
-path = filename+'_'+mean_mode+'_'+challenge+ '_{}_{}'.format(n_samples, n_tune)
-print(path)
+if mean_mode is not None:
+    filename += '_'+mean_mode
+if challenge is not None:
+    filename += '_'+challenge
+
+filename += '_{}_{}'.format(n_samples, n_tune)
+print(filename)
 
 DHz = np.array(trace.posterior["DH_gp"])
 DHz = DHz.reshape(-1, DHz.shape[-1])
@@ -228,8 +236,8 @@ s80 = np.array(trace.posterior["s80"]).flatten()
 S80 = s80*np.sqrt(Omega_m/0.3)
 M = np.array(trace.posterior["M"]).flatten()
 
-os.mkdir(path)
-np.savez(os.path.join(path,'samples.npz'), 
+os.mkdir(filename)
+np.savez(os.path.join(filename,'samples.npz'), 
          z_arr = z_arr,
          DHz = DHz,
          Hz=Hz,

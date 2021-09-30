@@ -22,8 +22,8 @@ a_arr = 1./(1+z_arr)
 challenge = 'challenge/cosmo4_seed1004'
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/'+challenge
 
-mean_path = None #'LCDM_cosmo44_10000_10000'
-mean_mode = None #'other'
+mean_path = 'LCDM_cosmo44_10000_10000'
+mean_mode = 'other'
 data_class = MakeData(z_max, res, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
@@ -53,7 +53,7 @@ datadict = {'DESI': DESI,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'DESI_gro' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],

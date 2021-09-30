@@ -42,6 +42,7 @@ class MakeData():
 
     def get_cosmo(self, mode='Planck', path=None):
         if mode=='Planck':
+            print('Using Planck mean')
             params = {'h': 0.6727,
                       'Omega_cdm': 0.265621, #0.237153,
                       'Omega_b': 0.0494116,
@@ -49,6 +50,7 @@ class MakeData():
                       'n_s': 0.9649,
                       'ln10^{10}A_s': 3.045}
         elif mode=='best_fit':
+            print('Using best fit mean')
             params = {'h': 0.6833,
                       'Omega_cdm': 0.250763, #0.237153,
                       'Omega_b': 0.0479757,
@@ -56,10 +58,11 @@ class MakeData():
                       'n_s': 0.9649,
                       'ln10^{10}A_s': 3.045}
         elif mode=='other':
-            params = self._get_LCDM_params(path)
-            H0 = np.mean(params['H0_gp'])
-            Wm0 = np.mean(params['Omega_m'])
-            Wb0 = np.mean(params['omega_b']/(params['H0_gp']/100)**2)
+            print('Using mean from file')
+            samples = self._get_LCDM_params(path)
+            H0 = np.mean(samples['H0_gp'])
+            Wm0 = np.mean(samples['Omega_m'])
+            Wb0 = np.mean(samples['omega_b']/(samples['H0_gp']/100)**2)
             Wc0 = Wm0 - Wb0
             WL0 = 1-Wm0-0.0015674
             params = {'h': H0/100,
@@ -68,6 +71,8 @@ class MakeData():
                       'Omega_Lambda': WL0,
                       'n_s': 0.9649,
                       'ln10^{10}A_s': 3.045}
+        else:
+            print('Not recognized option')
         cosmo = classy.Class()
         cosmo.set({ 'output':'mPk', 'P_k_max_h/Mpc': 20, 'z_max_pk': 1085})
         cosmo.set(params)
