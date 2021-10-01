@@ -43,8 +43,8 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=False)
 
-n_samples = 10000
-n_tune = 10000
+n_samples = 15000
+n_tune = 15000
 datadict = {'DESI': DESI,
             'WFIRST': WFIRST,
             'CC': CC,
@@ -55,7 +55,7 @@ datadict = {'DESI': DESI,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'DESI_gro' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
@@ -88,7 +88,7 @@ with pm.Model() as model:
     H0 = data_class.H0
     Wm0 = pm.Uniform("Wm0", 0., 1.) 
     Wm0_mean = pm.Uniform("Wm0_mean", 0., 1.) 
-    wm0_mean = pm.Deterministic("wm0_mean", Wm0_geo*(H0/100)**2)
+    wm0_mean = pm.Deterministic("wm0_mean", Wm0_mean*(H0/100)**2)
     wr0 = data_class.wr0
     wL0 = data_class.wL0 
     gp_cov = η ** 2 * pm.gp.cov.ExpQuad(1, ℓ) + pm.gp.cov.WhiteNoise(1e-3)
@@ -215,7 +215,7 @@ if mean_mode is not None:
 if challenge is not None:
     filename += '_'+challenge
 
-filename += '_{}_{}'.format(n_samples, n_tune)
+filename += 'fm_{}_{}'.format(n_samples, n_tune)
 print(filename)
 
 n = np.array(trace.posterior["η"]).flatten()

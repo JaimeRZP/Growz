@@ -20,10 +20,11 @@ z_arr = np.exp(x_arr)-1
 a_arr = 1./(1+z_arr)
 
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/'
-challenge = None #'challenge/cosmo4_seed1004'
+challenge = 'cosmo44'
 if challenge is not None:
-    path += challenge 
+    path += 'challenge/'+'cosmo{}_seed100{}'.format(challenge[-2], challenge[-1]) 
 
+print('data path: ', path)
 mean_path = None #'LCDM_cosmo44_10000_10000'
 mean_mode = 'Planck' #'other'
 data_class = MakeData(z_max, res, path,
@@ -33,18 +34,18 @@ Planck = data_class.Planck
 z_planck = data_class.z_planck
 c = data_class.c
 
-DESI = data_class.get_DESI(new=True)
-WFIRST = data_class.get_WFIRST(new=True)
-CC = data_class.get_CC(new=True)
-DSS = data_class.get_DSS(new=True)
-BOSS = data_class.get_BOSS(new=True)
-eBOSS = data_class.get_eBOSS(new=True)
-Wigglez = data_class.get_Wigglez(new=True)
-DS17 = data_class.get_DS17(new=True)
-CMB = data_class.get_CMB(new=True)
+DESI = data_class.get_DESI(new=False)
+WFIRST = data_class.get_WFIRST(new=False)
+CC = data_class.get_CC(new=False)
+DSS = data_class.get_DSS(new=False)
+BOSS = data_class.get_BOSS(new=False)
+eBOSS = data_class.get_eBOSS(new=False)
+Wigglez = data_class.get_Wigglez(new=False)
+DS17 = data_class.get_DS17(new=False)
+CMB = data_class.get_CMB(new=False)
 
-n_samples = 10000
-n_tune = 10000
+n_samples = 10
+n_tune = 10
 datadict = {'DESI': DESI,
             'WFIRST': WFIRST,
             'CC': CC,
@@ -55,7 +56,7 @@ datadict = {'DESI': DESI,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'DESI_gro' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
@@ -215,7 +216,7 @@ if mean_mode is not None:
 if challenge is not None:
     filename += '_'+challenge
 
-filename += '_{}_{}'.format(n_samples, n_tune)
+filename += 'A0_{}_{}'.format(n_samples, n_tune)
 print(filename)
 
 A0 = np.array(trace.posterior["A0"]).flatten()

@@ -43,8 +43,8 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=False)
 
-n_samples = 10000
-n_tune = 10000
+n_samples = 15000
+n_tune = 15000
 
 datadict = {'DESI': DESI,
             'WFIRST': WFIRST,
@@ -215,7 +215,7 @@ if mean_mode is not None:
 if challenge is not None:
     filename += '_'+challenge
 
-filename += '_{}_{}'.format(n_samples, n_tune)
+filename += 'hp_{}_{}'.format(n_samples, n_tune)
 print(filename)
 
 DHz = np.array(trace.posterior["DH_gp"])

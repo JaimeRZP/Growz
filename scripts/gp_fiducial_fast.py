@@ -19,13 +19,14 @@ dx = np.mean(np.diff(x_arr))
 z_arr = np.exp(x_arr)-1
 a_arr = 1./(1+z_arr)
 
-path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/'
-challenge = None #'challenge/cosmo4_seed1004'
+path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/' 
+challenge = 'cosmo44'
 if challenge is not None:
-    path += challenge 
+    path += 'challenge/'+'cosmo{}_seed100{}'.format(challenge[-2], challenge[-1])
 
-mean_path = None #'LCDM_cosmo44_10000_10000'
-mean_mode = 'Planck' #'other'
+print('data path: ', path)
+mean_path = 'LCDM_cosmo44_10000_10000'
+mean_mode = 'other'
 data_class = MakeData(z_max, res, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
@@ -43,8 +44,8 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=False)
 
-n_samples = 10000
-n_tune = 10000
+n_samples = 10
+n_tune = 10
 datadict = {'DESI': DESI,
             'WFIRST': WFIRST,
             'CC': CC,
