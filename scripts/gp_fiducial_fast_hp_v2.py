@@ -19,14 +19,13 @@ dx = np.mean(np.diff(x_arr))
 z_arr = np.exp(x_arr)-1
 a_arr = 1./(1+z_arr)
 
-path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/' 
-challenge = 'cosmo44'
+path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/'
+challenge = None #'challenge/cosmo4_seed1004'
 if challenge is not None:
-    path += 'challenge/'+'cosmo{}_seed100{}'.format(challenge[-2], challenge[-1])
+    path += challenge 
 
-print('data path: ', path)
-mean_path = 'LCDM_cosmo44_10000_10000'
-mean_mode = 'other' #'Planck'
+mean_path = None #'LCDM_cosmo44_10000_10000'
+mean_mode = 'Planck' #'other'
 data_class = MakeData(z_max, res, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
@@ -46,6 +45,7 @@ CMB = data_class.get_CMB(new=False)
 
 n_samples = 15000
 n_tune = 15000
+
 datadict = {'DESI': DESI,
             'WFIRST': WFIRST,
             'CC': CC,
@@ -84,19 +84,19 @@ data_cov = data_cov[1:]
 
 #base model
 with pm.Model() as model:
-    ℓ = pm.Uniform("ℓ", 0.001, 7) 
+    ℓ = 0.85 
     η = pm.HalfNormal("η", sigma=0.5) 
     H0 = data_class.H0
     Wm0 = pm.Uniform("Wm0", 0., 1.) 
-    wm0_geo = data_class.wm0 
+    wm0_mean = data_class.wm0 
     wr0 = data_class.wr0
     wL0 = data_class.wL0 
     gp_cov = η ** 2 * pm.gp.cov.ExpQuad(1, ℓ) + pm.gp.cov.WhiteNoise(1e-3)
     gp = pm.gp.Latent(cov_func=gp_cov)
     
     #Mean of the gp
-    H = pm.Deterministic('H', 100*tt.sqrt(wm0_geo*(1+z_arr)**3+wr0*(1+z_arr)**4+wL0))
-    
+    H = pm.Deterministic('H', 100*tt.sqrt(wm0_mean*(1+z_arr)**3+wr0*(1+z_arr)**4+wL0))
+
     #Set up Gaussian process
     DH_gp = gp.prior("DH_gp", X=x_arr[:, None]) 
     H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H*(1+DH_gp)))
@@ -122,7 +122,7 @@ with pm.Model() as model:
     a5 = 11.9611
     a6 = 2.81343
     a7 = 0.784719
-    rd_gp = pm.Deterministic("rd_gp", 1/(a1*wb0**a2+a3*wm0_geo**a4+a5*wb0**a6*wm0_geo**a7)) 
+    rd_gp = pm.Deterministic("rd_gp", 1/(a1*wb0**a2+a3*wm0_mean**a4+a5*wb0**a6*wm0_mean**a7)) 
         
 
     #s80 = data_class.s80
@@ -205,8 +205,8 @@ with pm.Model() as model:
     trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune)
 
 #print r-stat
-print(pm.summary(trace)['r_hat'][["Wm0", "ℓ","η"]])
-print(pm.summary(trace)['mean'][["Wm0", "ℓ","η"]])
+print(pm.summary(trace)['r_hat'][["Wm0", "η"]])
+print(pm.summary(trace)['mean'][["Wm0", "η"]])
 
 #Save
 filename = data_comb
@@ -214,12 +214,11 @@ if mean_mode is not None:
     filename += '_'+mean_mode
 if challenge is not None:
     filename += '_'+challenge
-    
-filename += '_{}_{}'.format(n_samples, n_tune)
+
+filename += 'hpv2_{}_{}'.format(n_samples, n_tune)
 print(filename)
 
 n = np.array(trace.posterior["η"]).flatten()
-l = np.array(trace.posterior["ℓ"]).flatten()
 DHz = np.array(trace.posterior["DH_gp"])
 DHz = DHz.reshape(-1, DHz.shape[-1])
 Hz =np.array(trace.posterior["H_gp"])
@@ -236,17 +235,12 @@ fs8z = np.array(trace.posterior["fs8_gp"])
 fs8z = fs8z.reshape(-1, fs8z.shape[-1])
 s80 = np.array(trace.posterior["s80"]).flatten()
 S80 = s80*np.sqrt(Omega_m/0.3)
-
-if 'DS17' in datasets:
-    M = np.array(trace.posterior["M"]).flatten()
-else:
-    M = None
+M = np.array(trace.posterior["M"]).flatten()
 
 os.mkdir(filename)
-np.savez(os.path.join(filename,'samples.npz'), 
+np.savez(os.path.join(filename,'samples.npz'),
+         n=n, 
          z_arr = z_arr,
-         n=n,
-         l=l,
          DHz = DHz,
          Hz=Hz,
          dMz=dMz,
@@ -256,5 +250,6 @@ np.savez(os.path.join(filename,'samples.npz'),
          Omega_m=Omega_m,
          omega_b=omega_b,
          rd=rd,
+         M=M,
          s80=s80,
          S80=S80)

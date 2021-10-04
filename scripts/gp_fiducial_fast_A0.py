@@ -44,8 +44,8 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=False)
 
-n_samples = 10
-n_tune = 10
+n_samples = 15000
+n_tune = 15000
 datadict = {'DESI': DESI,
             'WFIRST': WFIRST,
             'CC': CC,
@@ -252,7 +252,7 @@ np.savez(os.path.join(filename,'samples.npz'),
          s8z=s8z,
          fs8z=fs8z,
          H0_gp=H0_gp,
-         omega_m=omega_m,
+         Omega_m=Omega_m,
          omega_b=omega_b,
          rd=rd,
          M=M,
