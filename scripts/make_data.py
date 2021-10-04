@@ -81,11 +81,11 @@ class MakeData():
                       'Omega_Lambda': 0.6834,
                       'n_s': 0.9649,
                       'ln10^{10}A_s': 3.045}
-            self.W0 = np.mean(params['W0'])
-            self.W1 = np.mean(params['W1'])
-            self.W2 = np.mean(params['W2'])
-            self.W3 = np.mean(params['W3'])
-            self.W4 = np.mean(params['W4'])
+            self.W0 = np.mean(samples['W0'])
+            self.W1 = np.mean(samples['W1'])
+            self.W2 = np.mean(samples['W2'])
+            self.W3 = np.mean(samples['W3'])
+            self.W4 = np.mean(samples['W4'])
         else:
             print('Not recognized option')
         cosmo = classy.Class()

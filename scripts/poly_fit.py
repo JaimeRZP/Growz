@@ -370,7 +370,12 @@ else:
 
 os.mkdir(path)
 np.savez(os.path.join(path,'samples.npz'), 
-         z_arr = z_arr,
+         W0=W0,
+         W1=W1,
+         W2=W2,
+         W3=W3,
+         W4=W4,
+         z_arr=z_arr,
          Hz=Hz,
          dMz=dMz,
          s8z=s8z,

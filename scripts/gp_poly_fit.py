@@ -25,8 +25,8 @@ if challenge is not None:
     path += 'challenge/'+'cosmo{}_seed100{}'.format(challenge[-2], challenge[-1])
 
 print('data path: ', path)
-mean_path = 'LCDM_cosmo44_10000_10000'
-mean_mode = 'other' #'Planck'
+mean_path = 'poly_fit_cosmo44_10000_10000'
+mean_mode = 'poly_fit' #'Planck'
 data_class = MakeData(z_max, res, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
