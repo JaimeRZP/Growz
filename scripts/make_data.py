@@ -58,8 +58,8 @@ class MakeData():
                       'n_s': 0.9649,
                       'ln10^{10}A_s': 3.045}
         elif mode=='other':
-            print('Using mean from file')
-            samples = self._get_LCDM_params(path)
+            print('Using LCDM mean from file')
+            samples = self._get_params_from_file(path)
             H0 = np.mean(samples['H0_gp'])
             Wm0 = np.mean(samples['Omega_m'])
             Wb0 = np.mean(samples['omega_b']/(samples['H0_gp']/100)**2)
@@ -71,6 +71,21 @@ class MakeData():
                       'Omega_Lambda': WL0,
                       'n_s': 0.9649,
                       'ln10^{10}A_s': 3.045}
+        elif mode=='poly_fit':
+            print('Using poly fit mean from file')
+            samples = self._get_params_from_file(path)
+            H0 = np.mean(samples['H0_gp'])
+            sparams = {'h': H0/100,
+                      'Omega_cdm': 0.265621, #0.237153,
+                      'Omega_b': 0.0494116,
+                      'Omega_Lambda': 0.6834,
+                      'n_s': 0.9649,
+                      'ln10^{10}A_s': 3.045}
+            self.W0 = np.mean(params['W0'])
+            self.W1 = np.mean(params['W1'])
+            self.W2 = np.mean(params['W2'])
+            self.W3 = np.mean(params['W3'])
+            self.W4 = np.mean(params['W4'])
         else:
             print('Not recognized option')
         cosmo = classy.Class()
@@ -99,14 +114,14 @@ class MakeData():
         if mode=='Planck':
             H_mean = self.H_arr
         elif mode=='LCDM':
-            params = self._get_LCDM_params(path)
+            params = self._get_params_from_file(path)
             H0 = np.mean(params['H0_gp'])
             Wm0 = np.mean(params['Omega_m'])
             Wr0 = np.mean(self.wr0/(self.H0/100)**2)
             WL0 = 1-Wm0-Wr0
             H_mean = H0**2*np.sqrt(Wm0*(1+z_arr)**3+Wr0*(1+z_arr)**4+WL0)
         elif mode=='poly':
-            params = self._get_poly_fit_params(path)
+            params = self._get_params_from_file(path)
             H0 = np.mean(params['H0_gp'])
             W0 = np.mean(params['W0'])
             W1 = np.mean(params['W1'])
@@ -122,19 +137,15 @@ class MakeData():
             Wm0_mean = self.cosmo.Omega_m
             wm0_mean = self.wm0
         elif mode=='LCDM':
-            params = self._get_LCDM_params(path)
+            params = self._get_params_from_file(path)
             Wm0_mean = np.mean(params['Omega_m'])
             H0_mean = np.mean(params['H0_gp'])
             wm0_mean = Wm0_mean*(H0_mean/100)**2
         return Wm0_mean, wm0_mean
         
-    def _get_LCDM_params(self, path):
+    def _get_params_from_file(self, path):
         path += '/samples.npz'
         return np.load(path)
-    
-    def _get_poly_fit_params(self, path):
-        path += '/samples.npz'
-        return np.loadtxt(path)
                 
     def get_WFIRST(self, z_arr=None, new='False'):
         if z_arr is None:
