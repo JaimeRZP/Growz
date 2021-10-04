@@ -25,7 +25,7 @@ if challenge is not None:
     path += challenge 
 
 mean_path = None #'LCDM_cosmo44_10000_10000'
-mean_mode = 'Planck' #'other'
+mean_mode = 'best_fit' #'other'
 data_class = MakeData(z_max, res, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
@@ -33,15 +33,15 @@ Planck = data_class.Planck
 z_planck = data_class.z_planck
 c = data_class.c
 
-DESI = data_class.get_CC(new=True)
-WFIRST = data_class.get_CC(new=True)
-CC = data_class.get_CC(new=True)
-DSS = data_class.get_DSS(new=True)
-BOSS = data_class.get_BOSS(new=True)
-eBOSS = data_class.get_eBOSS(new=True)
-Wigglez = data_class.get_Wigglez(new=True)
-DS17 = data_class.get_DS17(new=True)
-CMB = data_class.get_CMB(new=True)
+DESI = data_class.get_CC(new=False)
+WFIRST = data_class.get_CC(new=False)
+CC = data_class.get_CC(new=False)
+DSS = data_class.get_DSS(new=False)
+BOSS = data_class.get_BOSS(new=False)
+eBOSS = data_class.get_eBOSS(new=False)
+Wigglez = data_class.get_Wigglez(new=False)
+DS17 = data_class.get_DS17(new=False)
+CMB = data_class.get_CMB(new=False)
 
 n_samples = 15000
 n_tune = 15000
