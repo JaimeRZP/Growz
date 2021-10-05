@@ -19,9 +19,17 @@ dx = np.mean(np.diff(x_arr))
 z_arr = np.exp(x_arr)-1
 a_arr = 1./(1+z_arr)
 
-path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/products'
+path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/' 
+challenge =  None #'cosmo44'
+if challenge is not None:
+    path += 'challenge/'+'cosmo{}_seed100{}'.format(challenge[-2], challenge[-1])
 
-data_class = MakeData(z_max, res , path)
+print('data path: ', path)
+mean_path =  None #'LCDM_cosmo44_10000_10000'
+mean_mode = 'Planck' #'Planck'
+data_class = MakeData(z_max, res, path,
+                      cosmo_mode=mean_mode,
+                      cosmo_path=mean_path)
 Planck = data_class.Planck
 z_planck = data_class.z_planck
 c = data_class.c
