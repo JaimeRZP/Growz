@@ -236,11 +236,7 @@ fs8z = np.array(trace.posterior["fs8_gp"])
 fs8z = fs8z.reshape(-1, fs8z.shape[-1])
 s80 = np.array(trace.posterior["s80"]).flatten()
 S80 = s80*np.sqrt(Omega_m/0.3)
-
-if 'DS17' in datasets:
-    M = np.array(trace.posterior["M"]).flatten()
-else:
-    M = None
+M = np.array(trace.posterior["M"]).flatten()
 
 os.mkdir(filename)
 np.savez(os.path.join(filename,'samples.npz'), 
