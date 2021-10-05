@@ -41,16 +41,16 @@ CC = data_class.get_CC(new=False)
 DSS = data_class.get_DSS(new=False)
 BOSS = data_class.get_BOSS(new=False)
 geo_BOSS = data_class.get_BOSS(new=False, mode='geo')
-fs8_BOSS = data_class.get_BOSS(new=False, mode='fs8')
+gro_BOSS = data_class.get_BOSS(new=False, mode='gro')
 eBOSS = data_class.get_eBOSS(new=False)
 geo_eBOSS = data_class.get_eBOSS(new=False, mode='geo')
-fs8_eBOSS = data_class.get_eBOSS(new=False, mode='fs8')
+gro_eBOSS = data_class.get_eBOSS(new=False, mode='gro')
 Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=False)
 
-n_samples = 15000
-n_tune = 15000
+n_samples = 20000
+n_tune = 20000
 
 datadict = {'DESI': DESI,
             'geo_DESI': geo_DESI,
@@ -60,10 +60,10 @@ datadict = {'DESI': DESI,
             'DS17': DS17, 
             'BOSS': BOSS,
             'geo_BOSS': geo_BOSS,
-            'fs8_BOSS': fs8_BOSS,
+            'gro_BOSS': gro_BOSS,
             'eBOSS': eBOSS,
             'geo_eBOSS': geo_eBOSS,
-            'fs8_eBOSS': fs8_eBOSS,
+            'gro_eBOSS': gro_eBOSS,
             'Wigglez': Wigglez,
             'DSS': DSS,
             'CMB': CMB}
@@ -73,8 +73,7 @@ data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
              'All_CMB_geo': ['CC', 'DS17', 'geo_BOSS', 'geo_eBOSS', 'CMB'],
-             'All_gro': ['fs8_BOSS', 'fs8_eBOSS', 'Wigglez', 'DSS'],
-             'All_CMB_gro': ['fs8_BOSS', 'fs8_eBOSS', 'Wigglez', 'DSS', 'CMB'],
+             'All_gro': ['gro_BOSS', 'gro_eBOSS', 'Wigglez', 'DSS'],
              'SDSS': ['BOSS', 'eBOSS'],
              'SDSS_CMB': ['BOSS', 'eBOSS', 'CMB'],
              'Add': ['CC', 'DS17', 'Wigglez', 'DSS'],
@@ -261,8 +260,8 @@ if 'geo_BOSS' in datasets:
         B_perp = pm.Deterministic("B_perp", B_dM*BOSS['rd']/rd_gp)
         theory = tt.concatenate([theory, B_para, B_perp])
         
-if 'fs8_BOSS' in datasets:
-    print('Adding fs8_BOSS')
+if 'gro_BOSS' in datasets:
+    print('Adding gro_BOSS')
     with model:
         B_fs8 = pm.Deterministic("B_fs8", 
                    tt.as_tensor_variable(fs8_gp[BOSS['idx']]+(fs8_gp[BOSS['idx']+1]-fs8_gp[BOSS['idx']])*BOSS['U']))
@@ -288,8 +287,8 @@ if 'geo_eBOSS' in datasets:
         eB_perp = pm.Deterministic("eB_perp", eB_dM/rd_gp)
         theory = tt.concatenate([theory, eB_para, eB_perp])
 
-if 'fs8_eBOSS' in datasets:
-    print('Adding fs8_eBOSS')
+if 'gro_eBOSS' in datasets:
+    print('Adding gro_eBOSS')
     with model:
         eB_fs8 = pm.Deterministic("eB_fs8", 
                    tt.as_tensor_variable(fs8_gp[eBOSS['idx']]+(fs8_gp[eBOSS['idx']+1]-fs8_gp[eBOSS['idx']])*eBOSS['U']))
@@ -314,6 +313,10 @@ if 'CMB' in datasets:
         dM_star = tt.as_tensor_variable(dM_gp[CMB['idx']]+(dM_gp[CMB['idx']+1]-dM_gp[CMB['idx']])*CMB['U'])
         t100 = pm.Deterministic('t100', 100*rd_gp/dM_star) 
         theory = tt.concatenate([theory, t100])
+
+with model:
+        lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
+        trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune)
 
 #print r-stat
 print(pm.summary(trace)['r_hat'][["Wm0", "η"]])

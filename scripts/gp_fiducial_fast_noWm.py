@@ -55,13 +55,12 @@ datadict = {'DESI': DESI,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'All_gro' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
              'All_CMB_geo': ['CC', 'DS17', 'geo_BOSS', 'geo_eBOSS', 'CMB'],
-             'All_gro': ['fs8_BOSS', 'fs8_eBOSS', 'Wigglez', 'DSS'],
-             'All_CMB_gro': ['fs8_BOSS', 'fs8_eBOSS', 'Wigglez', 'DSS', 'CMB'],
+             'All_gro': ['gro_BOSS', 'gro_eBOSS', 'Wigglez', 'DSS'],
              'SDSS': ['BOSS', 'eBOSS'],
              'SDSS_CMB': ['BOSS', 'eBOSS', 'CMB'],
              'Add': ['CC', 'DS17', 'Wigglez', 'DSS'],
