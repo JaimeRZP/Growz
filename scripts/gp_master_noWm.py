@@ -25,35 +25,33 @@ if challenge is not None:
     path += 'challenge/'+'cosmo{}_seed100{}'.format(challenge[-2], challenge[-1])
 
 print('data path: ', path)
-# It shouldn't really matter what we put
-# here since we are fitting the mean
 mean_path =  None #'LCDM_cosmo44_10000_10000'
-mean_mode = 'Planck' #'Planck'
+mean_mode = 'best_fit' #'Planck'
 data_class = MakeData(z_max, res, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
 Planck = data_class.Planck
 z_planck = data_class.z_planck
 c = data_class.c
-DESI = data_class.get_DESI(new=True, mode=None)
-geo_DESI = data_class.get_DESI(new=True, mode='geo')
-gro_DESI = data_class.get_DESI(new=True, mode='gro')
-WFIRST = data_class.get_WFIRST(new=True)
-CC = data_class.get_CC(new=True)
-DSS = data_class.get_DSS(new=True)
-BOSS = data_class.get_BOSS(new=True)
-geo_BOSS = data_class.get_BOSS(new=True, mode='geo')
-gro_BOSS = data_class.get_BOSS(new=True, mode='gro')
-eBOSS = data_class.get_eBOSS(new=True)
-geo_eBOSS = data_class.get_eBOSS(new=True, mode='geo')
-gro_eBOSS = data_class.get_eBOSS(new=True, mode='gro')
-Wigglez = data_class.get_Wigglez(new=True)
-DS17 = data_class.get_DS17(new=True)
-CMB = data_class.get_CMB(new=True)
-FCMB = data_class.get_FCMB(new=True)
+DESI = data_class.get_DESI(new=False, mode=None)
+geo_DESI = data_class.get_DESI(new=False, mode='geo')
+gro_DESI = data_class.get_DESI(new=False, mode='gro')
+WFIRST = data_class.get_WFIRST(new=False)
+CC = data_class.get_CC(new=False)
+DSS = data_class.get_DSS(new=False)
+BOSS = data_class.get_BOSS(new=False)
+geo_BOSS = data_class.get_BOSS(new=False, mode='geo')
+gro_BOSS = data_class.get_BOSS(new=False, mode='gro')
+eBOSS = data_class.get_eBOSS(new=False)
+geo_eBOSS = data_class.get_eBOSS(new=False, mode='geo')
+gro_eBOSS = data_class.get_eBOSS(new=False, mode='gro')
+Wigglez = data_class.get_Wigglez(new=False)
+DS17 = data_class.get_DS17(new=False)
+CMB = data_class.get_CMB(new=False)
+FCMB = data_class.get_FCMB(new=False)
 
-n_samples = 15000
-n_tune = 15000
+n_samples = 10 #15000
+n_tune = 10 #15000
 datadict = {'DESI': DESI,
             'geo_DESI': geo_DESI,
             'gro_DESI': gro_DESI,
@@ -335,7 +333,12 @@ print(pm.summary(trace)['mean'][["ℓ","η"]])
 
 #Save
 filename = data_comb
+if mean_mode is not None:
+    filename = filename+'_'+mean_mode
+if challenge is not None:
+    filename = filename+'_'+challenge
 path = filename+'_noWm'+'_{}_{}'.format(n_samples, n_tune)
+print(path)
 
 n = np.array(trace.posterior["η"]).flatten()
 l = np.array(trace.posterior["ℓ"]).flatten()

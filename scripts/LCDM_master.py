@@ -25,10 +25,8 @@ if challenge is not None:
     path += 'challenge/'+'cosmo{}_seed100{}'.format(challenge[-2], challenge[-1])
 
 print('data path: ', path)
-# It shouldn't really matter what we put
-# here since we are fitting the mean
 mean_path =  None #'LCDM_cosmo44_10000_10000'
-mean_mode = 'Planck' #'Planck'
+mean_mode = 'best_fit' #'Planck'
 data_class = MakeData(z_max, res, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
@@ -109,6 +107,7 @@ data_cov = data_cov[1:]
 with pm.Model() as model:
     Wm0 = pm.Uniform("Wm0", 0., 1.)
     H0 = pm.Normal("H0", mu=70, sigma=5)
+    wm0 = pm.Deterministic("wm0", Wm0*(H0/100)**2)
     Wr0 = data_class.cosmo.Omega_g()+data_class.Omega_nu
     WL0 = pm.Deterministic("WL0", 1-Wm0-Wr0) 
     
@@ -136,7 +135,7 @@ with pm.Model() as model:
     a5 = 11.9611
     a6 = 2.81343
     a7 = 0.784719
-    rd_gp = pm.Deterministic("rd_gp", 1/(a1*wb0**a2+a3*wm0_geo**a4+a5*wb0**a6*wm0_geo**a7)) 
+    rd_gp = pm.Deterministic("rd_gp", 1/(a1*wb0**a2+a3*wm0**a4+a5*wb0**a6*wm0**a7)) 
         
 
     #s80 = data_class.s80

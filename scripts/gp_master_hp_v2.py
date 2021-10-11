@@ -49,8 +49,8 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=False)
 
-n_samples = 20000
-n_tune = 20000
+n_samples = 15000
+n_tune = 15000
 
 datadict = {'DESI': DESI,
             'geo_DESI': geo_DESI,
@@ -371,7 +371,7 @@ if 'DS17' in datasets:
 else:
     M = None
 
-os.mkdir(path)
+os.mkdir(filename)
 np.savez(os.path.join(path,'samples.npz'), 
          z_arr = z_arr,
          n=n,
