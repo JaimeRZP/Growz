@@ -115,7 +115,7 @@ for dataset_name in datasets:
 data_cov = data_cov[1:]
 
 with pm.Model() as model:
-    ℓ = pm.Uniform("ℓ", 0.001, 7) 
+    ℓ = 0.85 # pm.Uniform("ℓ", 0.001, 7) 
     η = pm.HalfNormal("η", sigma=0.5) 
     H0 = data_class.H0
     Wm0 = pm.Uniform("Wm0", 0., 1.) 
@@ -372,7 +372,7 @@ else:
     M = None
 
 os.mkdir(filename)
-np.savez(os.path.join(path,'samples.npz'), 
+np.savez(os.path.join(filename,'samples.npz'), 
          z_arr = z_arr,
          n=n,
          DHz = DHz,
