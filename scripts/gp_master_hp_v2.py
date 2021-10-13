@@ -49,8 +49,8 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=False)
 
-n_samples = 15000
-n_tune = 15000
+n_samples = 10000
+n_tune = 10000
 
 datadict = {'DESI': DESI,
             'geo_DESI': geo_DESI,
@@ -68,7 +68,7 @@ datadict = {'DESI': DESI,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'All_CMB_geo' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'DESI_CMB_geo' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
@@ -115,7 +115,7 @@ for dataset_name in datasets:
 data_cov = data_cov[1:]
 
 with pm.Model() as model:
-    ℓ = 0.85 # pm.Uniform("ℓ", 0.001, 7) 
+    ℓ = 0.0001 # pm.Uniform("ℓ", 0.001, 7) 
     η = pm.HalfNormal("η", sigma=0.5) 
     H0 = data_class.H0
     Wm0 = pm.Uniform("Wm0", 0., 1.) 
@@ -329,7 +329,7 @@ if mean_mode is not None:
 if challenge is not None:
     filename += '_'+challenge
 
-filename += 'hpv2_{}_{}'.format(n_samples, n_tune)
+filename += 'l_{}_{}_{}'.format(ℓ, n_samples, n_tune)
 print(filename)
 
 n = np.array(trace.posterior["η"]).flatten()

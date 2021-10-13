@@ -20,17 +20,17 @@ z_arr = np.exp(x_arr)-1
 a_arr = 1./(1+z_arr)
 
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/' 
-challenge = 'cosmo44'
+challenge = 'cosmo41'
 if challenge is not None:
     path += 'challenge/'+'cosmo{}_seed100{}'.format(challenge[-2], challenge[-1])
 
 print('data path: ', path)
-mean_path =  None #'LCDM_cosmo44_10000_10000'
-mean_mode = 'best_fit' #'Planck'
-data_class = MakeData(z_max, res, path,
-                      cosmo_mode=mean_mode,
-                      cosmo_path=mean_path)
+mean_path =  None #'LCDM_cosmo44_15000_15000'
+mean_mode = 'Planck' #'Planck'
+data_class = MakeData(z_max, res, path)
 Planck = data_class.Planck
+z_planck = data_class.z_planck
+c = data_class.c
 z_planck = data_class.z_planck
 c = data_class.c
 
@@ -127,7 +127,7 @@ with pm.Model() as model:
         
 
     #https://arxiv.org/pdf/2106.00428.pdf
-    wb0 =  pm.Uniform("wb0", 0.022, 0.023)
+    wb0 =  pm.Uniform("wb0", 0.0, 0.45)
     a1 = 0.00785436
     a2 = 0.177084
     a3 = 0.00912388
@@ -222,7 +222,7 @@ print(pm.summary(trace)['r_hat'][["Wm0"]])
 print(pm.summary(trace)['mean'][["Wm0"]])
 
 #Save
-filename = 'LCDM_'+data_comb
+filename = 'LCDM_freewb_'+data_comb
 if mean_mode is not None:
     filename += '_'+mean_mode
 if challenge is not None:

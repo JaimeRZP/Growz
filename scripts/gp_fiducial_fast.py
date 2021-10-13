@@ -20,12 +20,12 @@ z_arr = np.exp(x_arr)-1
 a_arr = 1./(1+z_arr)
 
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/' 
-challenge = 'cosmo44'
+challenge = 'cosmo43'
 if challenge is not None:
     path += 'challenge/'+'cosmo{}_seed100{}'.format(challenge[-2], challenge[-1])
 
 print('data path: ', path)
-mean_path = 'LCDM_cosmo44_15000_15000'
+mean_path = 'challenge/cosmo4/freewb/LCDM_freewb_All_CMB_Planck_cosmo43_15000_15000'
 mean_mode = 'other' #'Planck'
 data_class = MakeData(z_max, res, path,
                       cosmo_mode=mean_mode,
@@ -114,7 +114,7 @@ with pm.Model() as model:
         
 
     #https://arxiv.org/pdf/2106.00428.pdf
-    wb0 =  pm.Uniform("wb0", 0.022, 0.023)
+    wb0 =  pm.Uniform("wb0", 0.0, 0.45)
     a1 = 0.00785436
     a2 = 0.177084
     a3 = 0.00912388
@@ -252,5 +252,6 @@ np.savez(os.path.join(filename,'samples.npz'),
          Omega_m=Omega_m,
          omega_b=omega_b,
          rd=rd,
+         M=M,
          s80=s80,
          S80=S80)
