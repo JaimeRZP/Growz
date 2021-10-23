@@ -330,8 +330,8 @@ with model:
     trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune)
 
 #print r-stat
-print(pm.summary(trace)['r_hat'][["Wm0", "ℓ","η"]])
-print(pm.summary(trace)['mean'][["Wm0", "ℓ","η"]])
+print(pm.summary(trace)['r_hat'][["ℓ","η"]])
+print(pm.summary(trace)['mean'][["ℓ","η"]])
 
 #Save
 filename = data_comb
