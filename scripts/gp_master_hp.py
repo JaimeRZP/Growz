@@ -20,9 +20,9 @@ z_arr = np.exp(x_arr)-1
 a_arr = 1./(1+z_arr)
 
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/'
-challenge = None #'challenge/cosmo4_seed1004'
+challenge = 'cosmo10'
 if challenge is not None:
-    path += challenge 
+    path += 'challenge/'+'cosmo{}_seed100{}'.format(challenge[-2], challenge[-1])
 
 mean_path = None #'LCDM_cosmo44_10000_10000'
 mean_mode = 'Planck' #'other'
@@ -49,8 +49,8 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=False)
 
-n_samples = 10000
-n_tune = 10000
+n_samples = 15000
+n_tune = 15000
 
 datadict = {'DESI': DESI,
             'geo_DESI': geo_DESI,
@@ -68,7 +68,7 @@ datadict = {'DESI': DESI,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'DESI_CMB_geo' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'All_CMB_geo' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
@@ -120,7 +120,7 @@ with pm.Model() as model:
     ℓ = 0.0001 
     η = 0.1 
     H0 = data_class.H0
-    wm0 = pm.Uniform("wm0", 0., 0.45) 
+    Wm0 = pm.Uniform("Wm0", 0., 1.0) 
     wm0_geo = data_class.wm0 
     wr0 = data_class.wr0
     wL0 = data_class.wL0 
@@ -162,7 +162,6 @@ with pm.Model() as model:
         #s80 = data_class.s80
         s80 = pm.Normal("s80", 0.8, 0.5)
         E = H_gp/H_gp[0]
-        Om = wm0*(100/H[0])**2
         xx = x_arr[::-1]
         ee = E[::-1]
         aa = np.exp(-xx)
@@ -175,9 +174,9 @@ with pm.Model() as model:
         yy = tt.inc_subtensor(yy[0], aa[0]**3*E[0])
 
         for i in range(nz-1):
-            A0 = -1.5*Om/(aa[i]*ee[i])
+            A0 = -1.5*Wm0/(aa[i]*ee[i])
             B0 = -1./(aa[i]**2*ee[i])
-            A1 = -1.5*Om/(aa[i+1]*ee[i+1])
+            A1 = -1.5*Wm0/(aa[i+1]*ee[i+1])
             B1 = -1./(aa[i+1]**2*ee[i+1])
             yy = tt.inc_subtensor(yy[i+1], (1+0.5*dx**2*A0*B0)*yy[i]+0.5*(A0+A1)*dx*dd[i])
             dd = tt.inc_subtensor(dd[i+1],0.5*(B0+B1)*dx*yy[i]+(1+0.5*dx**2*A0*B0)*dd[i])
@@ -201,7 +200,23 @@ if 'DESI' in datasets:
         DESI_fs8 = pm.Deterministic('DESI_fs8',
                    tt.as_tensor_variable(fs8_gp[DESI['idx']]+(fs8_gp[DESI['idx']+1]-fs8_gp[DESI['idx']])*DESI['U']))
         theory = tt.concatenate([theory, DESI_H, DESI_dA, DESI_fs8])
-        
+
+if 'gro_DESI' in datasets:
+    print('Adding DESI_gro')
+    with model:
+        DESI_fs8 = pm.Deterministic('DESI_fs8',
+                   tt.as_tensor_variable(fs8_gp[DESI['idx']]+(fs8_gp[DESI['idx']+1]-fs8_gp[DESI['idx']])*DESI['U']))
+        theory = tt.concatenate([theory, DESI_fs8])
+
+if 'geo_DESI' in datasets:
+    print('Adding DESI_geo')
+    with model:
+        DESI_H = pm.Deterministic('DESI_H',
+                                  tt.as_tensor_variable(H_gp[DESI['idx']]+(H_gp[DESI['idx']+1]-H_gp[DESI['idx']])*DESI['U']))
+        DESI_dA = pm.Deterministic('DESI_dA',
+                                    tt.as_tensor_variable(dA_gp[DESI['idx']]+(dA_gp[DESI['idx']+1]-dA_gp[DESI['idx']])*DESI['U']))
+        theory = tt.concatenate([theory, DESI_H, DESI_dA])
+
 if 'WFIRST' in datasets:
     print('Adding WFIRST')
     with model:
@@ -247,8 +262,8 @@ if 'geo_BOSS' in datasets:
         B_perp = pm.Deterministic("B_perp", B_dM*BOSS['rd']/rd_gp)
         theory = tt.concatenate([theory, B_para, B_perp])
         
-if 'fs8_BOSS' in datasets:
-    print('Adding fs8_BOSS')
+if 'gro_BOSS' in datasets:
+    print('Adding gro_BOSS')
     with model:
         B_fs8 = pm.Deterministic("B_fs8", 
                    tt.as_tensor_variable(fs8_gp[BOSS['idx']]+(fs8_gp[BOSS['idx']+1]-fs8_gp[BOSS['idx']])*BOSS['U']))
@@ -274,8 +289,8 @@ if 'geo_eBOSS' in datasets:
         eB_perp = pm.Deterministic("eB_perp", eB_dM/rd_gp)
         theory = tt.concatenate([theory, eB_para, eB_perp])
 
-if 'fs8_eBOSS' in datasets:
-    print('Adding fs8_eBOSS')
+if 'gro_eBOSS' in datasets:
+    print('Adding gro_eBOSS')
     with model:
         eB_fs8 = pm.Deterministic("eB_fs8", 
                    tt.as_tensor_variable(fs8_gp[eBOSS['idx']]+(fs8_gp[eBOSS['idx']+1]-fs8_gp[eBOSS['idx']])*eBOSS['U']))
@@ -300,22 +315,15 @@ if 'CMB' in datasets:
         dM_star = tt.as_tensor_variable(dM_gp[CMB['idx']]+(dM_gp[CMB['idx']+1]-dM_gp[CMB['idx']])*CMB['U'])
         t100 = pm.Deterministic('t100', 100*rd_gp/dM_star) 
         theory = tt.concatenate([theory, t100])
-        
-if 'FCMB' in datasets:
-    print('Adding FCMB')
-    with model:
-        FCMB_dM = pm.Deterministic('FCMB_dM',
-                  tt.as_tensor_variable(dM_gp[FCMB['idx']]+(dM_gp[FCMB['idx']+1]-dM_gp[FCMB['idx']])*FCMB['U']))
-        theory = tt.concatenate([theory, FCMB_dM])
-        
+
 #Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
     trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune)
     
 #print r-stat
-print(pm.summary(trace)['r_hat'][["wm0"]])
-print(pm.summary(trace)['mean'][["wm0"]])
+print(pm.summary(trace)['r_hat'][["Wm0"]])
+print(pm.summary(trace)['mean'][["Wm0"]])
 
 #Save
 filename = data_comb

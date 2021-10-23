@@ -20,9 +20,9 @@ z_arr = np.exp(x_arr)-1
 a_arr = 1./(1+z_arr)
 
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/'
-challenge = None #'challenge/cosmo4_seed1004'
+challenge = 'cosmo10'
 if challenge is not None:
-    path += challenge 
+    path += 'challenge/'+'cosmo{}_seed100{}'.format(challenge[-2], challenge[-1])
 
 mean_path = None #'LCDM_cosmo44_10000_10000'
 mean_mode = 'Planck' #'other'
@@ -49,8 +49,8 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=False)
 
-n_samples = 10000
-n_tune = 10000
+n_samples = 15000
+n_tune = 15000
 
 datadict = {'DESI': DESI,
             'geo_DESI': geo_DESI,
@@ -68,7 +68,7 @@ datadict = {'DESI': DESI,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'DESI_CMB_geo' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'All_CMB_geo' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
@@ -146,7 +146,7 @@ with pm.Model() as model:
         
     if get_rd:
         #https://arxiv.org/pdf/2106.00428.pdf
-        wb0 =  pm.Uniform("wb0", 0.022, 0.023)
+        wb0 =  pm.Uniform("wb0", 0.0, 0.45)
         a1 = 0.00785436
         a2 = 0.177084
         a3 = 0.00912388

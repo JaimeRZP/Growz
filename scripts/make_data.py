@@ -17,6 +17,7 @@ class MakeData():
         self.a_arr = 1./(1+self.z_arr) 
         self.dx = np.mean(np.diff(self.x_arr))
         self.dz = np.diff(self.z_arr)
+        self.sigma8 = None
         self.cosmo = self.get_cosmo(mode=cosmo_mode, path=cosmo_path)
             
         if self.z_max > 1085:
@@ -57,6 +58,7 @@ class MakeData():
                       'Omega_Lambda': 0.6996939,
                       'n_s': 0.9649,
                       'ln10^{10}A_s': 3.045}
+            self.sigma8 = 0.786
         elif mode=='other':
             print('Using LCDM mean from file')
             samples = self._get_params_from_file(path)
@@ -71,6 +73,7 @@ class MakeData():
                       'Omega_Lambda': WL0,
                       'n_s': 0.9649,
                       'ln10^{10}A_s': 3.045}
+            self.sigma8 = np.mean(samples['s80'])
         elif mode=='poly_fit':
             print('Using poly fit mean from file')
             samples = self._get_params_from_file(path)
@@ -93,7 +96,13 @@ class MakeData():
         cosmo.set(params)
         cosmo.compute()
         self.cosmo = cosmo
+        self.sigma8 = self.get_sigma8()
         return self.cosmo
+
+    def get_sigma8(self):
+        if self.sigma8 is None:
+            self.sigma8 = self.cosmo.sigma8()
+        return self.sigma8
         
     def make_idx(self, z_data, z_arr):
         idxs = np.array([])

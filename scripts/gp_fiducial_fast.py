@@ -44,8 +44,8 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=False)
 
-n_samples = 15000
-n_tune = 15000
+n_samples = 30000
+n_tune = 30000
 datadict = {'DESI': DESI,
             'WFIRST': WFIRST,
             'CC': CC,
