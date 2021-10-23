@@ -335,8 +335,13 @@ print(pm.summary(trace)['mean'][["Wm0", "ℓ","η"]])
 
 #Save
 filename = data_comb
-path = filename+'_Wm'+'_{}_{}'.format(n_samples, n_tune)
-print(path)
+if mean_mode is not None:
+    filename += '_'+mean_mode
+if challenge is not None:
+    filename += '_'+challenge
+    
+filename += '_{}_{}'.format(n_samples, n_tune)
+print(filename)
 
 n = np.array(trace.posterior["η"]).flatten()
 l = np.array(trace.posterior["ℓ"]).flatten()
@@ -396,64 +401,3 @@ np.savez(os.path.join(path,'samples.npz'),
          M=M,
          s80=s80,
          S80=S80)
-
-# plot the results
-######
-fig = plt.figure(figsize=(12, 5))
-ax = fig.gca()
-
-plot_gp_dist(ax, trace.posterior["H_gp"][0, :, :], z_arr[:, None])
-ax.plot(z_planck, Planck['Hkms_arr'], "k--", label=r'$CLASS$')
-plt.plot(z_arr, data_class.H_arr, 'b-.', label='formula')
-
-if 'CC' in datasets:
-    plt.errorbar(CC['z'], CC['data'], yerr = CC['err'], fmt='bo', label='CC')
-if 'BOSS' in datasets:
-    plt.errorbar(BOSS['z'], BOSS['para_data'], yerr=BOSS['para_err'], fmt='ro', label='BOSS')
-if 'eBOSS' in datasets:
-    plt.errorbar(eBOSS['z'], c/1000/(eBOSS['para_data']*eBOSS['rd']), yerr = 1/eBOSS['rd']/(np.array([0.47])), fmt='mo', label='eBOSS')
-if 'DESI' in datasets:
-    plt.errorbar(H_DESI['z'], H_DESI['data'], yerr = H_DESI['err'], fmt='bo', label='DESI')
-
-# axis labels and title
-#plt.xscale('log')
-plt.xlim(-.05, 2.5)
-plt.ylim(50, 300)
-plt.xlabel("z")
-plt.ylabel("H(z)")
-plt.title("H(z)")
-plt.legend()
-plt.savefig(os.path.join(path,'H.pdf'))  
-
-
-#######
-fig = plt.figure(figsize=(12, 5))
-ax = fig.gca()
-
-plot_gp_dist(ax, trace.posterior["dM_gp"][0, :, :], z_arr[:, None])
-
-plt.plot(z_planck, Planck['dM_arr'], "k--", label='Planck')
-plt.plot(z_arr, data_class.dM_arr, 'b-.', label='formula')
-
-if 'DS17' in datasets:
-    plt.errorbar(DS17['z'], (10**((DS17['data']-25+19.49)/5))/(1+DS17['z']),
-             yerr=(10**(DS17['err']/5))/(1+DS17['z']), fmt='co', label='DS17')
-if 'BOSS' in datasets:
-    plt.errorbar(BOSS['z'], BOSS['perp_data'], yerr=BOSS['perp_err'], fmt='ro', label='BOSS')
-if 'eBOSS' in datasets:
-    plt.errorbar(eBOSS['z'], eBOSS['perp_data']*eBOSS['rd'], yerr=np.array([0.79])*eBOSS['rd'], fmt='mo', label='eBOSS')
-if 'CMB' in datasets:
-    plt.errorbar(CMB['z'], (1/CMB['data'])*(100*CMB['rd']), yerr=(1/CMB['err'])*1/(100*CMB['rd']), fmt='go', label='CMB')
-if 'DESI' in datasets:
-    plt.errorbar(dA_DESI['z'], dA_DESI['data']*(1+dA_DESI['z']), yerr = dA_DESI['err'], fmt='bo', label='DESI')
-if 'FCMB' in datasets:
-    plt.errorbar(FCMB['z'], FCMB['data'], yerr=FCMB['err'], fmt='go', label='FCMB')
-    
-# axis labels and title
-#plt.xscale('log')
-plt.xlabel("z")
-plt.ylabel("dM(z)")
-plt.title("dM(z)")
-plt.legend()
-plt.savefig(os.path.join(path,'dM.pdf')) 
-
