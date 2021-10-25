@@ -20,13 +20,13 @@ z_arr = np.exp(x_arr)-1
 a_arr = 1./(1+z_arr)
 
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/' 
-challenge =  None # 'cosmo10'
+challenge = 'cosmo10'
 if challenge is not None:
     path += 'challenge/'+'cosmo{}_seed100{}'.format(challenge[-2], challenge[-1])
 
 print('data path: ', path)
 mean_path =  None #'LCDM_cosmo44_10000_10000'
-mean_mode = 'best_fit'
+mean_mode = 'Planck'
 data_class = MakeData(z_max, res, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
@@ -384,8 +384,8 @@ if 'DS17' in datasets:
 else:
     M = None
 
-os.mkdir(path)
-np.savez(os.path.join(path,'samples.npz'), 
+os.mkdir(filename)
+np.savez(os.path.join(filename, 'samples.npz'), 
          z_arr = z_arr,
          n=n,
          l=l,
