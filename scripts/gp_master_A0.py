@@ -51,8 +51,8 @@ DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 FCMB = data_class.get_FCMB(new=True)
 
-n_samples = 10 #15000
-n_tune = 10 #15000
+n_samples = 50000
+n_tune = 20000
 datadict = {'DESI': DESI,
             'geo_DESI': geo_DESI,
             'gro_DESI': gro_DESI,
@@ -70,7 +70,7 @@ datadict = {'DESI': DESI,
             'CMB': CMB, 
             'FCMB': FCMB}
 
-data_comb = 'All_CMB_geo' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
@@ -150,7 +150,7 @@ with pm.Model() as model:
         
     if get_rd:
         #https://arxiv.org/pdf/2106.00428.pdf
-        wb0 =  pm.Uniform("wb0", 0.022, 0.023)
+        wb0 =  pm.Uniform("wb0", 0.02, 0.03)
         a1 = 0.00785436
         a2 = 0.177084
         a3 = 0.00912388
@@ -161,8 +161,8 @@ with pm.Model() as model:
         rd_gp = pm.Deterministic("rd_gp", 1/(a1*wb0**a2+a3*wm0_mean**a4+a5*wb0**a6*wm0_mean**a7)) 
         
     if get_fs8:
-        Wm0 =  0.29897 #pm.Uniform("Wm0", 0., 1.)
-        s80 = 0.786 #pm.Normal("s80", 0.8, 0.5)
+        Wm0 = pm.Uniform("Wm0", 0., 1.)
+        s80 = pm.Normal("s80", 0.8, 0.5)
         E = H_gp/H_gp[0]
         xx = x_arr[::-1]
         ee = E[::-1]
