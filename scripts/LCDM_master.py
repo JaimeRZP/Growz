@@ -20,38 +20,50 @@ z_arr = np.exp(x_arr)-1
 a_arr = 1./(1+z_arr)
 
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/' 
-challenge = 'cosmo41'
+challenge = None #'cosmo61'
 if challenge is not None:
     path += 'challenge/'+'cosmo{}_seed100{}'.format(challenge[-2], challenge[-1])
 
 print('data path: ', path)
-mean_path =  None #'LCDM_cosmo44_15000_15000'
-mean_mode = 'Planck' #'Planck'
-data_class = MakeData(z_max, res, path)
+mean_path =  None #'LCDM_cosmo44_10000_10000'
+mean_mode = 'Planck'
+data_class = MakeData(z_max, res, path,
+                      cosmo_mode=mean_mode,
+                      cosmo_path=mean_path)
 Planck = data_class.Planck
 z_planck = data_class.z_planck
 c = data_class.c
-z_planck = data_class.z_planck
-c = data_class.c
 
-DESI = data_class.get_DESI(new=False)
+DESI = data_class.get_DESI(new=False, mode=None)
+geo_DESI = data_class.get_DESI(new=False, mode='geo')
+gro_DESI = data_class.get_DESI(new=False, mode='gro')
 WFIRST = data_class.get_WFIRST(new=False)
 CC = data_class.get_CC(new=False)
 DSS = data_class.get_DSS(new=False)
 BOSS = data_class.get_BOSS(new=False)
+geo_BOSS = data_class.get_BOSS(new=False, mode='geo')
+gro_BOSS = data_class.get_BOSS(new=False, mode='gro')
 eBOSS = data_class.get_eBOSS(new=False)
+geo_eBOSS = data_class.get_eBOSS(new=False, mode='geo')
+gro_eBOSS = data_class.get_eBOSS(new=False, mode='gro')
 Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=False)
 
-n_samples = 15000
-n_tune = 15000
+n_samples = 50000
+n_tune = 50000
 datadict = {'DESI': DESI,
+            'geo_DESI': geo_DESI,
+            'gro_DESI': gro_DESI,
             'WFIRST': WFIRST,
             'CC': CC,
             'DS17': DS17, 
             'BOSS': BOSS,
+            'geo_BOSS': geo_BOSS,
+            'gro_BOSS': gro_BOSS,
             'eBOSS': eBOSS,
+            'geo_eBOSS': geo_eBOSS,
+            'gro_eBOSS': gro_eBOSS,
             'Wigglez': Wigglez,
             'DSS': DSS,
             'CMB': CMB}
@@ -61,8 +73,8 @@ data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
              'All_CMB_geo': ['CC', 'DS17', 'geo_BOSS', 'geo_eBOSS', 'CMB'],
-             'All_gro': ['fs8_BOSS', 'fs8_eBOSS', 'Wigglez', 'DSS'],
-             'All_CMB_gro': ['fs8_BOSS', 'fs8_eBOSS', 'Wigglez', 'DSS', 'CMB'],
+             'All_gro': ['gro_BOSS', 'gro_eBOSS', 'Wigglez', 'DSS'],
+             'All_CMB_gro': ['gro_BOSS', 'gro_eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'SDSS': ['BOSS', 'eBOSS'],
              'SDSS_CMB': ['BOSS', 'eBOSS', 'CMB'],
              'Add': ['CC', 'DS17', 'Wigglez', 'DSS'],
@@ -75,8 +87,8 @@ datasets = data_combs[data_comb]
 
 need_dM = ['DESI', 'geo_DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
            'Wigglez', 'DS17', 'CMB', 'FCMB']
-need_fs8 = ['DESI', 'gro_DESI', 'BOSS', 'eBOSS', 'fs8_BOSS', 
-            'fs8_eBOSS', 'Wigglez', 'DSS']
+need_fs8 = ['DESI', 'gro_DESI', 'BOSS', 'eBOSS', 'gro_BOSS', 
+            'gro_eBOSS', 'Wigglez', 'DSS']
 need_rd = ['BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS', 'CMB']
 
 if any(dataset in datasets for dataset in need_dM):
@@ -127,7 +139,7 @@ with pm.Model() as model:
         
 
     #https://arxiv.org/pdf/2106.00428.pdf
-    wb0 =  pm.Uniform("wb0", 0.0, 0.45)
+    wb0 =  pm.Uniform("wb0", 0.015, 0.03)
     a1 = 0.00785436
     a2 = 0.177084
     a3 = 0.00912388
@@ -278,5 +290,6 @@ np.savez(os.path.join(filename,'samples.npz'),
          Omega_m=Omega_m,
          omega_b=omega_b,
          rd=rd,
+         M=M,
          s80=s80,
          S80=S80)
