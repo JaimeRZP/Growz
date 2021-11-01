@@ -51,8 +51,8 @@ DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 FCMB = data_class.get_FCMB(new=True)
 
-n_samples = 50000
-n_tune = 20000
+n_samples = 10 #20000
+n_tune = 10 #20000
 datadict = {'DESI': DESI,
             'geo_DESI': geo_DESI,
             'gro_DESI': gro_DESI,
@@ -341,7 +341,7 @@ if mean_mode is not None:
 if challenge is not None:
     filename += '_'+challenge
     
-filename += '_A0_bfWms8_{}_{}'.format(n_samples, n_tune)
+filename += '_A0_{}_{}'.format(n_samples, n_tune)
 print(filename)
 
 n = np.array(trace.posterior["η"]).flatten()

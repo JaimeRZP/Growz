@@ -20,7 +20,7 @@ z_arr = np.exp(x_arr)-1
 a_arr = 1./(1+z_arr)
 
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/' 
-challenge = 'cosmo60'
+challenge = 'cosmo11'
 if challenge is not None:
     path += 'challenge/'+'cosmo{}_seed100{}'.format(challenge[-2], challenge[-1])
 
@@ -340,7 +340,7 @@ if mean_mode is not None:
 if challenge is not None:
     filename += '_'+challenge
     
-filename += '_{}_{}'.format(n_samples, n_tune)
+filename += '_bfWms8_{}_{}'.format(n_samples, n_tune)
 print(filename)
 
 n = np.array(trace.posterior["η"]).flatten()
@@ -365,13 +365,13 @@ else:
     rd = None
     
 if get_fs8:
-    Omega_m = np.array(trace.posterior["Wm0"]).flatten()
+    Omega_m = None# np.array(trace.posterior["Wm0"]).flatten()
     s8z = np.array(trace.posterior["s8_gp"])
     s8z = s8z.reshape(-1, s8z.shape[-1])
     fs8z = np.array(trace.posterior["fs8_gp"])
     fs8z = fs8z.reshape(-1, fs8z.shape[-1])
-    s80 = np.array(trace.posterior["s80"]).flatten()
-    S80 = s80*np.sqrt(Omega_m/0.3)
+    s80 = None #np.array(trace.posterior["s80"]).flatten()
+    S80 = None #s80*np.sqrt(Omega_m/0.3)
 else: 
     Omega_m = None
     s8z = None 
