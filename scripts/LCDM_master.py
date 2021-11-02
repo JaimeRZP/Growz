@@ -234,13 +234,13 @@ print(pm.summary(trace)['r_hat'][["Wm0"]])
 print(pm.summary(trace)['mean'][["Wm0"]])
 
 #Save
-filename = 'LCDM_freewb_'+data_comb
+filename = data_comb
 if mean_mode is not None:
     filename += '_'+mean_mode
 if challenge is not None:
     filename += '_'+challenge
     
-filename += '_{}_{}'.format(n_samples, n_tune)
+filename = 'LCDM_'+filename+'_{}_{}'.format(n_samples, n_tune)
 print(filename)
 
 Hz =np.array(trace.posterior["H_gp"])

@@ -21,30 +21,39 @@ a_arr = 1./(1+z_arr)
 
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/products'
 
-data_class = MakeData(z_max, res , path)
+path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/' 
+challenge = None #'cosmo61'
+if challenge is not None:
+    path += 'challenge/'+'cosmo{}_seed100{}'.format(challenge[-2], challenge[-1])
+
+print('data path: ', path)
+mean_path =  None #'LCDM_cosmo44_10000_10000'
+mean_mode = 'Planck'
+data_class = MakeData(z_max, res, path,
+                      cosmo_mode=mean_mode,
+                      cosmo_path=mean_path)
 Planck = data_class.Planck
 z_planck = data_class.z_planck
 c = data_class.c
 
-DESI = data_class.get_DESI(new=True, mode=None)
-geo_DESI = data_class.get_DESI(new=True, mode='geo')
-gro_DESI = data_class.get_DESI(new=True, mode='gro')
-WFIRST = data_class.get_WFIRST(new=True)
-CC = data_class.get_CC(new=True)
-DSS = data_class.get_DSS(new=True)
-BOSS = data_class.get_BOSS(new=True)
-geo_BOSS = data_class.get_BOSS(new=True, mode='geo')
-fs8_BOSS = data_class.get_BOSS(new=True, mode='fs8')
-eBOSS = data_class.get_eBOSS(new=True)
-geo_eBOSS = data_class.get_eBOSS(new=True, mode='geo')
-fs8_eBOSS = data_class.get_eBOSS(new=True, mode='fs8')
-Wigglez = data_class.get_Wigglez(new=True)
-DS17 = data_class.get_DS17(new=True)
-CMB = data_class.get_CMB(new=True)
-FCMB = data_class.get_FCMB(new=True)
+DESI = data_class.get_DESI(new=False, mode=None)
+geo_DESI = data_class.get_DESI(new=False, mode='geo')
+gro_DESI = data_class.get_DESI(new=False, mode='gro')
+WFIRST = data_class.get_WFIRST(new=False)
+CC = data_class.get_CC(new=False)
+DSS = data_class.get_DSS(new=False)
+BOSS = data_class.get_BOSS(new=False)
+geo_BOSS = data_class.get_BOSS(new=False, mode='geo')
+gro_BOSS = data_class.get_BOSS(new=False, mode='gro')
+eBOSS = data_class.get_eBOSS(new=False)
+geo_eBOSS = data_class.get_eBOSS(new=False, mode='geo')
+gro_eBOSS = data_class.get_eBOSS(new=False, mode='gro')
+Wigglez = data_class.get_Wigglez(new=False)
+DS17 = data_class.get_DS17(new=False)
+CMB = data_class.get_CMB(new=False)
 
-n_samples = 10000
-n_tune = 10000
+n_samples = 50000
+n_tune = 50000
 datadict = {'DESI': DESI,
             'geo_DESI': geo_DESI,
             'gro_DESI': gro_DESI,
@@ -53,22 +62,21 @@ datadict = {'DESI': DESI,
             'DS17': DS17, 
             'BOSS': BOSS,
             'geo_BOSS': geo_BOSS,
-            'fs8_BOSS': fs8_BOSS,
+            'gro_BOSS': gro_BOSS,
             'eBOSS': eBOSS,
             'geo_eBOSS': geo_eBOSS,
-            'fs8_eBOSS': fs8_eBOSS,
+            'gro_eBOSS': gro_eBOSS,
             'Wigglez': Wigglez,
             'DSS': DSS,
-            'CMB': CMB, 
-            'FCMB': FCMB}
+            'CMB': CMB}
 
 data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
              'All_CMB_geo': ['CC', 'DS17', 'geo_BOSS', 'geo_eBOSS', 'CMB'],
-             'All_gro': ['fs8_BOSS', 'fs8_eBOSS', 'Wigglez', 'DSS'],
-             'All_CMB_gro': ['fs8_BOSS', 'fs8_eBOSS', 'Wigglez', 'DSS', 'CMB'],
+             'All_gro': ['gro_BOSS', 'gro_eBOSS', 'Wigglez', 'DSS'],
+             'All_CMB_gro': ['gro_BOSS', 'gro_eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'SDSS': ['BOSS', 'eBOSS'],
              'SDSS_CMB': ['BOSS', 'eBOSS', 'CMB'],
              'Add': ['CC', 'DS17', 'Wigglez', 'DSS'],
@@ -81,8 +89,8 @@ datasets = data_combs[data_comb]
 
 need_dM = ['DESI', 'geo_DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
            'Wigglez', 'DS17', 'CMB', 'FCMB']
-need_fs8 = ['DESI', 'gro_DESI', 'BOSS', 'eBOSS', 'fs8_BOSS', 
-            'fs8_eBOSS', 'Wigglez', 'DSS']
+need_fs8 = ['DESI', 'gro_DESI', 'BOSS', 'eBOSS', 'gro_BOSS', 
+            'gro_eBOSS', 'Wigglez', 'DSS']
 need_rd = ['BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS', 'CMB']
 
 if any(dataset in datasets for dataset in need_dM):
@@ -134,7 +142,7 @@ with pm.Model() as model:
         
     if get_rd:
         #https://arxiv.org/pdf/2106.00428.pdf
-        wb0 =  pm.Uniform("wb0", 0.022, 0.023)
+        wb0 =  pm.Uniform("wb0", 0.015, 0.030)
         wm0 = pm.Deterministic("wm0", Wm0_mean*(H0/100)**2)
         a1 = 0.00785436
         a2 = 0.177084
@@ -176,6 +184,7 @@ with pm.Model() as model:
         
     theory = tt.as_tensor_variable([])
     
+#Modules
 #Modules
 if 'DESI' in datasets:
     print('Adding DESI')
@@ -249,8 +258,8 @@ if 'geo_BOSS' in datasets:
         B_perp = pm.Deterministic("B_perp", B_dM*BOSS['rd']/rd_gp)
         theory = tt.concatenate([theory, B_para, B_perp])
         
-if 'fs8_BOSS' in datasets:
-    print('Adding fs8_BOSS')
+if 'gro_BOSS' in datasets:
+    print('Adding gro_BOSS')
     with model:
         B_fs8 = pm.Deterministic("B_fs8", 
                    tt.as_tensor_variable(fs8_gp[BOSS['idx']]+(fs8_gp[BOSS['idx']+1]-fs8_gp[BOSS['idx']])*BOSS['U']))
@@ -276,8 +285,8 @@ if 'geo_eBOSS' in datasets:
         eB_perp = pm.Deterministic("eB_perp", eB_dM/rd_gp)
         theory = tt.concatenate([theory, eB_para, eB_perp])
 
-if 'fs8_eBOSS' in datasets:
-    print('Adding fs8_eBOSS')
+if 'gro_eBOSS' in datasets:
+    print('Adding gro_eBOSS')
     with model:
         eB_fs8 = pm.Deterministic("eB_fs8", 
                    tt.as_tensor_variable(fs8_gp[eBOSS['idx']]+(fs8_gp[eBOSS['idx']+1]-fs8_gp[eBOSS['idx']])*eBOSS['U']))
@@ -303,13 +312,6 @@ if 'CMB' in datasets:
         t100 = pm.Deterministic('t100', 100*rd_gp/dM_star) 
         theory = tt.concatenate([theory, t100])
         
-if 'FCMB' in datasets:
-    print('Adding FCMB')
-    with model:
-        FCMB_dM = pm.Deterministic('FCMB_dM',
-                  tt.as_tensor_variable(dM_gp[FCMB['idx']]+(dM_gp[FCMB['idx']+1]-dM_gp[FCMB['idx']])*FCMB['U']))
-        theory = tt.concatenate([theory, FCMB_dM])
-        
 #Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
@@ -321,8 +323,13 @@ print(pm.summary(trace)['mean'][["Wm0"]])
 
 #Save
 filename = data_comb
-path = 'nogp_'+filename+'_{}_{}'.format(n_samples, n_tune)
-print(path)
+if mean_mode is not None:
+    filename += '_'+mean_mode
+if challenge is not None:
+    filename += '_'+challenge
+    
+filename = 'LCDM_'+filename+'_{}_{}'.format(n_samples, n_tune)
+print(filename)
 
 Hz =np.array(trace.posterior["H_gp"])
 Hz = Hz.reshape(-1, Hz.shape[-1])
@@ -360,8 +367,8 @@ if 'DS17' in datasets:
 else:
     M = None
 
-os.mkdir(path)
-np.savez(os.path.join(path,'samples.npz'), 
+os.mkdir(filename)
+np.savez(os.path.join(filename,'samples.npz'), 
          z_arr = z_arr,
          Hz=Hz,
          dMz=dMz,
@@ -371,95 +378,6 @@ np.savez(os.path.join(path,'samples.npz'),
          Omega_m=Omega_m,
          omega_b=omega_b,
          rd=rd,
+         M=M,
          s80=s80,
          S80=S80)
-
-# plot the results
-######
-fig = plt.figure(figsize=(12, 5))
-ax = fig.gca()
-
-plot_gp_dist(ax, trace.posterior["H_gp"][0, :, :], z_arr[:, None])
-ax.plot(z_planck, Planck['Hkms_arr'], "k--", label=r'$CLASS$')
-plt.plot(z_arr, data_class.H_arr, 'b-.', label='formula')
-
-if 'CC' in datasets:
-    plt.errorbar(CC['z'], CC['data'], yerr = CC['err'], fmt='bo', label='CC')
-if 'BOSS' in datasets:
-    plt.errorbar(BOSS['z'], BOSS['para_data'], yerr=BOSS['para_err'], fmt='ro', label='BOSS')
-if 'eBOSS' in datasets:
-    plt.errorbar(eBOSS['z'], c/1000/(eBOSS['para_data']*eBOSS['rd']), yerr = 1/eBOSS['rd']/(np.array([0.47])), fmt='mo', label='eBOSS')
-if 'DESI' in datasets:
-    plt.errorbar(H_DESI['z'], H_DESI['data'], yerr = H_DESI['err'], fmt='bo', label='DESI')
-
-# axis labels and title
-#plt.xscale('log')
-plt.xlim(-.05, 2.5)
-plt.ylim(50, 300)
-plt.xlabel("z")
-plt.ylabel("H(z)")
-plt.title("H(z)")
-plt.legend()
-plt.savefig(os.path.join(path,'H.pdf'))  
-
-
-#######
-fig = plt.figure(figsize=(12, 5))
-ax = fig.gca()
-
-plot_gp_dist(ax, trace.posterior["dM_gp"][0, :, :], z_arr[:, None])
-
-plt.plot(z_planck, Planck['dM_arr'], "k--", label='Planck')
-plt.plot(z_arr, data_class.dM_arr, 'b-.', label='formula')
-
-if 'DS17' in datasets:
-    plt.errorbar(DS17['z'], (10**((DS17['data']-25+19.49)/5))/(1+DS17['z']),
-             yerr=(10**(DS17['err']/5))/(1+DS17['z']), fmt='co', label='DS17')
-if 'BOSS' in datasets:
-    plt.errorbar(BOSS['z'], BOSS['perp_data'], yerr=BOSS['perp_err'], fmt='ro', label='BOSS')
-if 'eBOSS' in datasets:
-    plt.errorbar(eBOSS['z'], eBOSS['perp_data']*eBOSS['rd'], yerr=np.array([0.79])*eBOSS['rd'], fmt='mo', label='eBOSS')
-if 'CMB' in datasets:
-    plt.errorbar(CMB['z'], (1/CMB['data'])*(100*CMB['rd']), yerr=(1/CMB['err'])*1/(100*CMB['rd']), fmt='go', label='CMB')
-if 'DESI' in datasets:
-    plt.errorbar(dA_DESI['z'], dA_DESI['data']*(1+dA_DESI['z']), yerr = dA_DESI['err'], fmt='bo', label='DESI')
-if 'FCMB' in datasets:
-    plt.errorbar(FCMB['z'], FCMB['data'], yerr=FCMB['err'], fmt='go', label='FCMB')
-    
-# axis labels and title
-#plt.xscale('log')
-plt.xlabel("z")
-plt.ylabel("dM(z)")
-plt.title("dM(z)")
-plt.legend()
-plt.savefig(os.path.join(path,'dM.pdf')) 
-
-#######
-fig = plt.figure(figsize=(12, 5))
-ax = fig.gca()
-
-plot_gp_dist(ax, trace.posterior["fs8_gp"][0, :, :],
-             z_arr[:, None])
-
-plt.plot(z_arr, data_class.fs8_arr, 'b-.', label='formula')
-plt.plot(z_planck, Planck['fs8_arr'], "k--", label='Planck')
-if 'BOSS' in datasets:
-    plt.errorbar(BOSS['z'], BOSS['fs8_data'], yerr=BOSS['fs8_err'], fmt='ro', label='BOSS')
-if 'eBOSS' in datasets:
-    plt.errorbar(eBOSS['z'], eBOSS['fs8_data'], yerr=eBOSS['fs8_err'], fmt='mo', label='eBOSS')
-if 'Wigglez' in datasets:
-    plt.errorbar(Wigglez['z'], Wigglez['data'], yerr=Wigglez['err'], fmt='yo', label='Wigglez')
-if 'DSS' in datasets:
-    plt.errorbar(DSS['z'], DSS['data'], yerr=DSS['err'], fmt='go', label='DSS')
-if 'DESI' in datasets:
-    plt.errorbar(fs8_DESI['z'], fs8_DESI['data'], yerr = fs8_DESI['err'], fmt='bo', label='DESI')   
-
-
-# axis labels and title
-plt.xlim(-.05, 2.5)
-plt.ylim(0.2, 0.55)
-plt.xlabel("z")
-plt.ylabel("fs8(z)")
-plt.title("fs8(z)")
-plt.legend()
-plt.savefig(os.path.join(path,'fs8.pdf'))  
