@@ -120,8 +120,6 @@ with pm.Model() as model:
     wm0_geo = data_class.wm0 
     wr0 = data_class.wr0
     wL0 = data_class.wL0 
-    H_gp_cov = η_H ** 2 * pm.gp.cov.ExpQuad(1, ℓ_H) + pm.gp.cov.WhiteNoise(1e-3)
-    H_gp = pm.gp.Latent(cov_func=H_gp_cov)
     
     #Mean of the gp
     H_gp = pm.Deterministic('H', 100*tt.sqrt(wm0_geo*(1+z_arr)**3+wr0*(1+z_arr)**4+wL0))
