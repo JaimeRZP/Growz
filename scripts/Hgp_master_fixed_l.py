@@ -118,6 +118,7 @@ data_cov = data_cov[1:]
 with pm.Model() as model:
     ℓ = 0.0001 # pm.Uniform("ℓ", 0.001, 7) 
     η = pm.HalfNormal("η", sigma=0.5) 
+    A0 = pm.Uniform("A0", 0.8, 1.2)
     H0 = data_class.H0
     wm0_mean = data_class.wm0 
     wr0 = data_class.wr0
@@ -130,7 +131,7 @@ with pm.Model() as model:
     
     #Set up Gaussian process
     DH_gp = gp.prior("DH_gp", X=x_arr[:, None]) 
-    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H*(1+DH_gp)))
+    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H*A0*(1+DH_gp)))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
     
     if get_dM:

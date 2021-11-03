@@ -26,7 +26,7 @@ if challenge is not None:
 
 print('data path: ', path)
 mean_path =  None #'LCDM_cosmo44_10000_10000'
-mean_mode = 'best_fit'
+mean_mode = 'Planck'
 data_class = MakeData(z_max, res, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
@@ -119,6 +119,7 @@ data_cov = data_cov[1:]
 with pm.Model() as model:
     ℓ = pm.Uniform("ℓ", 0.001, 7) 
     η = pm.HalfNormal("η", sigma=0.5) 
+    A0 = pm.Uniform("A0", 0.8, 1.2)
     wm0_mean = data_class.wm0 
     wr0 = data_class.wr0
     wL0 = data_class.wL0 
@@ -130,7 +131,7 @@ with pm.Model() as model:
     
     #Set up Gaussian process
     DH_gp = gp.prior("DH_gp", X=x_arr[:, None]) 
-    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H*(1+DH_gp)))
+    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(A0*H*(1+DH_gp)))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
     
     if get_dM:
@@ -320,8 +321,8 @@ with model:
     trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune)
 
 #print r-stat
-print(pm.summary(trace)['r_hat'][["ℓ","η"]])
-print(pm.summary(trace)['mean'][["ℓ","η"]])
+print(pm.summary(trace)['r_hat'][["Wm0", "A0", "ℓ", "η"]])
+print(pm.summary(trace)['mean'][["Wm0", "A0", "ℓ", "η"]])
 
 #Save
 filename = data_comb
@@ -330,11 +331,12 @@ if mean_mode is not None:
 if challenge is not None:
     filename += '_'+challenge
     
-filename += '_{}_{}'.format(n_samples, n_tune)
+filename += '_A0_{}_{}'.format(n_samples, n_tune)
 print(filename)
 
 n = np.array(trace.posterior["η"]).flatten()
 l = np.array(trace.posterior["ℓ"]).flatten()
+A0 = np.array(trace.posterior["A0"]).flatten()
 DHz = np.array(trace.posterior["DH_gp"])
 DHz = DHz.reshape(-1, DHz.shape[-1])
 Hz =np.array(trace.posterior["H_gp"])
@@ -375,10 +377,11 @@ else:
     M = None
 
 os.mkdir(filename)
-np.savez(os.path.join(filename, 'samples.npz'), 
+np.savez(os.path.join(filename,'samples.npz'), 
          z_arr = z_arr,
          n=n,
          l=l,
+         A0=A0,
          DHz = DHz,
          Hz=Hz,
          dMz=dMz,

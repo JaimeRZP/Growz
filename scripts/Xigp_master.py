@@ -116,22 +116,15 @@ for dataset_name in datasets:
 data_cov = data_cov[1:]
 
 #base model
-with pm.Model() as model:
-    ℓ = 0.0001 
-    η = 0.1 
-    A0 = pm.Uniform("A0", 0.8, 1.2)
+with pm.Model() as model: 
     wm0_geo = data_class.wm0 
     wr0 = data_class.wr0
     wL0 = data_class.wL0 
-    gp_cov = η ** 2 * pm.gp.cov.ExpQuad(1, ℓ) + pm.gp.cov.WhiteNoise(1e-3)
-    gp = pm.gp.Latent(cov_func=gp_cov)
+    H_gp_cov = η_H ** 2 * pm.gp.cov.ExpQuad(1, ℓ_H) + pm.gp.cov.WhiteNoise(1e-3)
+    H_gp = pm.gp.Latent(cov_func=H_gp_cov)
     
     #Mean of the gp
-    H = pm.Deterministic('H', 100*tt.sqrt(wm0_geo*(1+z_arr)**3+wr0*(1+z_arr)**4+wL0))
-    
-    #Set up Gaussian process
-    DH_gp = gp.prior("DH_gp", X=x_arr[:, None]) 
-    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H*A0*(1+DH_gp)))
+    H_gp = pm.Deterministic('H', 100*tt.sqrt(wm0_geo*(1+z_arr)**3+wr0*(1+z_arr)**4+wL0))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
     
     if get_dM:
@@ -157,9 +150,17 @@ with pm.Model() as model:
         rd_gp = pm.Deterministic("rd_gp", 1/(a1*wb0**a2+a3*wm0_geo**a4+a5*wb0**a6*wm0_geo**a7)) 
         
     if get_fs8:
-        s80 = pm.Normal("s80", 0.8, 0.5)
+        ℓ_Xi = pm.Uniform("ℓ_Xi", 0.001, 7) 
+        η_Xi = pm.HalfNormal("η_Xi", sigma=0.5)
+        Xi_gp_cov = η_Xi ** 2 * pm.gp.cov.ExpQuad(1, ℓ_Xi) + pm.gp.cov.WhiteNoise(1e-3)
+        Xi_gp = pm.gp.Latent(cov_func=Xi_gp_cov)
+        DXi_gp = Xi_gp.prior("DXi_gp", X=x_arr[:, None]) 
+        Xi_gp = pm.Deterministic("Xi_gp", tt.as_tensor_variable(np.ones_like(z_arr)+DXi_gp)) 
         Wm0 = pm.Uniform("Wm0", 0., 1.0) 
+        s80 = pm.Normal("s80", 0.8, 0.5)
         E = H_gp/H_gp[0]
+        Om = tt.as_tensor_variable(Xi_gp*Wm)
+        Omm = Om[::-1]
         xx = x_arr[::-1]
         ee = E[::-1]
         aa = np.exp(-xx)
@@ -172,9 +173,9 @@ with pm.Model() as model:
         yy = tt.inc_subtensor(yy[0], aa[0]**3*E[0])
 
         for i in range(nz-1):
-            A0 = -1.5*Wm0/(aa[i]*ee[i])
+            A0 = -1.5*Omm[i]/(aa[i]*ee[i])
             B0 = -1./(aa[i]**2*ee[i])
-            A1 = -1.5*Wm0/(aa[i+1]*ee[i+1])
+            A1 = -1.5*Omm[i]/(aa[i+1]*ee[i+1])
             B1 = -1./(aa[i+1]**2*ee[i+1])
             yy = tt.inc_subtensor(yy[i+1], (1+0.5*dx**2*A0*B0)*yy[i]+0.5*(A0+A1)*dx*dd[i])
             dd = tt.inc_subtensor(dd[i+1],0.5*(B0+B1)*dx*yy[i]+(1+0.5*dx**2*A0*B0)*dd[i])
@@ -184,9 +185,9 @@ with pm.Model() as model:
         
         fs8_gp = pm.Deterministic('fs8_gp', s80*y/(a_arr**2*E*d[0]))
         s8_gp = pm.Deterministic('s8_gp', s80*d/d[0])
-        
+
     theory = tt.as_tensor_variable([])
-    
+
 #Modules
 if 'DESI' in datasets:
     print('Adding DESI')
@@ -210,11 +211,11 @@ if 'geo_DESI' in datasets:
     print('Adding DESI_geo')
     with model:
         DESI_H = pm.Deterministic('DESI_H',
-                                  tt.as_tensor_variable(H_gp[DESI['idx']]+(H_gp[DESI['idx']+1]-H_gp[DESI['idx']])*DESI['U']))
+                 tt.as_tensor_variable(H_gp[DESI['idx']]+(H_gp[DESI['idx']+1]-H_gp[DESI['idx']])*DESI['U']))
         DESI_dA = pm.Deterministic('DESI_dA',
-                                    tt.as_tensor_variable(dA_gp[DESI['idx']]+(dA_gp[DESI['idx']+1]-dA_gp[DESI['idx']])*DESI['U']))
+                  tt.as_tensor_variable(dA_gp[DESI['idx']]+(dA_gp[DESI['idx']+1]-dA_gp[DESI['idx']])*DESI['U']))
         theory = tt.concatenate([theory, DESI_H, DESI_dA])
-
+        
 if 'WFIRST' in datasets:
     print('Adding WFIRST')
     with model:
@@ -274,10 +275,10 @@ if 'eBOSS' in datasets:
         eB_dM = tt.as_tensor_variable(dM_gp[eBOSS['idx']]+(dM_gp[eBOSS['idx']+1]-dM_gp[eBOSS['idx']])*eBOSS['U'])
         eB_fs8 = pm.Deterministic("eB_fs8", 
                    tt.as_tensor_variable(fs8_gp[eBOSS['idx']]+(fs8_gp[eBOSS['idx']+1]-fs8_gp[eBOSS['idx']])*eBOSS['U']))
-        eB_para = pm.Deterministic("eB_para", eB_dH/rd_gp)# eBOSS['rd'])
-        eB_perp = pm.Deterministic("eB_perp", eB_dM/rd_gp)# eBOSS['rd'])
+        eB_para = pm.Deterministic("eB_para", eB_dH/rd_gp)
+        eB_perp = pm.Deterministic("eB_perp", eB_dM/rd_gp)
         theory = tt.concatenate([theory, eB_para, eB_perp, eB_fs8])
-
+        
 if 'geo_eBOSS' in datasets:
     print('Adding geo_eBOSS')
     with model:
@@ -293,7 +294,7 @@ if 'gro_eBOSS' in datasets:
         eB_fs8 = pm.Deterministic("eB_fs8", 
                    tt.as_tensor_variable(fs8_gp[eBOSS['idx']]+(fs8_gp[eBOSS['idx']+1]-fs8_gp[eBOSS['idx']])*eBOSS['U']))
         theory = tt.concatenate([theory, eB_fs8])
-        
+
 if 'Wigglez' in datasets:
     print('Adding Wigglez')
     with model:
@@ -313,15 +314,15 @@ if 'CMB' in datasets:
         dM_star = tt.as_tensor_variable(dM_gp[CMB['idx']]+(dM_gp[CMB['idx']+1]-dM_gp[CMB['idx']])*CMB['U'])
         t100 = pm.Deterministic('t100', 100*rd_gp/dM_star) 
         theory = tt.concatenate([theory, t100])
-
+        
 #Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
     trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune)
-    
+
 #print r-stat
-print(pm.summary(trace)['r_hat'][["Wm0"]])
-print(pm.summary(trace)['mean'][["Wm0"]])
+print(pm.summary(trace)['r_hat'][["ℓ_H", "η_H"]])
+print(pm.summary(trace)['mean'][["ℓ_H", "η_H"]])
 
 #Save
 filename = data_comb
@@ -329,13 +330,10 @@ if mean_mode is not None:
     filename += '_'+mean_mode
 if challenge is not None:
     filename += '_'+challenge
+    
+filename += '_Xi_{}_{}'.format(n_samples, n_tune)
 
-filename += '_l_{}_n_{}_{}_{}'.format(ℓ, η, n_samples, n_tune)
-print(filename)
-
-DHz = np.array(trace.posterior["DH_gp"])
-DHz = DHz.reshape(-1, DHz.shape[-1])
-Hz =np.array(trace.posterior["H_gp"])
+Hz = np.array(trace.posterior["H_gp"])
 Hz = Hz.reshape(-1, Hz.shape[-1])
 H0_gp = np.array(trace.posterior["H0_gp"]).flatten()
 
@@ -353,6 +351,12 @@ else:
     rd = None
     
 if get_fs8:
+    n_Xi = np.array(trace.posterior["η_Xi"]).flatten()
+    l_Xi = np.array(trace.posterior["ℓ_Xi"]).flatten()
+    DXiz = np.array(trace.posterior["DXi_gp"])
+    DXiz = DXiz.reshape(-1, DXiz.shape[-1])
+    Xiz = np.array(trace.posterior["Xi_gp"])
+    Xiz = Xiz.reshape(-1, Xiz.shape[-1])
     s8z = np.array(trace.posterior["s8_gp"])
     s8z = s8z.reshape(-1, s8z.shape[-1])
     fs8z = np.array(trace.posterior["fs8_gp"])
@@ -361,6 +365,10 @@ if get_fs8:
     s80 = np.array(trace.posterior["s80"]).flatten()
     S80 = s80*np.sqrt(Omega_m/0.3)
 else: 
+    n_Xi = None
+    l_Xi = None
+    DXiz = None
+    Xiz = None
     s8z = None 
     fs8z = None
     Omega_m = None
@@ -375,7 +383,10 @@ else:
 os.mkdir(filename)
 np.savez(os.path.join(filename,'samples.npz'), 
          z_arr = z_arr,
-         DHz = DHz,
+         n_Xi=n_Xi,
+         l_Xi=l_Xi,
+         DXiz=DXiz,
+         Xiz=Xiz,
          Hz=Hz,
          dMz=dMz,
          s8z=s8z,
