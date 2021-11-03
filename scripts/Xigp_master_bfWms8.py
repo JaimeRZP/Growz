@@ -154,8 +154,8 @@ with pm.Model() as model:
         Xi_gp = pm.gp.Latent(cov_func=Xi_gp_cov)
         DXi_gp = Xi_gp.prior("DXi_gp", X=x_arr[:, None]) 
         Xi_gp = pm.Deterministic("Xi_gp", tt.as_tensor_variable(np.ones_like(z_arr)+DXi_gp)) 
-        Wm0 = data_class.Wm0 #pm.Uniform("Wm0", 0., 1.0) 
-        s80 = data_class.s80 #pm.Normal("s80", 0.8, 0.5)
+        Wm0 = 0.3150 #pm.Uniform("Wm0", 0., 1.)
+        s80 = 0.823 #pm.Normal("s80", 0.8, 0.5)
         E = H_gp/H_gp[0]
         Om = tt.as_tensor_variable(Xi_gp*Wm)
         Omm = Om[::-1]
