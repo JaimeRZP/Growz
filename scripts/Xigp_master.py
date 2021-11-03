@@ -122,7 +122,7 @@ with pm.Model() as model:
     wL0 = data_class.wL0 
     
     #Mean of the gp
-    H_gp = pm.Deterministic('H', 100*tt.sqrt(wm0_geo*(1+z_arr)**3+wr0*(1+z_arr)**4+wL0))
+    H_gp = pm.Deterministic('H_gp', 100*tt.sqrt(wm0_geo*(1+z_arr)**3+wr0*(1+z_arr)**4+wL0))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
     
     if get_dM:
