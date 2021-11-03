@@ -157,7 +157,7 @@ with pm.Model() as model:
         Wm0 = pm.Uniform("Wm0", 0., 1.0) 
         s80 = pm.Normal("s80", 0.8, 0.5)
         E = H_gp/H_gp[0]
-        Om = tt.as_tensor_variable(Xi_gp*Wm)
+        Om = tt.as_tensor_variable(Xi_gp*Wm0)
         Omm = Om[::-1]
         xx = x_arr[::-1]
         ee = E[::-1]
