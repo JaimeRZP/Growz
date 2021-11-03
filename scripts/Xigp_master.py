@@ -319,8 +319,8 @@ with model:
     trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune)
 
 #print r-stat
-print(pm.summary(trace)['r_hat'][["ℓ_H", "η_H"]])
-print(pm.summary(trace)['mean'][["ℓ_H", "η_H"]])
+print(pm.summary(trace)['r_hat'][["ℓ_Xi", "η_Xi"]])
+print(pm.summary(trace)['mean'][["ℓ_Xi", "η_Xi"]])
 
 #Save
 filename = data_comb
@@ -330,6 +330,7 @@ if challenge is not None:
     filename += '_'+challenge
     
 filename += '_Xi_{}_{}'.format(n_samples, n_tune)
+print(filename)
 
 Hz = np.array(trace.posterior["H_gp"])
 Hz = Hz.reshape(-1, Hz.shape[-1])

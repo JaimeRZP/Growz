@@ -337,6 +337,7 @@ if challenge is not None:
     filename += '_'+challenge
     
 filename += '_Xi_H_{}_{}'.format(n_samples, n_tune)
+print(filename)
 
 n_H = np.array(trace.posterior["η_H"]).flatten()
 l_H = np.array(trace.posterior["ℓ_H"]).flatten()
