@@ -27,11 +27,14 @@ if challenge is not None:
 print('data path: ', path)
 mean_path =  None #'LCDM_cosmo44_10000_10000'
 mean_mode = 'Planck'
+Wms8_path =  None #'LCDM_cosmo44_10000_10000'
+Wms8_mode = 'best_fit'
 data_class = MakeData(z_max, res, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
-Planck = data_class.Planck
-z_planck = data_class.z_planck
+Wms8_cosmo = MakeData(z_max, res, path,
+                      cosmo_mode=Wms8_mode,
+                      cosmo_path=Wms8_path)
 c = data_class.c
 
 DESI = data_class.get_DESI(new=False, mode=None)
@@ -145,8 +148,8 @@ with pm.Model() as model:
         Xi_gp = pm.gp.Latent(cov_func=Xi_gp_cov)
         DXi_gp = Xi_gp.prior("DXi_gp", X=x_arr[:, None]) 
         Xi_gp = pm.Deterministic("Xi_gp", tt.as_tensor_variable(np.ones_like(z_arr)+DXi_gp)) 
-        Wm0 = data_class.Wm0
-        s80 = data_class.sigma8
+        Wm0 = Wms8_cosmo.Wm0
+        s80 = Wms8_cosmo.sigma8
         E = H_gp/H_gp[0]
         Om = tt.as_tensor_variable(Xi_gp*Wm0)
         Omm = Om[::-1]
