@@ -50,8 +50,8 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=False)
 
-n_samples = 10 #50000
-n_tune = 10 #50000
+n_samples = 50000
+n_tune = 50000
 datadict = {'DESI': DESI,
             'geo_DESI': geo_DESI,
             'gro_DESI': gro_DESI,
@@ -117,7 +117,7 @@ data_cov = data_cov[1:]
 
 #base model
 with pm.Model() as model:
-    ℓ = 0.0001 
+    ℓ = 0.001 
     η = 0.1 
     A0 = pm.Uniform("A0", 0.8, 1.2)
     wm0_geo = data_class.wm0 
