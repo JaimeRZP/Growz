@@ -353,9 +353,9 @@ if get_fs8:
     s8z = s8z.reshape(-1, s8z.shape[-1])
     fs8z = np.array(trace.posterior["fs8_gp"])
     fs8z = fs8z.reshape(-1, fs8z.shape[-1])
-    Omega_m = np.array(trace.posterior["Wm0"]).flatten()
-    s80 = np.array(trace.posterior["s80"]).flatten()
-    S80 = s80*np.sqrt(Omega_m/0.3)
+    Omega_m = None #np.array(trace.posterior["Wm0"]).flatten()
+    s80 = None #np.array(trace.posterior["s80"]).flatten()
+    S80 = None #s80*np.sqrt(Omega_m/0.3)
 else: 
     s8z = None 
     fs8z = None

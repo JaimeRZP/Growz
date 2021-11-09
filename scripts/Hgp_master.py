@@ -20,7 +20,7 @@ z_arr = np.exp(x_arr)-1
 a_arr = 1./(1+z_arr)
 
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/' 
-challenge = 'cosmo51'
+challenge = None #'cosmo51'
 if challenge is not None:
     path += 'challenge/'+'cosmo{}_seed100{}'.format(challenge[-2], challenge[-1])
 
@@ -67,7 +67,7 @@ datadict = {'DESI': DESI,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'DESI_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
