@@ -30,8 +30,6 @@ mean_mode = 'Planck'
 data_class = MakeData(z_max, res, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
-Planck = data_class.Planck
-z_planck = data_class.z_planck
 c = data_class.c
 
 DESI = data_class.get_DESI(new=False, mode=None)
@@ -50,8 +48,8 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=False)
 
-n_samples = 20000
-n_tune = 20000
+n_samples = 10 #20000
+n_tune = 10 #20000
 
 datadict = {'DESI': DESI,
             'geo_DESI': geo_DESI,
