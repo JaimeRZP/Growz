@@ -322,6 +322,7 @@ if challenge is not None:
 filename += '_l_{}_n_{}_{}_{}'.format(ℓ, η, n_samples, n_tune)
 print(filename)
 
+A0 = np.array(trace.posterior["A0"]).flatten()
 DHz = np.array(trace.posterior["DH_gp"])
 DHz = DHz.reshape(-1, DHz.shape[-1])
 Hz =np.array(trace.posterior["H_gp"])
@@ -362,6 +363,7 @@ else:
 os.mkdir(filename)
 np.savez(os.path.join(filename,'samples.npz'), 
          z_arr = z_arr,
+         A0=A0,
          DHz = DHz,
          Hz=Hz,
          dMz=dMz,
