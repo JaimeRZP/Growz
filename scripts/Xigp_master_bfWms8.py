@@ -136,16 +136,7 @@ with pm.Model() as model:
         dL_gp = pm.Deterministic('dL_gp', dM_gp*(1+z_arr))
         
     if get_rd:
-        #https://arxiv.org/pdf/2106.00428.pdf
-        wb0 =  pm.Uniform("wb0", 0.015, 0.03)
-        a1 = 0.00785436
-        a2 = 0.177084
-        a3 = 0.00912388
-        a4 = 0.618711
-        a5 = 11.9611
-        a6 = 2.81343
-        a7 = 0.784719
-        rd_gp = pm.Deterministic("rd_gp", 1/(a1*wb0**a2+a3*wm0_geo**a4+a5*wb0**a6*wm0_geo**a7)) 
+        rd_gp = pm.Normal("rd_gp", 150, 5)
         
     if get_fs8:
         ℓ_Xi = pm.Uniform("ℓ_Xi", 0.001, 7) 
@@ -154,8 +145,8 @@ with pm.Model() as model:
         Xi_gp = pm.gp.Latent(cov_func=Xi_gp_cov)
         DXi_gp = Xi_gp.prior("DXi_gp", X=x_arr[:, None]) 
         Xi_gp = pm.Deterministic("Xi_gp", tt.as_tensor_variable(np.ones_like(z_arr)+DXi_gp)) 
-        Wm0 = 0.3150 #pm.Uniform("Wm0", 0., 1.)
-        s80 = 0.823 #pm.Normal("s80", 0.8, 0.5)
+        Wm0 = data_class.Wm0
+        s80 = data_class.sigma8
         E = H_gp/H_gp[0]
         Om = tt.as_tensor_variable(Xi_gp*Wm0)
         Omm = Om[::-1]
@@ -316,7 +307,7 @@ if 'CMB' in datasets:
 #Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
-    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune)
+    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.99)
 
 #print r-stat
 print(pm.summary(trace)['r_hat'][["ℓ_Xi", "η_Xi"]])
@@ -345,9 +336,7 @@ else:
 
 if get_rd:
     rd = np.array(trace.posterior["rd_gp"]).flatten()
-    omega_b = np.array(trace.posterior["wb0"]).flatten()
 else:
-    omega_b = None
     rd = None
     
 if get_fs8:
@@ -387,6 +376,5 @@ np.savez(os.path.join(filename,'samples.npz'),
          s8z=s8z,
          fs8z=fs8z,
          H0_gp=H0_gp,
-         omega_b=omega_b,
          rd=rd,
          M=M)

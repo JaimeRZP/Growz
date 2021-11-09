@@ -147,20 +147,11 @@ with pm.Model() as model:
         dL_gp = pm.Deterministic('dL_gp', dM_gp*(1+z_arr))
         
     if get_rd:
-        #https://arxiv.org/pdf/2106.00428.pdf
-        wb0 =  pm.Uniform("wb0", 0.015, 0.03)
-        a1 = 0.00785436
-        a2 = 0.177084
-        a3 = 0.00912388
-        a4 = 0.618711
-        a5 = 11.9611
-        a6 = 2.81343
-        a7 = 0.784719
-        rd_gp = pm.Deterministic("rd_gp", 1/(a1*wb0**a2+a3*wm0_mean**a4+a5*wb0**a6*wm0_mean**a7)) 
+        rd_gp = pm.Normal("rd_gp", 150, 5)
         
     if get_fs8:
-        Wm0 = 0.3150 #pm.Uniform("Wm0", 0., 1.)
-        s80 = 0.823 #pm.Normal("s80", 0.8, 0.5)
+        Wm0 = data_class.Wm0
+        s80 = data_class.sigma8
         E = H_gp/H_gp[0]
         xx = x_arr[::-1]
         ee = E[::-1]
@@ -315,18 +306,11 @@ if 'CMB' in datasets:
         dM_star = tt.as_tensor_variable(dM_gp[CMB['idx']]+(dM_gp[CMB['idx']+1]-dM_gp[CMB['idx']])*CMB['U'])
         t100 = pm.Deterministic('t100', 100*rd_gp/dM_star) 
         theory = tt.concatenate([theory, t100])
-        
-if 'FCMB' in datasets:
-    print('Adding FCMB')
-    with model:
-        FCMB_dM = pm.Deterministic('FCMB_dM',
-                  tt.as_tensor_variable(dM_gp[FCMB['idx']]+(dM_gp[FCMB['idx']+1]-dM_gp[FCMB['idx']])*FCMB['U']))
-        theory = tt.concatenate([theory, FCMB_dM])
-        
+
 #Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
-    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune)
+    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.99)
 
 #print r-stat
 print(pm.summary(trace)['r_hat'][["ℓ","η"]])
@@ -358,23 +342,21 @@ else:
 
 if get_rd:
     rd = np.array(trace.posterior["rd_gp"]).flatten()
-    omega_b = np.array(trace.posterior["wb0"]).flatten()
 else:
-    omega_b = None
     rd = None
     
 if get_fs8:
-    Omega_m = None# np.array(trace.posterior["Wm0"]).flatten()
     s8z = np.array(trace.posterior["s8_gp"])
     s8z = s8z.reshape(-1, s8z.shape[-1])
     fs8z = np.array(trace.posterior["fs8_gp"])
     fs8z = fs8z.reshape(-1, fs8z.shape[-1])
-    s80 = None #np.array(trace.posterior["s80"]).flatten()
-    S80 = None #s80*np.sqrt(Omega_m/0.3)
+    Omega_m = np.array(trace.posterior["Wm0"]).flatten()
+    s80 = np.array(trace.posterior["s80"]).flatten()
+    S80 = s80*np.sqrt(Omega_m/0.3)
 else: 
-    Omega_m = None
     s8z = None 
     fs8z = None
+    Omega_m = None
     s80 = None
     S80 = None
 
@@ -388,6 +370,7 @@ np.savez(os.path.join(filename, 'samples.npz'),
          z_arr = z_arr,
          n=n,
          l=l,
+         A0=A0,
          DHz = DHz,
          Hz=Hz,
          dMz=dMz,
@@ -395,8 +378,7 @@ np.savez(os.path.join(filename, 'samples.npz'),
          fs8z=fs8z,
          H0_gp=H0_gp,
          Omega_m=Omega_m,
-         omega_b=omega_b,
-         rd=rd,
-         M=M,
          s80=s80,
-         S80=S80)
+         S80=S80,
+         rd=rd,
+         M=M)

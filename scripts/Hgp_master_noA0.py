@@ -145,16 +145,7 @@ with pm.Model() as model:
         dL_gp = pm.Deterministic('dL_gp', dM_gp*(1+z_arr))
         
     if get_rd:
-        #https://arxiv.org/pdf/2106.00428.pdf
-        wb0 =  pm.Uniform("wb0", 0.015, 0.03)
-        a1 = 0.00785436
-        a2 = 0.177084
-        a3 = 0.00912388
-        a4 = 0.618711
-        a5 = 11.9611
-        a6 = 2.81343
-        a7 = 0.784719
-        rd_gp = pm.Deterministic("rd_gp", 1/(a1*wb0**a2+a3*wm0_mean**a4+a5*wb0**a6*wm0_mean**a7)) 
+        rd_gp = pm.Normal("rd_gp", 150, 5) 
         
     if get_fs8:
         Wm0 = pm.Uniform("Wm0", 0., 1.)
@@ -317,11 +308,11 @@ if 'CMB' in datasets:
 #Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
-    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune)
+    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.99)
 
 #print r-stat
-print(pm.summary(trace)['r_hat'][["ℓ","η"]])
-print(pm.summary(trace)['mean'][["ℓ","η"]])
+print(pm.summary(trace)['r_hat'][["Wm0","ℓ","η"]])
+print(pm.summary(trace)['mean'][["Wm0","ℓ","η"]])
 
 #Save
 filename = data_comb
@@ -349,9 +340,7 @@ else:
 
 if get_rd:
     rd = np.array(trace.posterior["rd_gp"]).flatten()
-    omega_b = np.array(trace.posterior["wb0"]).flatten()
 else:
-    omega_b = None
     rd = None
     
 if get_fs8:
@@ -386,8 +375,7 @@ np.savez(os.path.join(filename, 'samples.npz'),
          fs8z=fs8z,
          H0_gp=H0_gp,
          Omega_m=Omega_m,
-         omega_b=omega_b,
-         rd=rd,
-         M=M,
          s80=s80,
-         S80=S80)
+         S80=S80,
+         rd=rd,
+         M=M)
