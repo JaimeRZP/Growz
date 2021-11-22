@@ -32,9 +32,9 @@ Wms8_mode = 'best_fit'
 data_class = MakeData(z_max, res, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
-Wms8_cosmo = MakeData(z_max, res, path,
-                      cosmo_mode=Wms8_mode,
-                      cosmo_path=Wms8_path)
+#Wms8_cosmo = MakeData(z_max, res, path,
+#                      cosmo_mode=Wms8_mode,
+#                      cosmo_path=Wms8_path)
 c = data_class.c
 
 DESI = data_class.get_DESI(new=False, mode=None)
@@ -53,8 +53,8 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=False)
 
-n_samples = 10 #50000
-n_tune = 10 #50000
+n_samples = 10 #3000
+n_tune = 10 #3000
 datadict = {'DESI': DESI,
             'geo_DESI': geo_DESI,
             'gro_DESI': gro_DESI,
@@ -153,8 +153,8 @@ with pm.Model() as model:
         rd_gp = pm.Normal("rd_gp", 150, 5)
         
     if get_fs8:
-        Wm0 = Wms8_cosmo.Wm0
-        s80 = Wms8_cosmo.sigma8
+        Wm0 = 0.250763 + 0.0479757 #Wms8_cosmo.Wm0
+        s80 = 0.786 #Wms8_cosmo.sigma8
         E = H_gp/H_gp[0]
         xx = x_arr[::-1]
         ee = E[::-1]
@@ -313,7 +313,7 @@ if 'CMB' in datasets:
 #Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
-    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.99)
+    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.95)
 
 #print r-stat
 print(pm.summary(trace)['r_hat'][["ℓ","η"]])
@@ -329,6 +329,7 @@ if challenge is not None:
 filename += '_bfWms8_{}_{}'.format(n_samples, n_tune)
 print(filename)
 
+A0 = np.array(trace.posterior["A0"]).flatten()
 n = np.array(trace.posterior["η"]).flatten()
 l = np.array(trace.posterior["ℓ"]).flatten()
 DHz = np.array(trace.posterior["DH_gp"])
