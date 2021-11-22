@@ -27,14 +27,14 @@ if challenge is not None:
 print('data path: ', path)
 mean_path =  None #'LCDM_cosmo44_10000_10000'
 mean_mode = 'Planck'
-Wms8_path =  None #'LCDM_cosmo44_10000_10000'
-Wms8_mode = 'best_fit'
+#Wms8_path =  None #'LCDM_cosmo44_10000_10000'
+#Wms8_mode = 'best_fit'
 data_class = MakeData(z_max, res, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
-Wms8_cosmo = MakeData(z_max, res, path,
-                      cosmo_mode=Wms8_mode,
-                      cosmo_path=Wms8_path)
+#Wms8_cosmo = MakeData(z_max, res, path,
+#                      cosmo_mode=Wms8_mode,
+#                      cosmo_path=Wms8_path)
 c = data_class.c
 
 DESI = data_class.get_DESI(new=False, mode=None)
@@ -53,8 +53,8 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=False)
 
-n_samples = 50000
-n_tune = 50000
+n_samples = 1000
+n_tune = 1000
 datadict = {'DESI': DESI,
             'geo_DESI': geo_DESI,
             'gro_DESI': gro_DESI,
@@ -148,8 +148,8 @@ with pm.Model() as model:
         Xi_gp = pm.gp.Latent(cov_func=Xi_gp_cov)
         DXi_gp = Xi_gp.prior("DXi_gp", X=x_arr[:, None]) 
         Xi_gp = pm.Deterministic("Xi_gp", tt.as_tensor_variable(np.ones_like(z_arr)+DXi_gp)) 
-        Wm0 = Wms8_cosmo.Wm0
-        s80 = Wms8_cosmo.sigma8
+        Wm0 = 0.250763 + 0.0479757 #Wms8_cosmo.Wm0
+        s80 = 0.786 #Wms8_cosmo.sigma8
         E = H_gp/H_gp[0]
         Om = tt.as_tensor_variable(Xi_gp*Wm0)
         Omm = Om[::-1]
@@ -310,7 +310,7 @@ if 'CMB' in datasets:
 #Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
-    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.99)
+    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.90)
 
 #print r-stat
 print(pm.summary(trace)['r_hat'][["ℓ_Xi", "η_Xi"]])

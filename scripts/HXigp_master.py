@@ -48,8 +48,8 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=False)
 
-n_samples = 50000
-n_tune = 50000
+n_samples = 1000
+n_tune = 1000
 datadict = {'DESI': DESI,
             'geo_DESI': geo_DESI,
             'gro_DESI': gro_DESI,
@@ -312,7 +312,7 @@ if 'CMB' in datasets:
 #Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
-    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.99)
+    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.90)
 
 #print r-stat
 print(pm.summary(trace)['r_hat'][["ℓ_H", "η_H"]])
@@ -327,7 +327,7 @@ if challenge is not None:
     
 filename += '_Xi_H_{}_{}'.format(n_samples, n_tune)
 print(filename)
-
+A0 = np.array(trace.posterior["A0"]).flatten()
 n_H = np.array(trace.posterior["η_H"]).flatten()
 l_H = np.array(trace.posterior["ℓ_H"]).flatten()
 DHz = np.array(trace.posterior["DH_gp"])
@@ -362,6 +362,7 @@ if get_fs8:
     s80 = np.array(trace.posterior["s80"]).flatten()
     S80 = s80*np.sqrt(Omega_m/0.3)
 else: 
+    A0 = None
     n_Xi = None
     l_Xi = None
     DXiz = None
@@ -380,6 +381,7 @@ else:
 os.mkdir(filename)
 np.savez(os.path.join(filename,'samples.npz'), 
          z_arr = z_arr,
+         A0=A0,
          n_Xi=n_Xi,
          l_Xi=l_Xi,
          n_H=n_H,
