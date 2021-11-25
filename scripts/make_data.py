@@ -31,7 +31,9 @@ class MakeData():
         self.Wm0 = self.cosmo.Omega_m() 
         self.wm0 = self.cosmo.Omega_m() * self.cosmo.h()**2
         self.wb0 = self.cosmo.Omega_b() * self.cosmo.h()**2
+        self.Wr0 = (self.cosmo.Omega_g()+self.Omega_nu) 
         self.wr0 = (self.cosmo.Omega_g()+self.Omega_nu) * self.cosmo.h()**2
+        self.WL0 = self.cosmo.Omega_Lambda()
         self.wL0 = self.cosmo.Omega_Lambda() * self.cosmo.h()**2
         
         self.H_arr = 100*np.sqrt(self.wm0*(1+self.z_arr)**3+(self.wr0)*(1+self.z_arr)**4+self.wL0)
