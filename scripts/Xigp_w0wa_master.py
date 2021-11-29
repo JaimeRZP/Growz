@@ -117,7 +117,7 @@ data_cov = data_cov[1:]
 with pm.Model() as model: 
     H0 = pm.Normal('H0', 70, 5)
     Wm0 = pm.Uniform("Wm0", 0., 1.0)
-    Wr0 = dataclass.Wr0
+    Wr0 = data_class.Wr0
     WL0 = pm.Deterministic('WL', 1-Wm0-Wr0)
     #W0wa
     w0 = pm.Normal('w0', -1, 0.5)
