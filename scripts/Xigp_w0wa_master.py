@@ -116,16 +116,16 @@ data_cov = data_cov[1:]
 #base model
 with pm.Model() as model: 
     H0 = pm.Normal('H0', 70, 5)
-    Wm0m = pm.Uniform('Wm0m', 0, ,1)
+    Wm0 = pm.Uniform("Wm0", 0., 1.0)
     Wr0 = dataclass.Wr0
-    WL0 = pm.Deterministic('WL', 1-Wm0m-Wr0)
+    WL0 = pm.Deterministic('WL', 1-Wm0-Wr0)
     #W0wa
     w0 = pm.Normal('w0', -1, 0.5)
     wa = pm.Normal('wa', 0, 0.5)
     nuz = pm.Deterministic('nuz', 3*(1+w0+z_arr*(1+w0+wa))/(1+z_arr))
     
     #Mean of the gp
-    H_gp = pm.Deterministic('H_gp', H0*tt.sqrt(Wm0m*(1+z_arr)**3+Wr0*(1+z_arr)**4+WL0*(1+z)**nuz))
+    H_gp = pm.Deterministic('H_gp', H0*tt.sqrt(Wm0*(1+z_arr)**3+Wr0*(1+z_arr)**4+WL0*(1+z_arr)**nuz))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
     
     if get_dM:
@@ -147,8 +147,7 @@ with pm.Model() as model:
         Xi_gp_cov = η_Xi ** 2 * pm.gp.cov.ExpQuad(1, ℓ_Xi) + pm.gp.cov.WhiteNoise(1e-3)
         Xi_gp = pm.gp.Latent(cov_func=Xi_gp_cov)
         DXi_gp = Xi_gp.prior("DXi_gp", X=x_arr[:, None]) 
-        Xi_gp = pm.Deterministic("Xi_gp", tt.as_tensor_variable(np.ones_like(z_arr)+DXi_gp)) 
-        Wm0 = pm.Uniform("Wm0", 0., 1.0) 
+        Xi_gp = pm.Deterministic("Xi_gp", tt.as_tensor_variable(np.ones_like(z_arr)+DXi_gp))  
         s80 = pm.Normal("s80", 0.8, 0.5)
         E = H_gp/H_gp[0]
         Om = tt.as_tensor_variable(Xi_gp*Wm0)
@@ -323,14 +322,14 @@ if mean_mode is not None:
 if challenge is not None:
     filename += '_'+challenge
     
-filename += '_Xi_{}_{}'.format(n_samples, n_tune)
+filename += '_Xi_w0wa_{}_{}'.format(n_samples, n_tune)
 print(filename)
 
 Hz = np.array(trace.posterior["H_gp"])
 Hz = Hz.reshape(-1, Hz.shape[-1])
 H0 = np.array(trace.posterior["H0"]).flatten()
 H0_gp = np.array(trace.posterior["H0_gp"]).flatten()
-Omega_m_mean = np.array(trace.posterior["Wm0m"]).flatten()
+Omega_m = np.array(trace.posterior["Wm0"]).flatten()
 w0 = np.array(trace.posterior["w0"]).flatten()
 wa = np.array(trace.posterior["wa"]).flatten()
 
@@ -356,7 +355,6 @@ if get_fs8:
     s8z = s8z.reshape(-1, s8z.shape[-1])
     fs8z = np.array(trace.posterior["fs8_gp"])
     fs8z = fs8z.reshape(-1, fs8z.shape[-1])
-    Omega_m = np.array(trace.posterior["Wm0"]).flatten()
     s80 = np.array(trace.posterior["s80"]).flatten()
     S80 = s80*np.sqrt(Omega_m/0.3)
 else: 
@@ -391,7 +389,6 @@ np.savez(os.path.join(filename,'samples.npz'),
          H0=H0,
          H0_gp=H0_gp,
          Omega_m=Omega_m,
-         Omega_m_mean=Omega_m_mean,
          s80=s80,
          S80=S80,
          rd=rd,
