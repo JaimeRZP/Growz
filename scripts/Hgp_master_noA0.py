@@ -120,7 +120,7 @@ with pm.Model() as model:
     wm0_mean = data_class.wm0 
     wr0 = data_class.wr0
     wL0 = data_class.wL0 
-    gp_cov = η ** 2 * pm.gp.cov.ExpQuad(1, ℓ) + pm.gp.cov.WhiteNoise(1e-3)
+    gp_cov = η ** 2 * pm.gp.cov.ExpQuad(1, ℓ) + pm.gp.cov.WhiteNoise(1e-5)
     gp = pm.gp.Latent(cov_func=gp_cov)
     
     #Mean of the gp

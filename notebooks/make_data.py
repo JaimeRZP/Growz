@@ -164,6 +164,9 @@ class MakeData():
             if mode is None:
                 np.savez(os.path.join(self.path, dataset_name), 
                  data = DESI_data,
+                 fs8_data = DESI_fs8_data,
+                 dA_data = DESI_dA_data,
+                 H_data = DESI_H_data,
                  z=z_DESI,
                  cov=DESI_cov,
                  err=DESI_err, 

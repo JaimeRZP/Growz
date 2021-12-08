@@ -192,7 +192,7 @@ class MakeData():
             
         return np.load(filepath)
         
-    def get_DESI(self, z_arr=None, new='False', mode=None):
+    def get_DESI(self, z_arr=None, new='False', mode=None, improv=1):
         if z_arr is None:
             z_arr = self.z_arr
         if mode is None:
@@ -223,9 +223,9 @@ class MakeData():
             s8_DESI = self.s8_arr[DESI_idx]+(self.s8_arr[DESI_idx+1]-self.s8_arr[DESI_idx])*DESI_U
             fs8_DESI = self.fs8_arr[DESI_idx]+(self.fs8_arr[DESI_idx+1]-self.fs8_arr[DESI_idx])*DESI_U
             
-            DESI_H_err = H_DESI*DESI_rels_H/100
-            DESI_dA_err = dA_DESI*DESI_rels_dA/100
-            DESI_fs8_err = fs8_DESI*DESI_rels_fs8/100
+            DESI_H_err = improv*H_DESI*DESI_rels_H/100
+            DESI_dA_err = improv*dA_DESI*DESI_rels_dA/100
+            DESI_fs8_err = improv*fs8_DESI*DESI_rels_fs8/1000
 
             DESI_err = np.concatenate([DESI_H_err, DESI_dA_err, DESI_fs8_err])
 
@@ -253,12 +253,15 @@ class MakeData():
             if mode is None:
                 np.savez(os.path.join(self.path, dataset_name), 
                  data = DESI_data,
+                 fs8_data = DESI_fs8_data,
+                 dA_data = DESI_dA_data,
+                 H_data = DESI_H_data,
                  z=z_DESI,
                  cov=DESI_cov,
                  err=DESI_err, 
                  idx = DESI_idx,
                  U=DESI_U)
-                
+
             elif mode=='geo':
                 np.savez(os.path.join(self.path, dataset_name), 
                  data = DESI_geo_data,
@@ -266,7 +269,7 @@ class MakeData():
                  cov=DESI_geo_cov,
                  idx = DESI_idx,
                  U=DESI_U)
-            
+
             elif mode=='gro':
                 np.savez(os.path.join(self.path, dataset_name), 
                  data = DESI_fs8_data,
