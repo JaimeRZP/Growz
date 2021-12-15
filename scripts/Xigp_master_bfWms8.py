@@ -37,10 +37,10 @@ data_class = MakeData(z_max, res, path,
 #                      cosmo_path=Wms8_path)
 c = data_class.c
 
-DESI = data_class.get_DESI(new=False, mode=None)
-geo_DESI = data_class.get_DESI(new=False, mode='geo')
-gro_DESI = data_class.get_DESI(new=False, mode='gro')
-WFIRST = data_class.get_WFIRST(new=False)
+DESI = data_class.get_DESI(new=True, mode=None)
+geo_DESI = data_class.get_DESI(new=True, mode='geo')
+gro_DESI = data_class.get_DESI(new=True, mode='gro')
+WFIRST = data_class.get_WFIRST(new=True)
 CC = data_class.get_CC(new=False)
 DSS = data_class.get_DSS(new=False)
 BOSS = data_class.get_BOSS(new=False)
