@@ -142,7 +142,7 @@ with pm.Model() as model:
         rd_gp = pm.Normal("rd_gp", 150, 5) 
         
     if get_fs8:
-        ℓ_Xi = pm.Uniform("ℓ_Xi", 0.001, 7) 
+        ℓ_Xi = pm.Uniform("ℓ_Xi", 0.01, 6)  
         η_Xi = pm.HalfNormal("η_Xi", sigma=0.5)
         Xi_gp_cov = η_Xi ** 2 * pm.gp.cov.ExpQuad(1, ℓ_Xi) + pm.gp.cov.WhiteNoise(1e-5)
         Xi_gp = pm.gp.Latent(cov_func=Xi_gp_cov)
@@ -224,7 +224,7 @@ if 'CC' in datasets:
 if 'DS17' in datasets:
     print('Adding Pantheon')
     with model:
-        M = pm.Normal('M', mu=-19.0, sigma=3)
+        M = pm.Normal('M', mu=-19.0, sigma=1)
         DS17_dL = tt.as_tensor_variable(dL_gp[DS17['idx']]+(dL_gp[DS17['idx']+1]-dL_gp[DS17['idx']])*DS17['U'])
         DS17_u = pm.Deterministic("DS17_dL",
                  tt.as_tensor_variable(5*tt.log10(DS17_dL)+25+M))

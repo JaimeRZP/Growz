@@ -120,18 +120,18 @@ data_cov = data_cov[1:]
 
 #base model
 with pm.Model() as model:
-    ℓ = pm.Uniform("ℓ", 0.001, 7) 
-    η = pm.HalfNormal("η", sigma=0.5) 
-    A0 = pm.Uniform("A0", 0.8, 1.2)
+    ℓ = pm.Uniform("ℓ", 0.01, 6) 
+    η = pm.HalfNormal("η", sigma=0.2) 
+    A0 = pm.Normal("A0", 1, 0.2)
     H0 = data_class.H0
-    wm0_mean = data_class.wm0 
-    wr0 = data_class.wr0
-    wL0 = data_class.wL0 
+    Wm0_m = data_class.Wm0
+    Wr0 = data_class.Wr0
+    WL0 = data_class.WL0
     gp_cov = η ** 2 * pm.gp.cov.ExpQuad(1, ℓ) + pm.gp.cov.WhiteNoise(1e-5)
     gp = pm.gp.Latent(cov_func=gp_cov)
     
     #Mean of the gp
-    H = pm.Deterministic('H', 100*tt.sqrt(wm0_mean*(1+z_arr)**3+wr0*(1+z_arr)**4+wL0))
+    H = pm.Deterministic('H', H0*tt.sqrt(Wm0_m*(1+z_arr)**3+Wr0*(1+z_arr)**4+WL0))
     
     #Set up Gaussian process
     DH_gp = gp.prior("DH_gp", X=x_arr[:, None]) 
@@ -228,7 +228,7 @@ if 'CC' in datasets:
 if 'DS17' in datasets:
     print('Adding Pantheon')
     with model:
-        M = pm.Normal('M', mu=-19.0, sigma=3)
+        M = pm.Normal('M', mu=-19.0, sigma=1)
         DS17_dL = tt.as_tensor_variable(dL_gp[DS17['idx']]+(dL_gp[DS17['idx']+1]-dL_gp[DS17['idx']])*DS17['U'])
         DS17_u = pm.Deterministic("DS17_dL",
                  tt.as_tensor_variable(5*tt.log10(DS17_dL)+25+M))

@@ -20,7 +20,7 @@ z_arr = np.exp(x_arr)-1
 a_arr = 1./(1+z_arr)
 
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/' 
-challenge = 'cosmo51'
+challenge = None #'cosmo51'
 if challenge is not None:
     path += 'challenge/'+'cosmo{}_seed100{}'.format(challenge[-2], challenge[-1])
 
@@ -48,8 +48,8 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=False)
 
-n_samples = 3001
-n_tune = 3000
+n_samples = 2500
+n_tune = 2500
 
 datadict = {'DESI': DESI,
             'geo_DESI': geo_DESI,
@@ -119,14 +119,15 @@ with pm.Model() as model:
     ℓ = pm.Uniform("ℓ", 0.01, 6) 
     η = pm.HalfNormal("η", sigma=0.2) 
     A0 = pm.Normal("A0", 1, 0.2)
-    wm0_mean = data_class.wm0 
-    wr0 = data_class.wr0
-    wL0 = data_class.wL0 
+    H0 = data_class.H0
+    Wm0_m = data_class.Wm0
+    Wr0 = data_class.Wr0
+    WL0 = data_class.WL0
     gp_cov = η ** 2 * pm.gp.cov.ExpQuad(1, ℓ) + pm.gp.cov.WhiteNoise(1e-5)
     gp = pm.gp.Latent(cov_func=gp_cov)
     
     #Mean of the gp
-    H = pm.Deterministic('H', 100*tt.sqrt(wm0_mean*(1+z_arr)**3+wr0*(1+z_arr)**4+wL0))
+    H = pm.Deterministic('H', H0*tt.sqrt(Wm0_m*(1+z_arr)**3+Wr0*(1+z_arr)**4+WL0))
     
     #Set up Gaussian process
     DH_gp = gp.prior("DH_gp", X=x_arr[:, None]) 
@@ -308,7 +309,7 @@ if 'CMB' in datasets:
 #Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
-    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.90)
+    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.95)
 
 #print r-stat
 print(pm.summary(trace)['r_hat'][["A0", "ℓ", "η"]])
