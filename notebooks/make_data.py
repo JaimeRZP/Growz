@@ -7,7 +7,7 @@ from pandas import read_table
 import pyccl as ccl
 
 class MakeData():
-    def __init__(self, z_max, res, path):
+    def __init__(self, z_max, res, path, cosmo_mode='Planck', cosmo_path=None):
         self.c = 299792458.0
         self.path = path
         self.res = res
@@ -17,7 +17,8 @@ class MakeData():
         self.a_arr = 1./(1+self.z_arr) 
         self.dx = np.mean(np.diff(self.x_arr))
         self.dz = np.diff(self.z_arr)
-        self.cosmo = self.get_cosmo()
+        self.sigma8 = None
+        self.cosmo = self.get_cosmo(mode=cosmo_mode, path=cosmo_path)
             
         if self.z_max > 1085:
             self.z_planck = self.z_arr[self.z_arr<1085]
@@ -27,36 +28,83 @@ class MakeData():
         
         bg = self.cosmo.get_background()
         self.Omega_nu = bg['(.)rho_ur'][-1]/(bg['H [1/Mpc]'][-1])**2
+        self.Wm0 = self.cosmo.Omega_m() 
         self.wm0 = self.cosmo.Omega_m() * self.cosmo.h()**2
         self.wb0 = self.cosmo.Omega_b() * self.cosmo.h()**2
+        self.Wr0 = (self.cosmo.Omega_g()+self.Omega_nu) 
         self.wr0 = (self.cosmo.Omega_g()+self.Omega_nu) * self.cosmo.h()**2
+        self.WL0 = self.cosmo.Omega_Lambda()
         self.wL0 = self.cosmo.Omega_Lambda() * self.cosmo.h()**2
-        self.s80 = self.cosmo.sigma8()
         
         self.H_arr = 100*np.sqrt(self.wm0*(1+self.z_arr)**3+(self.wr0)*(1+self.z_arr)**4+self.wL0)
-        #self.H_arr *= (1+0.4*self.gaussian(self.z_arr, 0.8, 0.2)) 
         self.H0 = self.H_arr[0]
         self.dM_arr = utils.make_dM((1000/self.c)*self.H_arr, self.x_arr)
         self.dA_arr = self.dM_arr/(1+self.z_arr)
         self.s8_arr, self.fs8_arr = utils.make_fs8(self.H_arr, self.x_arr,
-                                                   self.wm0, self.s80)
+                                                   self.wm0, self.cosmo.sigma8())
 
-    def gaussian(self, z_arr, mu, sig):
-        return np.exp(-np.power(z_arr - mu, 2.) / (2 * np.power(sig, 2.)))
-    
-    def get_cosmo(self):
-        params = {'h': 0.6727,
-                  'Omega_cdm': 0.265621, #0.237153,
-                  'Omega_b': 0.0494116,
-                  'Omega_Lambda': 0.6834,
-                  'n_s': 0.9649,
-                  'ln10^{10}A_s': 3.045}
-        cosmo = ccl.boltzmann.classy.Class()
+    def get_cosmo(self, mode='Planck', path=None):
+        if mode=='Planck':
+            print('Using Planck mean')
+            params = {'h': 0.6727,
+                      'Omega_cdm': 0.265621, #0.237153,
+                      'Omega_b': 0.0494116,
+                      'Omega_Lambda': 0.6834,
+                      'n_s': 0.9649,
+                      'ln10^{10}A_s': 3.045}
+        elif mode=='best_fit':
+            print('Using best fit mean')
+            params = {'h': 0.6833,
+                      'Omega_cdm': 0.250763, #0.237153,
+                      'Omega_b': 0.0479757,
+                      'Omega_Lambda': 0.6996939,
+                      'n_s': 0.9649,
+                      'ln10^{10}A_s': 3.045}
+            self.sigma8 = 0.786
+        elif mode=='other':
+            print('Using LCDM mean from file')
+            samples = self._get_params_from_file(path)
+            H0 = np.mean(samples['H0_gp'])
+            Wm0 = np.mean(samples['Omega_m'])
+            Wb0 = np.mean(samples['omega_b']/(samples['H0_gp']/100)**2)
+            Wc0 = Wm0 - Wb0
+            WL0 = 1-Wm0-0.0015674
+            params = {'h': H0/100,
+                      'Omega_cdm': Wc0, 
+                      'Omega_b': Wb0,
+                      'Omega_Lambda': WL0,
+                      'n_s': 0.9649,
+                      'ln10^{10}A_s': 3.045}
+            self.sigma8 = np.mean(samples['s80'])
+        elif mode=='poly_fit':
+            print('Using poly fit mean from file')
+            samples = self._get_params_from_file(path)
+            H0 = np.mean(samples['H0_gp'])
+            sparams = {'h': H0/100,
+                      'Omega_cdm': 0.265621, #0.237153,
+                      'Omega_b': 0.0494116,
+                      'Omega_Lambda': 0.6834,
+                      'n_s': 0.9649,
+                      'ln10^{10}A_s': 3.045}
+            self.W0 = np.mean(samples['W0'])
+            self.W1 = np.mean(samples['W1'])
+            self.W2 = np.mean(samples['W2'])
+            self.W3 = np.mean(samples['W3'])
+            self.W4 = np.mean(samples['W4'])
+        else:
+            print('Not recognized option')
+        cosmo = classy.Class()
         cosmo.set({ 'output':'mPk', 'P_k_max_h/Mpc': 20, 'z_max_pk': 1085})
         cosmo.set(params)
         cosmo.compute()
         self.cosmo = cosmo
+        self.sigma8 = self.get_sigma8()
         return self.cosmo
+
+    def get_sigma8(self):
+        if self.sigma8 is None:
+            self.sigma8 = self.cosmo.sigma8()
+        return self.sigma8
         
     def make_idx(self, z_data, z_arr):
         idxs = np.array([])
@@ -71,6 +119,44 @@ class MakeData():
     def make_U(self, z_data, z_arr, idxs):
         dz = np.diff(z_arr)[idxs]
         return (z_data - z_arr[idxs])/dz
+    
+    def get_H_mean(self, path=None, mode='LCDM'):
+        z_arr = self.z_arr
+        if mode=='Planck':
+            H_mean = self.H_arr
+        elif mode=='LCDM':
+            params = self._get_params_from_file(path)
+            H0 = np.mean(params['H0_gp'])
+            Wm0 = np.mean(params['Omega_m'])
+            Wr0 = np.mean(self.wr0/(self.H0/100)**2)
+            WL0 = 1-Wm0-Wr0
+            H_mean = H0**2*np.sqrt(Wm0*(1+z_arr)**3+Wr0*(1+z_arr)**4+WL0)
+        elif mode=='poly':
+            params = self._get_params_from_file(path)
+            H0 = np.mean(params['H0_gp'])
+            W0 = np.mean(params['W0'])
+            W1 = np.mean(params['W1'])
+            W2 = np.mean(params['W2'])
+            W3 = np.mean(params['W3'])
+            W4 = np.mean(params['W4'])
+            H2 = H0**2*(W0+W1*(1+z_arr)+W2*(1+z_arr)**2+W3*(1+z_arr)**3+W4*(1+z_arr)**4)
+            H_mean = np.sqrt(H2)
+        return H_mean
+
+    def get_Wm_mean(self, path=None, mode='LCDM'):
+        if mode=='Planck':
+            Wm0_mean = self.cosmo.Omega_m
+            wm0_mean = self.wm0
+        elif mode=='LCDM':
+            params = self._get_params_from_file(path)
+            Wm0_mean = np.mean(params['Omega_m'])
+            H0_mean = np.mean(params['H0_gp'])
+            wm0_mean = Wm0_mean*(H0_mean/100)**2
+        return Wm0_mean, wm0_mean
+        
+    def _get_params_from_file(self, path):
+        path += '/samples.npz'
+        return np.load(path)
                 
     def get_WFIRST(self, z_arr=None, new='False'):
         if z_arr is None:
@@ -106,7 +192,7 @@ class MakeData():
             
         return np.load(filepath)
         
-    def get_DESI(self, z_arr=None, new='False', mode=None):
+    def get_DESI(self, z_arr=None, new='False', mode=None, improv=1.0):
         if z_arr is None:
             z_arr = self.z_arr
         if mode is None:
@@ -137,9 +223,9 @@ class MakeData():
             s8_DESI = self.s8_arr[DESI_idx]+(self.s8_arr[DESI_idx+1]-self.s8_arr[DESI_idx])*DESI_U
             fs8_DESI = self.fs8_arr[DESI_idx]+(self.fs8_arr[DESI_idx+1]-self.fs8_arr[DESI_idx])*DESI_U
             
-            DESI_H_err = H_DESI*DESI_rels_H/100
-            DESI_dA_err = dA_DESI*DESI_rels_dA/100
-            DESI_fs8_err = fs8_DESI*DESI_rels_fs8/100
+            DESI_H_err = improv*H_DESI*DESI_rels_H/100
+            DESI_dA_err = improv*dA_DESI*DESI_rels_dA/100
+            DESI_fs8_err = improv*fs8_DESI*DESI_rels_fs8/100
 
             DESI_err = np.concatenate([DESI_H_err, DESI_dA_err, DESI_fs8_err])
 

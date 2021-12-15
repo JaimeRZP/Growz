@@ -116,9 +116,9 @@ data_cov = data_cov[1:]
 
 #base model
 with pm.Model() as model:
-    ℓ = pm.Uniform("ℓ", 0.001, 7) 
-    η = pm.HalfNormal("η", sigma=0.5) 
-    A0 = pm.Uniform("A0", 0.8, 1.2)
+    ℓ = pm.Uniform("ℓ", 0.01, 6) 
+    η = pm.HalfNormal("η", sigma=0.2) 
+    A0 = pm.Normal("A0", 1, 0.2)
     wm0_mean = data_class.wm0 
     wr0 = data_class.wr0
     wL0 = data_class.wL0 
@@ -223,7 +223,7 @@ if 'CC' in datasets:
 if 'DS17' in datasets:
     print('Adding Pantheon')
     with model:
-        M = pm.Normal('M', mu=-19.0, sigma=3)
+        M = pm.Normal('M', mu=-19.3, sigma=1)
         DS17_dL = tt.as_tensor_variable(dL_gp[DS17['idx']]+(dL_gp[DS17['idx']+1]-dL_gp[DS17['idx']])*DS17['U'])
         DS17_u = pm.Deterministic("DS17_dL",
                  tt.as_tensor_variable(5*tt.log10(DS17_dL)+25+M))
