@@ -50,50 +50,33 @@ class MakeData():
                       'Omega_cdm': 0.265621, #0.237153,
                       'Omega_b': 0.0494116,
                       'Omega_Lambda': 0.6834,
-                      'n_s': 0.9649,
-                      'ln10^{10}A_s': 3.045}
+                      'sigma8': 0.812}
+                      #'n_s': 0.9649,
+                      #'ln10^{10}A_s': 3.045}
         elif mode=='best_fit':
             print('Using best fit mean')
             params = {'h': 0.6833,
                       'Omega_cdm': 0.250763, #0.237153,
                       'Omega_b': 0.0479757,
                       'Omega_Lambda': 0.6996939,
-                      'n_s': 0.9649,
-                      'ln10^{10}A_s': 3.045}
-            self.sigma8 = 0.786
+                      'sigma8': 0.786}
         elif mode=='other':
             print('Using LCDM mean from file')
             samples = self._get_params_from_file(path)
             H0 = np.mean(samples['H0_gp'])
             Wm0 = np.mean(samples['Omega_m'])
             Wb0 = np.mean(samples['omega_b']/(samples['H0_gp']/100)**2)
+            sigma8 = np.mean(samples['s80'])
             Wc0 = Wm0 - Wb0
             WL0 = 1-Wm0-0.0015674
             params = {'h': H0/100,
                       'Omega_cdm': Wc0, 
                       'Omega_b': Wb0,
                       'Omega_Lambda': WL0,
-                      'n_s': 0.9649,
-                      'ln10^{10}A_s': 3.045}
-            self.sigma8 = np.mean(samples['s80'])
-        elif mode=='poly_fit':
-            print('Using poly fit mean from file')
-            samples = self._get_params_from_file(path)
-            H0 = np.mean(samples['H0_gp'])
-            sparams = {'h': H0/100,
-                      'Omega_cdm': 0.265621, #0.237153,
-                      'Omega_b': 0.0494116,
-                      'Omega_Lambda': 0.6834,
-                      'n_s': 0.9649,
-                      'ln10^{10}A_s': 3.045}
-            self.W0 = np.mean(samples['W0'])
-            self.W1 = np.mean(samples['W1'])
-            self.W2 = np.mean(samples['W2'])
-            self.W3 = np.mean(samples['W3'])
-            self.W4 = np.mean(samples['W4'])
+                      'sigma8': sigma8}
         else:
             print('Not recognized option')
-        cosmo = classy.Class()
+        cosmo = ccl.boltzmann.classy.Class()
         cosmo.set({ 'output':'mPk', 'P_k_max_h/Mpc': 20, 'z_max_pk': 1085})
         cosmo.set(params)
         cosmo.compute()
