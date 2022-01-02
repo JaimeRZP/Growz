@@ -48,8 +48,8 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=False)
 
-n_samples = 7500
-n_tune = 7500
+n_samples =  3000
+n_tune = 5000
 datadict = {'DESI': DESI,
             'geo_DESI': geo_DESI,
             'gro_DESI': gro_DESI,
@@ -322,7 +322,7 @@ if mean_mode is not None:
 if challenge is not None:
     filename += '_'+challenge
     
-filename += '_Xi_w0wa_{}_{}'.format(n_samples, n_tune)
+filename += '_Xi_wCDM_{}_{}'.format(n_samples, n_tune)
 print(filename)
 
 Hz = np.array(trace.posterior["H_gp"])

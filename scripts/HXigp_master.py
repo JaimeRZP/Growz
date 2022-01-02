@@ -48,8 +48,8 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=False)
 
-n_samples = 2500
-n_tune = 2500
+n_samples = 3000
+n_tune = 5000
 datadict = {'DESI': DESI,
             'geo_DESI': geo_DESI,
             'gro_DESI': gro_DESI,
@@ -122,8 +122,8 @@ with pm.Model() as model:
     Wm0_m = data_class.Wm0
     Wr0 = data_class.Wr0
     WL0 = data_class.WL0
-    gp_cov = η_H ** 2 * pm.gp.cov.ExpQuad(1, ℓ_H) + pm.gp.cov.WhiteNoise(1e-5)
-    gp = pm.gp.Latent(cov_func=gp_cov)
+    H_gp_cov = η_H ** 2 * pm.gp.cov.ExpQuad(1, ℓ_H) + pm.gp.cov.WhiteNoise(1e-5)
+    H_gp = pm.gp.Latent(cov_func=H_gp_cov)
     
     #Mean of the gp
     H = pm.Deterministic('H', H0*tt.sqrt(Wm0_m*(1+z_arr)**3+Wr0*(1+z_arr)**4+WL0))

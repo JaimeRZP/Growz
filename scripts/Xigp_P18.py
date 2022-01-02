@@ -48,8 +48,8 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=False)
 
-n_samples = 10 #7500
-n_tune = 10 #7500
+n_samples = 3000
+n_tune = 5000
 datadict = {'DESI': DESI,
             'geo_DESI': geo_DESI,
             'gro_DESI': gro_DESI,
@@ -66,7 +66,7 @@ datadict = {'DESI': DESI,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'All_gro' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
@@ -83,8 +83,8 @@ data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'WFIRST_CMB': ['WFIRST', 'CMB']}
 datasets = data_combs[data_comb]
 
-need_dM = ['DESI', 'geo_DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
-           'Wigglez', 'DS17', 'CMB', 'FCMB']
+need_dM = ['DESI', 'geo_DESI', 'BOSS', 'eBOSS',
+           'geo_BOSS', 'geo_eBOSS', 'DS17', 'CMB']
 need_fs8 = ['DESI', 'gro_DESI', 'BOSS', 'eBOSS', 'gro_BOSS', 
             'gro_eBOSS', 'Wigglez', 'DSS']
 need_rd = ['BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS', 'CMB']
@@ -115,9 +115,9 @@ data_cov = data_cov[1:]
 
 #base model
 with pm.Model() as model: 
-    H0 = pm.Normal('H0', 70, 5)
-    Wm0 = pm.Uniform('Wm0', 0 ,1)
+    H0 = pm.Normal('H0', 67.27, 0.6)
     Wr0 = data_class.Wr0
+    Wm0 = pm.TruncatedNormal('Wm0', mu=0.3166, sigma=0.0084, lower=0 , upper=1-Wr0) 
     WL0 = pm.Deterministic('WL', 1-Wm0-Wr0)
     
     #Mean of the gp
@@ -305,7 +305,7 @@ if mean_mode is not None:
 if challenge is not None:
     filename += '_'+challenge
     
-filename += '_Xi_LCDM_{}_{}'.format(n_samples, n_tune)
+filename += '_Xi_P18_{}_{}'.format(n_samples, n_tune)
 print(filename)
 
 Hz = np.array(trace.posterior["H_gp"])
