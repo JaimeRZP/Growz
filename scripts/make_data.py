@@ -397,12 +397,10 @@ class MakeData():
             pass
         else:
             z_CMB = np.array([1089.95]) 
-            #CMB_rd = utils.make_rd(self.wm0, self.wb0) 
-            #CMB_idx =  self.make_idx(z_CMB, z_arr)
-            #CMB_U = self.make_U(z_CMB, z_arr, CMB_idx)
+            CMB_idx =  self.make_idx(z_CMB, z_arr)
+            CMB_U = self.make_U(z_CMB, z_arr, CMB_idx)
             #dM_CMB = self.dM_arr[CMB_idx]+(self.dM_arr[CMB_idx+1]-self.dM_arr[CMB_idx])*CMB_U
             #perp_CMB = 100*(CMB_rd/dM_CMB)
-            
             CMB_rd = 144.46 
             perp_CMB = np.array([1.04097])
             
