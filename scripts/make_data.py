@@ -76,7 +76,7 @@ class MakeData():
                       'sigma8': sigma8}
         else:
             print('Not recognized option')
-        cosmo = ccl.boltzmann.classy.Class()
+        cosmo = classy.Class()
         cosmo.set({ 'output':'mPk', 'P_k_max_h/Mpc': 20, 'z_max_pk': 1085})
         cosmo.set(params)
         cosmo.compute()
