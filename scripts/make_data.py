@@ -210,7 +210,7 @@ class MakeData():
             print('Multiplying error bars by ', improv)
             DESI_H_err = improv*H_DESI*DESI_rels_H/100
             DESI_dA_err = improv*dA_DESI*DESI_rels_dA/100
-            DESI_fs8_err = improv*fs8_DESI*DESI_rels_fs8/1000
+            DESI_fs8_err = improv*fs8_DESI*DESI_rels_fs8/100
 
             DESI_err = np.concatenate([DESI_H_err, DESI_dA_err, DESI_fs8_err])
 
@@ -243,7 +243,7 @@ class MakeData():
                  H_data = DESI_H_data,
                  fs8_err = DESI_fs8_err,
                  dA_err = DESI_dA_err,
-                 H_err = DESI_H_err
+                 H_err = DESI_H_err,
                  z=z_DESI,
                  cov=DESI_cov,
                  err=DESI_err, 
