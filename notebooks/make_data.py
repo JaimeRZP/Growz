@@ -187,6 +187,7 @@ class MakeData():
             print('Found file for '+ dataset_name)
             pass
         else:
+            print('Making new '+ dataset_name)
             DESI_rels_dA  = [2.78, 1.87, 1.45, 1.19, 1.01, 0.87, 0.77, 
              0.76, 0.88, 0.91, 0.91, 0.91, 1.00, 1.17, 
              1.50, 2.36, 3.62, 4.79]
@@ -206,6 +207,7 @@ class MakeData():
             s8_DESI = self.s8_arr[DESI_idx]+(self.s8_arr[DESI_idx+1]-self.s8_arr[DESI_idx])*DESI_U
             fs8_DESI = self.fs8_arr[DESI_idx]+(self.fs8_arr[DESI_idx+1]-self.fs8_arr[DESI_idx])*DESI_U
             
+            print('Multiplying error bars by ', improv)
             DESI_H_err = improv*H_DESI*DESI_rels_H/100
             DESI_dA_err = improv*dA_DESI*DESI_rels_dA/100
             DESI_fs8_err = improv*fs8_DESI*DESI_rels_fs8/1000
@@ -239,6 +241,9 @@ class MakeData():
                  fs8_data = DESI_fs8_data,
                  dA_data = DESI_dA_data,
                  H_data = DESI_H_data,
+                 fs8_err = DESI_fs8_err,
+                 dA_err = DESI_dA_err,
+                 H_err = DESI_H_err,
                  z=z_DESI,
                  cov=DESI_cov,
                  err=DESI_err, 
