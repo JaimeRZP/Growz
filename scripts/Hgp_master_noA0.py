@@ -308,7 +308,7 @@ if 'CMB' in datasets:
 #Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
-    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.95)
+    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.97)
 
 #print r-stat
 print(pm.summary(trace)['r_hat'][["Wm0","ℓ","η"]])

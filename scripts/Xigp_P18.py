@@ -123,7 +123,10 @@ with pm.Model() as model:
     #Mean of the gp
     H_gp = pm.Deterministic('H_gp', H0*tt.sqrt(Wm0*(1+z_arr)**3+Wr0*(1+z_arr)**4+WL0))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
-        
+       
+    if get_rd
+        rd_gp = pm.Normal('rd_gp', 144.46, 0.000003)
+    
     if get_fs8:
         ℓ_Xi = pm.Uniform("ℓ_Xi", 0.01, 6) 
         η_Xi = pm.HalfNormal("η_Xi", sigma=0.5)
@@ -131,7 +134,7 @@ with pm.Model() as model:
         Xi_gp = pm.gp.Latent(cov_func=Xi_gp_cov)
         DXi_gp = Xi_gp.prior("DXi_gp", X=x_arr[:, None]) 
         Xi_gp = pm.Deterministic("Xi_gp", tt.as_tensor_variable(np.ones_like(z_arr)+DXi_gp)) 
-        s80 = pm.Normal("s80", 0.8, 0.5)
+        s80 = pm.Normal("s80", 0.8, 0.5) #pm.Normal("s80", 0.811, 0.0073)
         E = H_gp/H_gp[0]
         Om = tt.as_tensor_variable(Xi_gp*Wm0)
         Omm = Om[::-1]
@@ -292,7 +295,7 @@ if 'CMB' in datasets:
 #Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
-    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.95)
+    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.97)
 
 #print r-stat
 print(pm.summary(trace)['r_hat'][["ℓ_Xi", "η_Xi"]])
