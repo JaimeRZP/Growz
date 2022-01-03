@@ -150,6 +150,7 @@ class MakeData():
             print('Found file for '+ dataset_name)
             pass
         else:
+            print('Making new '+ dataset_name)
             WFIRST_rels_E  = np.array([1.3, 1.1, 1.5, 
                                 1.5, 2.0, 2.3, 
                                 2.6, 3.4, 8.9])
@@ -277,6 +278,7 @@ class MakeData():
             print('Found file for '+ dataset_name)
             pass
         else:
+            print('Making new '+ dataset_name)
             SN = utils.read_light_curve_parameters('/mnt/zfsusers/jaimerz/PhD/Growz/data/raw/PantheonDS17/lcparam_DS17f.txt')
             SN_data = np.array(SN.mb)
             z_SN = np.array(SN.zcmb)
@@ -304,6 +306,7 @@ class MakeData():
             print('Found file for '+ dataset_name)
             return np.load(filepath)
         else:
+            print('Making new '+ dataset_name)
             CC_data = np.array([69. ,  69. ,  68.6,  83. ,  75. ,  75. ,  72.9,  77. ,
                     88.8,  83. ,  81.5,  83. ,  95. ,  77. ,  87.1,  82.6,  92.8,
                     89. ,  80.9,  97. ,  90.4, 104. ,  87.9,  97.3,  92. ,  97.3,
@@ -343,6 +346,7 @@ class MakeData():
             print('Found file for '+ dataset_name)
             pass
         else:
+            print('Making new '+ dataset_name)
             z_Wigglez = np.array([0.44, 0.60, 0.73])
             fs8_Wigglez = np.array([0.413, 0.390, 0.437])
             data_Wigglez = np.concatenate([fs8_Wigglez])
@@ -371,6 +375,7 @@ class MakeData():
             print('Found file for '+ dataset_name)
             pass
         else:
+            print('Making new '+ dataset_name)
             z_DSS = np.array([0])
             fs8_DSS = np.array([0.39])
             DSS_cov = np.array([[0.022**2]])
@@ -396,6 +401,7 @@ class MakeData():
             print('Found file for '+ dataset_name)
             pass
         else:
+            print('Making new '+ dataset_name)
             z_CMB = np.array([1089.95]) 
             CMB_idx =  self.make_idx(z_CMB, z_arr)
             CMB_U = self.make_U(z_CMB, z_arr, CMB_idx)
@@ -425,6 +431,7 @@ class MakeData():
             print('Found file for '+ dataset_name)
             pass
         else:
+            print('Making new '+ dataset_name)
             z_FCMB = np.array([1090.30])
             FCMB_idx =  self.make_idx(z_FCMB, z_arr)
             FCMB_U = self.make_U(z_FCMB, z_arr, FCMB_idx)
@@ -457,6 +464,7 @@ class MakeData():
             print('Found file for '+ dataset_name)
             pass
         else:
+            print('Making new '+ dataset_name)
             z_eBOSS = np.array([1.48])
             para_eBOSS = 13.23
             perp_eBOSS = 30.21
@@ -525,6 +533,7 @@ class MakeData():
             print('Found file for '+ dataset_name)
             pass
         else:
+            print('Making new '+ dataset_name)
             z_BOSS = np.array([0.38, 0.51, 0.61])
             perp_BOSS = np.array([1512.39, 1975.22, 2306.68])
             para_BOSS = np.array([81.2087, 90.9029, 98.9647])

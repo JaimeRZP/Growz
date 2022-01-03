@@ -46,7 +46,7 @@ geo_eBOSS = data_class.get_eBOSS(new=False, mode='geo')
 gro_eBOSS = data_class.get_eBOSS(new=False, mode='gro')
 Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
-CMB = data_class.get_CMB(new=False)
+CMB = data_class.get_CMB(new=True)
 
 n_samples = 3000
 n_tune = 7000
