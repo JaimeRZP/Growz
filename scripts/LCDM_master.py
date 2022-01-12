@@ -48,10 +48,10 @@ geo_eBOSS = data_class.get_eBOSS(new=False, mode='geo')
 gro_eBOSS = data_class.get_eBOSS(new=False, mode='gro')
 Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
-CMB = data_class.get_CMB(new=False)
+CMB = data_class.get_CMB(new=True)
 
-n_samples = 1000
-n_tune = 1000
+n_samples = 2500
+n_tune = 4000
 datadict = {'DESI': DESI,
             'geo_DESI': geo_DESI,
             'gro_DESI': gro_DESI,
@@ -82,7 +82,8 @@ data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'DESI_CMB': ['DESI', 'CMB'], 
              'DESI_CMB_geo': ['geo_DESI', 'CMB'], 
              'DESI_gro': ['gro_DESI'], 
-             'WFIRST_CMB': ['WFIRST', 'CMB']}
+             'WFIRST_CMB': ['WFIRST', 'CMB'],
+             'CMB': ['CMB']}
 datasets = data_combs[data_comb]
 
 need_dM = ['DESI', 'geo_DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
@@ -310,7 +311,8 @@ if 'CMB' in datasets:
 #Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
-    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune)
+    trace = pm.sample(n_samples, return_inferencedata=True, 
+                      tune=n_tune, target_accept=0.9)
 
 #print r-stat
 print(pm.summary(trace)['r_hat'][["Wm0"]])
