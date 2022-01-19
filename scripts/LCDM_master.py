@@ -215,8 +215,8 @@ if 'Euclid' in datasets:
                    tt.as_tensor_variable(fs8_gp[Euclid['idx']]+(fs8_gp[Euclid['idx']+1]-fs8_gp[Euclid['idx']])*Euclid['U']))
         theory = tt.concatenate([theory, Euclid_H, Euclid_dA, Euclid_fs8])
         
-if 'WFISRT' in datasets:
-    print('Adding WFISRT')
+if 'WFIRST' in datasets:
+    print('Adding WFIRST')
     with model:
         WFIRST_H = pm.Deterministic('WFIRST_H',
                  tt.as_tensor_variable(H_gp[WFIRST['idx']]+(H_gp[WFIRST['idx']+1]-H_gp[WFIRST['idx']])*WFIRST['U']))
