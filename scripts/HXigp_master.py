@@ -32,10 +32,10 @@ data_class = MakeData(z_max, res, path,
                       cosmo_path=mean_path)
 c = data_class.c
 
-DESI = data_class.get_DESI(new=True, mode=None)
-geo_DESI = data_class.get_DESI(new=True, mode='geo')
-gro_DESI = data_class.get_DESI(new=True, mode='gro')
-WFIRST = data_class.get_WFIRST(new=True)
+DESI_data = data_class.get_synthetic('DESI', new=True)
+DESIfs_data = data_class.get_synthetic('DESI_fs', new=True)
+Euclid_data = data_class.get_synthetic('Euclid', new=True)
+WFIRST_data = data_class.get_synthetic('WFIRST', new=True)
 CC = data_class.get_CC(new=False)
 DSS = data_class.get_DSS(new=False)
 BOSS = data_class.get_BOSS(new=False)
@@ -48,9 +48,12 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=True)
 
-n_samples = 3000
-n_tune = 7000
+n_samples = 2500
+n_tune = 4000
 datadict = {'DESI': DESI,
+            'DESIfs': DESIfs,
+            'WFIRST': WFIRST,
+            'Euclid': Euclid,
             'geo_DESI': geo_DESI,
             'gro_DESI': gro_DESI,
             'WFIRST': WFIRST,
@@ -78,14 +81,15 @@ data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'Add': ['CC', 'DS17', 'Wigglez', 'DSS'],
              'Add_CMB': ['CC', 'DS17', 'Wigglez', 'DSS', 'CMB'],
              'DESI_CMB': ['DESI', 'CMB'], 
-             'DESI_CMB_geo': ['geo_DESI', 'CMB'], 
-             'DESI_gro': ['gro_DESI'], 
-             'WFIRST_CMB': ['WFIRST', 'CMB']}
+             'DESIfs_CMB': ['DESIfs', 'CMB'],
+             'Euclid_CMB': ['Euclid', 'CMB'],
+             'WFIRST_CMB': ['WFIRST', 'CMB'],
+             'CMB': ['CMB']}
 datasets = data_combs[data_comb]
 
-need_dM = ['DESI', 'geo_DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
+need_dM = ['DESI', 'DESIfs', 'WFIRST', 'Euclid','geo_DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
            'Wigglez', 'DS17', 'CMB', 'FCMB']
-need_fs8 = ['DESI', 'gro_DESI', 'BOSS', 'eBOSS', 'gro_BOSS', 
+need_fs8 = ['DESI', 'DESIfs', 'WFIRST', 'Euclid', 'BOSS', 'eBOSS', 'gro_BOSS', 
             'gro_eBOSS', 'Wigglez', 'DSS']
 need_rd = ['BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS', 'CMB']
 
@@ -194,29 +198,40 @@ if 'DESI' in datasets:
         DESI_fs8 = pm.Deterministic('DESI_fs8',
                    tt.as_tensor_variable(fs8_gp[DESI['idx']]+(fs8_gp[DESI['idx']+1]-fs8_gp[DESI['idx']])*DESI['U']))
         theory = tt.concatenate([theory, DESI_H, DESI_dA, DESI_fs8])
-
-if 'gro_DESI' in datasets:
-    print('Adding DESI_gro')
-    with model:
-        DESI_fs8 = pm.Deterministic('DESI_fs8',
-                   tt.as_tensor_variable(fs8_gp[DESI['idx']]+(fs8_gp[DESI['idx']+1]-fs8_gp[DESI['idx']])*DESI['U']))
-        theory = tt.concatenate([theory, DESI_fs8])
-
-if 'geo_DESI' in datasets:
-    print('Adding DESI_geo')
-    with model:
-        DESI_H = pm.Deterministic('DESI_H',
-                 tt.as_tensor_variable(H_gp[DESI['idx']]+(H_gp[DESI['idx']+1]-H_gp[DESI['idx']])*DESI['U']))
-        DESI_dA = pm.Deterministic('DESI_dA',
-                  tt.as_tensor_variable(dA_gp[DESI['idx']]+(dA_gp[DESI['idx']+1]-dA_gp[DESI['idx']])*DESI['U']))
-        theory = tt.concatenate([theory, DESI_H, DESI_dA])
         
-if 'WFIRST' in datasets:
-    print('Adding WFIRST')
+if 'DESIfs' in datasets:
+    print('Adding DESIfs')
     with model:
-        WFIRST_E = pm.Deterministic('WFIRST_E',
-                   tt.as_tensor_variable(E_gp[WFIRST['idx']]+(E_gp[WFIRST['idx']+1]-E_gp[WFIRST['idx']])*WFIRST['U']))
-        theory = tt.concatenate([theory, WFIRST_E])
+        DESIfs_H = pm.Deterministic('DESIfs_H',
+                 tt.as_tensor_variable(H_gp[DESIfs['idx']]+(H_gp[DESIfs['idx']+1]-H_gp[DESIfs['idx']])*DESIfs['U']))
+        DESIfs_dA = pm.Deterministic('DESIfs_dA',
+                  tt.as_tensor_variable(dA_gp[DESIfs['idx']]+(dA_gp[DESIfs['idx']+1]-dA_gp[DESIfs['idx']])*DESIfs['U']))
+        DESIfs_fs8 = pm.Deterministic('DESIfs_fs8',
+                   tt.as_tensor_variable(fs8_gp[DESIfs['idx']]+(fs8_gp[DESIfs['idx']+1]-fs8_gp[DESIfs['idx']])*DESIfs['U']))
+        theory = tt.concatenate([theory, DESIfs_H, DESIfs_dA, DESIfs_fs8])
+        
+if 'Euclid' in datasets:
+    print('Adding Euclid')
+    with model:
+        Euclid_H = pm.Deterministic('Euclid_H',
+                 tt.as_tensor_variable(H_gp[Euclid['idx']]+(H_gp[Euclid['idx']+1]-H_gp[Euclid['idx']])*Euclid['U']))
+        Euclid_dA = pm.Deterministic('Euclid_dA',
+                  tt.as_tensor_variable(dA_gp[Euclid['idx']]+(dA_gp[Euclid['idx']+1]-dA_gp[Euclid['idx']])*Euclid['U']))
+        Euclid_fs8 = pm.Deterministic('Euclid_fs8',
+                   tt.as_tensor_variable(fs8_gp[Euclid['idx']]+(fs8_gp[Euclid['idx']+1]-fs8_gp[Euclid['idx']])*Euclid['U']))
+        theory = tt.concatenate([theory, Euclid_H, Euclid_dA, Euclid_fs8])
+        
+if 'WFISRT' in datasets:
+    print('Adding WFISRT')
+    with model:
+        WFISRT_H = pm.Deterministic('WFISRT_H',
+                 tt.as_tensor_variable(H_gp[WFISRT['idx']]+(H_gp[WFISRT['idx']+1]-H_gp[WFISRT['idx']])*WFISRT['U']))
+        WFISRT_dA = pm.Deterministic('WFISRT_dA',
+                  tt.as_tensor_variable(dA_gp[WFISRT['idx']]+(dA_gp[WFISRT['idx']+1]-dA_gp[WFISRT['idx']])*WFISRT['U']))
+        WFISRT_fs8 = pm.Deterministic('WFISRT_fs8',
+                   tt.as_tensor_variable(fs8_gp[WFISRT['idx']]+(fs8_gp[WFISRT['idx']+1]-fs8_gp[WFISRT['idx']])*WFISRT['U']))
+        theory = tt.concatenate([theory, WFISRT_H, WFISRT_dA, WFISRT_fs8])
+
 
 if 'CC' in datasets:
     print('Adding CCs')
