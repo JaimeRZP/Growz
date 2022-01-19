@@ -158,9 +158,9 @@ class MakeData():
             fs8_err = covs['fs8_err']
             err = np.concatenate([H_err, dA_err, fs8_err])
 
-            H_data = H #+ np.random.randn(len(z_arr))*H_err
-            dA_data = dA #+ np.random.randn(len(z_arr))*dA_err
-            fs8_data = fs8 #+ np.random.randn(len(z_arr))*fs8_err
+            H_data = H + np.random.randn(len(z_arr))*H_err
+            dA_data = dA + np.random.randn(len(z_arr))*dA_err
+            fs8_data = fs8 + np.random.randn(len(z_arr))*fs8_err
             data = np.concatenate([H_data, dA_data, fs8_data])
 
             H_cov = covs['hh_cov']
