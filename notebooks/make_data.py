@@ -141,39 +141,54 @@ class MakeData():
         path += '/samples.npz'
         return np.load(path)
                 
-    def get_WFIRST(self, z_arr=None, new='False'):
-        if z_arr is None:
-            z_arr = self.z_arr
-        dataset_name = 'WFIRST'
+    def get_synthetic(self, dataset_name, new='False'):
         filepath = os.path.join(self.path, dataset_name+'.npz')
         if (os.path.exists(filepath)) and (new is False):
             print('Found file for '+ dataset_name)
             pass
         else:
             print('Making new '+ dataset_name)
-            WFIRST_rels_E  = np.array([1.3, 1.1, 1.5, 
-                                1.5, 2.0, 2.3, 
-                                2.6, 3.4, 8.9])
-            z_WFIRST = np.array([0.07, 0.2, 0.35, 
-                              0.6, 0.8, 1.0,
-                              1.3, 1.7, 2.5])
-            WFIRST_idx =  self.make_idx(z_WFIRST, z_arr) 
-            WFIRST_U = self.make_U(z_WFIRST, z_arr, WFIRST_idx)
-            E_arr = self.H_arr/self.H_arr[0]
-            WFIRST_err = E_arr[WFIRST_idx]*WFIRST_rels_E/100
-            WFIRST_data = E_arr[WFIRST_idx]+ np.random.randn(len(z_WFIRST))*WFIRST_err
-            WFIRST_cov = np.zeros([len(z_WFIRST), len(z_WFIRST)])
-            for i in np.arange(len(z_WFIRST)):
-                WFIRST_cov[i,i] = WFIRST_err[i]**2
-                
-            np.savez(os.path.join(self.path, dataset_name), 
-                     data = WFIRST_data,
-                     z=z_WFIRST,
-                     cov=WFIRST_cov,
-                     err=WFIRST_err, 
-                     idx=WFIRST_idx, 
-                     U=WFIRST_U)
+            covs = np.load('/home/jaime/PhD/Growz/data/raw/'+dataset_name+'_covs.npz')
+            rels_dA  = covs['da_err']
+            rels_H = covs['h_err'] 
+            rels_fs8 = covs['fs8_err']
+            z_arr = covs['z_arr']
+            idx_arr =  self.make_idx(z_arr, self.z_arr)
+            U_arr = self.make_U(z_arr, self.z_arr, idx_arr)
+
+            H = covs['H_data']
+            dA = covs['dA_data']
+            fs8 = covs['fs8_data']
             
+            H_err = H*covs['h_err']/100
+            dA_err = dA*covs['da_err']/100
+            fs8_err = fs8*covs['fs8_err']/100
+            err = np.concatenate([H_err, dA_err, fs8_err])
+
+            H_data = H + np.random.randn(len(z_arr))*H_err
+            dA_data = dA + np.random.randn(len(z_arr))*dA_err
+            fs8_data = fs8 + np.random.randn(len(z_arr))*fs8_err
+            data = np.concatenate([H_data, dA_data, fs8_data])
+
+            H_cov = covs['hh_cov']
+            dA_cov = covs['dada_cov']
+            fs8_cov = covs['fs8fs8_cov']
+            cov = covs['total_cov']
+            
+            np.savez(os.path.join(self.path, dataset_name), 
+                     data = data,
+                     fs8_data = fs8_data,
+                     dA_data = dA_data,
+                     H_data = H_data,
+                     fs8_err = fs8_err,
+                     dA_err = dA_err,
+                     H_err = H_err,
+                     z = z_arr,
+                     cov = cov,
+                     err = err, 
+                     idx = idx_arr,
+                     U = U_arr)
+        
         return np.load(filepath)
         
     def get_DESI(self, z_arr=None, new='False', mode=None, improv=1):

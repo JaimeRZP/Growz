@@ -49,7 +49,7 @@ DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=False)
 
 n_samples = 3000
-n_tune = 5000
+n_tune = 7000
 datadict = {'DESI': DESI,
             'geo_DESI': geo_DESI,
             'gro_DESI': gro_DESI,
@@ -305,7 +305,7 @@ if 'CMB' in datasets:
 #Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
-    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.95)
+    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.97)
 
 #print r-stat
 print(pm.summary(trace)['r_hat'][["ℓ_Xi", "η_Xi"]])

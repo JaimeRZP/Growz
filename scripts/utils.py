@@ -96,14 +96,3 @@ def make_dM(H, x_arr):
     dM[1:] = dx*np.cumsum((1+z_arr)/H)
     dM = 0.5*(dM[1:]+dM[:-1])-0.5*dM[1]
     return dM
-
-def make_rd(wm0, wb0):
-    a1 = 0.00785436
-    a2 = 0.177084
-    a3 = 0.00912388
-    a4 = 0.618711
-    a5 = 11.9611
-    a6 = 2.81343
-    a7 = 0.784719
-    rd_gp = 1/(a1*wb0**a2+a3*wm0**a4+a5*(wb0**a6)*(wm0**a7))
-    return rd_gp
