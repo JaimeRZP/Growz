@@ -77,7 +77,7 @@ class MakeData():
         else:
             print('Not recognized option')
         cosmo = classy.Class()
-        cosmo.set({ 'output':'mPk', 'P_k_max_h/Mpc': 20, 'z_max_pk': 1085})
+        cosmo.set({'output':'mPk', 'P_k_max_h/Mpc': 20, 'z_max_pk': 1085})
         cosmo.set(params)
         cosmo.compute()
         self.cosmo = cosmo
@@ -146,9 +146,12 @@ class MakeData():
             idx_arr =  self.make_idx(z_arr, self.z_arr)
             U_arr = self.make_U(z_arr, self.z_arr, idx_arr)
 
-            H = covs['H_data']
-            dA = covs['dA_data']
-            fs8 = covs['fs8_data']
+            H_DESI = self.H_arr[idx_arr]+(self.H_arr[idx_arr+1]-self.H_arr[idx_arr])*U_arr
+            dA_DESI = self.dA_arr[idx_arr]+(self.dA_arr[idx_arr+1]-self.dA_arr[idx_arr])*U_arr
+            fs8_DESI = self.fs8_arr[idx_arr]+(self.fs8_arr[idx_arr+1]-self.fs8_arr[idx_arr])*U_arr
+            #H = covs['H_data']
+            #dA = covs['dA_data']
+            #fs8 = covs['fs8_data']
             
             H_err = H*covs['h_err']/100
             dA_err = dA*covs['da_err']/100
