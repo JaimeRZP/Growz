@@ -32,10 +32,10 @@ data_class = MakeData(z_max, res, path,
                       cosmo_path=mean_path)
 c = data_class.c
 
-DESI_data = data_class.get_synthetic('DESI', new=True)
-DESIfs_data = data_class.get_synthetic('DESI_fs', new=True)
-Euclid_data = data_class.get_synthetic('Euclid', new=True)
-WFIRST_data = data_class.get_synthetic('WFIRST', new=True)
+DESI = data_class.get_synthetic('DESI', new=True)
+DESIfs = data_class.get_synthetic('DESI_fs', new=True)
+Euclid = data_class.get_synthetic('Euclid', new=True)
+WFIRST = data_class.get_synthetic('WFIRST', new=True)
 CC = data_class.get_CC(new=False)
 DSS = data_class.get_DSS(new=False)
 BOSS = data_class.get_BOSS(new=False)
@@ -54,9 +54,6 @@ datadict = {'DESI': DESI,
             'DESIfs': DESIfs,
             'WFIRST': WFIRST,
             'Euclid': Euclid,
-            'geo_DESI': geo_DESI,
-            'gro_DESI': gro_DESI,
-            'WFIRST': WFIRST,
             'CC': CC,
             'DS17': DS17, 
             'BOSS': BOSS,

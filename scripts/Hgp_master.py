@@ -35,7 +35,7 @@ c = data_class.c
 DESI = data_class.get_DESI(new=True, mode=None)
 geo_DESI = data_class.get_DESI(new=True, mode='geo')
 gro_DESI = data_class.get_DESI(new=True, mode='gro')
-WFIRST = data_class.get_WFIRST(new=True)
+#WFIRST = data_class.get_WFIRST(new=True)
 CC = data_class.get_CC(new=False)
 DSS = data_class.get_DSS(new=False)
 BOSS = data_class.get_BOSS(new=False)
@@ -48,13 +48,13 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=True)
 
-n_samples = 5000
+n_samples = 4000
 n_tune = 7000
 
 datadict = {'DESI': DESI,
             'geo_DESI': geo_DESI,
             'gro_DESI': gro_DESI,
-            'WFIRST': WFIRST,
+            #'WFIRST': WFIRST,
             'CC': CC,
             'DS17': DS17, 
             'BOSS': BOSS,
@@ -67,7 +67,7 @@ datadict = {'DESI': DESI,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'All_CMB_geo' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
@@ -310,7 +310,7 @@ if 'CMB' in datasets:
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
     trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune,
-                      target_accept=0.97)
+                      target_accept=0.99)
 
 #print r-stat
 print(pm.summary(trace)['r_hat'][["A0", "ℓ", "η"]])
