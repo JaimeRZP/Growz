@@ -146,21 +146,21 @@ class MakeData():
             idx_arr =  self.make_idx(z_arr, self.z_arr)
             U_arr = self.make_U(z_arr, self.z_arr, idx_arr)
 
-            H_DESI = self.H_arr[idx_arr]+(self.H_arr[idx_arr+1]-self.H_arr[idx_arr])*U_arr
-            dA_DESI = self.dA_arr[idx_arr]+(self.dA_arr[idx_arr+1]-self.dA_arr[idx_arr])*U_arr
-            fs8_DESI = self.fs8_arr[idx_arr]+(self.fs8_arr[idx_arr+1]-self.fs8_arr[idx_arr])*U_arr
+            H = self.H_arr[idx_arr]+(self.H_arr[idx_arr+1]-self.H_arr[idx_arr])*U_arr
+            dA = self.dA_arr[idx_arr]+(self.dA_arr[idx_arr+1]-self.dA_arr[idx_arr])*U_arr
+            fs8 = self.fs8_arr[idx_arr]+(self.fs8_arr[idx_arr+1]-self.fs8_arr[idx_arr])*U_arr
             #H = covs['H_data']
             #dA = covs['dA_data']
             #fs8 = covs['fs8_data']
             
-            H_err = H*covs['h_err']/100
-            dA_err = dA*covs['da_err']/100
-            fs8_err = fs8*covs['fs8_err']/100
+            H_err = covs['h_err']
+            dA_err = covs['da_err']
+            fs8_err = covs['fs8_err']
             err = np.concatenate([H_err, dA_err, fs8_err])
 
-            H_data = H + np.random.randn(len(z_arr))*H_err
-            dA_data = dA + np.random.randn(len(z_arr))*dA_err
-            fs8_data = fs8 + np.random.randn(len(z_arr))*fs8_err
+            H_data = H #+ np.random.randn(len(z_arr))*H_err
+            dA_data = dA #+ np.random.randn(len(z_arr))*dA_err
+            fs8_data = fs8 #+ np.random.randn(len(z_arr))*fs8_err
             data = np.concatenate([H_data, dA_data, fs8_data])
 
             H_cov = covs['hh_cov']

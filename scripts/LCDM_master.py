@@ -50,8 +50,8 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=True)
 
-n_samples = 1000
-n_tune = 1000
+n_samples = 1002
+n_tune = 1002
 datadict = {'DESI': DESI,
             'DESIfs': DESIfs,
             'WFIRST': WFIRST,
@@ -68,7 +68,7 @@ datadict = {'DESI': DESI,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'WFIRST_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'DESI_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
@@ -223,7 +223,7 @@ if 'WFIRST' in datasets:
         WFIRST_dA = pm.Deterministic('WFIRST_dA',
                   tt.as_tensor_variable(dA_gp[WFIRST['idx']]+(dA_gp[WFIRST['idx']+1]-dA_gp[WFIRST['idx']])*WFIRST['U']))
         WFIRST_fs8 = pm.Deterministic('WFIRST_fs8',
-                   tt.as_tensor_variable(fs8_gp[WFISRT['idx']]+(fs8_gp[WFIRST['idx']+1]-fs8_gp[WFIRST['idx']])*WFIRST['U']))
+                   tt.as_tensor_variable(fs8_gp[WFIRST['idx']]+(fs8_gp[WFIRST['idx']+1]-fs8_gp[WFIRST['idx']])*WFIRST['U']))
         theory = tt.concatenate([theory, WFIRST_H, WFIRST_dA, WFIRST_fs8])
 
 if 'CC' in datasets:

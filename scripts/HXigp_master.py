@@ -226,7 +226,7 @@ if 'WFIRST' in datasets:
         WFISRT_dA = pm.Deterministic('WFISRT_dA',
                   tt.as_tensor_variable(dA_gp[WFISRT['idx']]+(dA_gp[WFISRT['idx']+1]-dA_gp[WFISRT['idx']])*WFISRT['U']))
         WFISRT_fs8 = pm.Deterministic('WFISRT_fs8',
-                   tt.as_tensor_variable(fs8_gp[WFISRT['idx']]+(fs8_gp[WFISRT['idx']+1]-fs8_gp[WFISRT['idx']])*WFISRT['U']))
+                   tt.as_tensor_variable(fs8_gp[WFIRST['idx']]+(fs8_gp[WFISRT['idx']+1]-fs8_gp[WFISRT['idx']])*WFISRT['U']))
         theory = tt.concatenate([theory, WFISRT_H, WFISRT_dA, WFISRT_fs8])
 
 
