@@ -48,8 +48,8 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=True)
 
-n_samples = 2500
-n_tune = 4000
+n_samples = 3000
+n_tune = 7000
 datadict = {'DESI': DESI,
             'DESIfs': DESIfs,
             'WFIRST': WFIRST,
@@ -221,13 +221,13 @@ if 'Euclid' in datasets:
 if 'WFIRST' in datasets:
     print('Adding WFIRST')
     with model:
-        WFISRT_H = pm.Deterministic('WFISRT_H',
-                 tt.as_tensor_variable(H_gp[WFISRT['idx']]+(H_gp[WFISRT['idx']+1]-H_gp[WFISRT['idx']])*WFISRT['U']))
-        WFISRT_dA = pm.Deterministic('WFISRT_dA',
-                  tt.as_tensor_variable(dA_gp[WFISRT['idx']]+(dA_gp[WFISRT['idx']+1]-dA_gp[WFISRT['idx']])*WFISRT['U']))
-        WFISRT_fs8 = pm.Deterministic('WFISRT_fs8',
-                   tt.as_tensor_variable(fs8_gp[WFIRST['idx']]+(fs8_gp[WFISRT['idx']+1]-fs8_gp[WFISRT['idx']])*WFISRT['U']))
-        theory = tt.concatenate([theory, WFISRT_H, WFISRT_dA, WFISRT_fs8])
+        WFIRST_H = pm.Deterministic('WFIRST_H',
+                 tt.as_tensor_variable(H_gp[WFIRST['idx']]+(H_gp[WFIRST['idx']+1]-H_gp[WFIRST['idx']])*WFIRST['U']))
+        WFIRST_dA = pm.Deterministic('WFIRST_dA',
+                  tt.as_tensor_variable(dA_gp[WFIRST['idx']]+(dA_gp[WFIRST['idx']+1]-dA_gp[WFIRST['idx']])*WFIRST['U']))
+        WFIRST_fs8 = pm.Deterministic('WFIRST_fs8',
+                   tt.as_tensor_variable(fs8_gp[WFIRST['idx']]+(fs8_gp[WFIRST['idx']+1]-fs8_gp[WFIRST['idx']])*WFIRST['U']))
+        theory = tt.concatenate([theory, WFIRST_H, WFIRST_dA, WFIRST_fs8])
 
 
 if 'CC' in datasets:
