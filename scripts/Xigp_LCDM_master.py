@@ -26,16 +26,16 @@ if challenge is not None:
 
 print('data path: ', path)
 mean_path =  None #'LCDM_cosmo44_10000_10000'
-mean_mode = 'best_fit'
+mean_mode = 'Planck'
 data_class = MakeData(z_max, res, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
 c = data_class.c
 
-DESI = data_class.get_DESI(new=True, mode=None)
-geo_DESI = data_class.get_DESI(new=True, mode='geo')
-gro_DESI = data_class.get_DESI(new=True, mode='gro')
-WFIRST = data_class.get_WFIRST(new=True)
+DESI = data_class.get_synthetic('DESI', new=True)
+DESIfs = data_class.get_synthetic('DESI_fs', new=True)
+Euclid = data_class.get_synthetic('Euclid', new=True)
+WFIRST = data_class.get_synthetic('WFIRST', new=True)
 CC = data_class.get_CC(new=False)
 DSS = data_class.get_DSS(new=False)
 BOSS = data_class.get_BOSS(new=False)
@@ -46,7 +46,7 @@ geo_eBOSS = data_class.get_eBOSS(new=False, mode='geo')
 gro_eBOSS = data_class.get_eBOSS(new=False, mode='gro')
 Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
-CMB = data_class.get_CMB(new=False)
+CMB = data_class.get_CMB(new=True)
 
 n_samples = 3000
 n_tune = 7000
