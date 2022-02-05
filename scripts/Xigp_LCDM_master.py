@@ -51,9 +51,9 @@ CMB = data_class.get_CMB(new=True)
 n_samples = 3000
 n_tune = 7000
 datadict = {'DESI': DESI,
-            'geo_DESI': geo_DESI,
-            'gro_DESI': gro_DESI,
+            'DESIfs': DESIfs,
             'WFIRST': WFIRST,
+            'Euclid': Euclid,
             'CC': CC,
             'DS17': DS17, 
             'BOSS': BOSS,
@@ -78,9 +78,10 @@ data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'Add': ['CC', 'DS17', 'Wigglez', 'DSS'],
              'Add_CMB': ['CC', 'DS17', 'Wigglez', 'DSS', 'CMB'],
              'DESI_CMB': ['DESI', 'CMB'], 
-             'DESI_CMB_geo': ['geo_DESI', 'CMB'], 
-             'DESI_gro': ['gro_DESI'], 
-             'WFIRST_CMB': ['WFIRST', 'CMB']}
+             'DESIfs_CMB': ['DESIfs', 'CMB'],
+             'Euclid_CMB': ['Euclid', 'CMB'],
+             'WFIRST_CMB': ['WFIRST', 'CMB'],
+             'CMB': ['CMB']}
 datasets = data_combs[data_comb]
 
 need_dM = ['DESI', 'geo_DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
