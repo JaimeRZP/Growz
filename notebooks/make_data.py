@@ -297,12 +297,12 @@ class MakeData():
             pass
         else:
             print('Making new '+ dataset_name)
-            SN = utils.read_light_curve_parameters('/mnt/zfsusers/jaimerz/PhD/Growz/data/raw/PantheonDS17/lcparam_DS17f.txt')
+            SN = utils.read_light_curve_parameters('/home/jaime/PhD/Growz/data/raw/PantheonDS17/lcparam_DS17f.txt')
             SN_data = np.array(SN.mb)
             z_SN = np.array(SN.zcmb)
             SN_idx =  self.make_idx(z_SN, z_arr) 
             SN_U = self.make_U(z_SN, z_arr, SN_idx)
-            SN_cov = np.genfromtxt('/mnt/zfsusers/jaimerz/PhD/Growz/data/raw/PantheonDS17/syscov_panth.txt') + np.diag(SN.dmb**2)
+            SN_cov = np.genfromtxt('/home/jaime/PhD/Growz/data/raw/PantheonDS17/syscov_panth.txt') + np.diag(SN.dmb**2)
             SN_err = np.sqrt(np.diag(SN_cov))
 
             np.savez(os.path.join(self.path, dataset_name),  
@@ -422,8 +422,8 @@ class MakeData():
             print('Making new '+ dataset_name)
             z_CMB = np.array([1089.95]) 
             #CMB_rd = utils.make_rd(self.wm0, self.wb0) 
-            #CMB_idx =  self.make_idx(z_CMB, z_arr)
-            #CMB_U = self.make_U(z_CMB, z_arr, CMB_idx)
+            CMB_idx =  self.make_idx(z_CMB, z_arr)
+            CMB_U = self.make_U(z_CMB, z_arr, CMB_idx)
             #dM_CMB = self.dM_arr[CMB_idx]+(self.dM_arr[CMB_idx+1]-self.dM_arr[CMB_idx])*CMB_U
             #perp_CMB = 100*(CMB_rd/dM_CMB)
             

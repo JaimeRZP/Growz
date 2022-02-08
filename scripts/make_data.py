@@ -138,7 +138,7 @@ class MakeData():
             pass
         else:
             print('Making new '+ dataset_name)
-            covs = np.load('/mnt/zfsusers/jaimerz/PhD/Growz/data/raw/'+dataset_name+'_covs.npz')
+            covs = np.load('home/jaime/PhD/Growz/data/raw/'+dataset_name+'_covs.npz')
             rels_dA  = covs['da_err']
             rels_H = covs['h_err'] 
             rels_fs8 = covs['fs8_err']
@@ -287,12 +287,12 @@ class MakeData():
             pass
         else:
             print('Making new '+ dataset_name)
-            SN = utils.read_light_curve_parameters('/mnt/zfsusers/jaimerz/PhD/Growz/data/raw/PantheonDS17/lcparam_DS17f.txt')
+            SN = utils.read_light_curve_parameters('/home/jaime/PhD/Growz/data/raw/PantheonDS17/lcparam_DS17f.txt')
             SN_data = np.array(SN.mb)
             z_SN = np.array(SN.zcmb)
             SN_idx =  self.make_idx(z_SN, z_arr) 
             SN_U = self.make_U(z_SN, z_arr, SN_idx)
-            SN_cov = np.genfromtxt('/mnt/zfsusers/jaimerz/PhD/Growz/data/raw/PantheonDS17/syscov_panth.txt') + np.diag(SN.dmb**2)
+            SN_cov = np.genfromtxt('/home/jaime/PhD/Growz/data/raw/PantheonDS17/syscov_panth.txt') + np.diag(SN.dmb**2)
             SN_err = np.sqrt(np.diag(SN_cov))
 
             np.savez(os.path.join(self.path, dataset_name),  
