@@ -26,15 +26,13 @@ if challenge is not None:
 
 print('data path: ', path)
 mean_path =  None #'LCDM_cosmo44_10000_10000'
-mean_mode = 'best_fit'
+mean_mode = 'Planck'
 data_class = MakeData(z_max, res, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
 c = data_class.c
 
 DESI = data_class.get_DESI(new=True, mode=None)
-geo_DESI = data_class.get_DESI(new=True, mode='geo')
-gro_DESI = data_class.get_DESI(new=True, mode='gro')
 WFIRST = data_class.get_WFIRST(new=True)
 CC = data_class.get_CC(new=False)
 DSS = data_class.get_DSS(new=False)
@@ -78,8 +76,6 @@ data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'Add': ['CC', 'DS17', 'Wigglez', 'DSS'],
              'Add_CMB': ['CC', 'DS17', 'Wigglez', 'DSS', 'CMB'],
              'DESI_CMB': ['DESI', 'CMB'], 
-             'DESI_CMB_geo': ['geo_DESI', 'CMB'], 
-             'DESI_gro': ['gro_DESI'], 
              'WFIRST_CMB': ['WFIRST', 'CMB']}
 datasets = data_combs[data_comb]
 
