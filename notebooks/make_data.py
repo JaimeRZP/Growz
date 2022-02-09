@@ -159,9 +159,6 @@ class MakeData():
             H = self.H_arr[idx_arr]+(self.H_arr[idx_arr+1]-self.H_arr[idx_arr])*U_arr
             dA = self.dA_arr[idx_arr]+(self.dA_arr[idx_arr+1]-self.dA_arr[idx_arr])*U_arr
             fs8 = self.fs8_arr[idx_arr]+(self.fs8_arr[idx_arr+1]-self.fs8_arr[idx_arr])*U_arr
-            #H = covs['H_data']
-            #dA = covs['dA_data']
-            #fs8 = covs['fs8_data']
             
             H_err = covs['h_err']
             dA_err = covs['da_err']
