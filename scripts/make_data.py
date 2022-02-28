@@ -5,9 +5,11 @@ import os
 import classy
 import utils
 from pandas import read_table
+np.random.seed(1998)
 
 class MakeData():
     def __init__(self, z_max, res, path, cosmo_mode='Planck', cosmo_path=None):
+        np.random.seed(1998)
         self.c = 299792458.0
         self.path = path
         self.res = res

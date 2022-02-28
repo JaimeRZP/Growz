@@ -164,10 +164,12 @@ class MakeData():
             dA_err = covs['da_err']
             fs8_err = covs['fs8_err']
             err = np.concatenate([H_err, dA_err, fs8_err])
-
-            H_data = H + np.random.randn(len(z_arr))*H_err
-            dA_data = dA + np.random.randn(len(z_arr))*dA_err
-            fs8_data = fs8 + np.random.randn(len(z_arr))*fs8_err
+            np.random.seed(10)
+            random = np.random.randn(len(z_arr))
+            print(random)
+            H_data = H + random*H_err
+            dA_data = dA + random*dA_err
+            fs8_data = fs8 + random*fs8_err
             data = np.concatenate([H_data, dA_data, fs8_data])
 
             H_cov = covs['hh_cov']
@@ -195,7 +197,7 @@ class MakeData():
         if z_arr is None:
             z_arr = self.z_arr
         if mode is None:
-            dataset_name = 'DESI'
+            dataset_name = 'old_DESI'
         else:
             dataset_name = mode + 'DESI'
         filepath = os.path.join(self.path, dataset_name+'.npz')
@@ -230,9 +232,12 @@ class MakeData():
 
             DESI_err = np.concatenate([DESI_H_err, DESI_dA_err, DESI_fs8_err])
 
-            DESI_H_data = H_DESI + np.random.randn(len(z_DESI))*DESI_H_err
-            DESI_dA_data = dA_DESI + np.random.randn(len(z_DESI))*DESI_dA_err
-            DESI_fs8_data = fs8_DESI + np.random.randn(len(z_DESI))*DESI_fs8_err
+            np.random.seed(10)
+            random = np.random.randn(len(z_DESI))
+            print(random)
+            DESI_H_data = H_DESI + random*DESI_H_err
+            DESI_dA_data = dA_DESI + random*DESI_dA_err
+            DESI_fs8_data = fs8_DESI + random*DESI_fs8_err
             DESI_data = np.concatenate([DESI_H_data, DESI_dA_data, DESI_fs8_data])
             DESI_geo_data = np.concatenate([DESI_H_data, DESI_dA_data])
 
