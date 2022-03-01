@@ -50,8 +50,6 @@ CMB = data_class.get_CMB(new=True)
 n_samples = 1003
 n_tune = 1003
 datadict = {'DESI': DESI,
-            'DESIfs': DESIfs,
-            'WFIRST': WFIRST,
             'Euclid': Euclid,
             'CC': CC,
             'DS17': DS17, 
