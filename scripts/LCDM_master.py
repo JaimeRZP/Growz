@@ -30,8 +30,6 @@ mean_mode = 'Planck'
 data_class = MakeData(z_max, res, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
-Planck = data_class.Planck
-z_planck = data_class.z_planck
 c = data_class.c
 
 which_DESI = 'DESI_hs'
