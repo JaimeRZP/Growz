@@ -324,7 +324,11 @@ print(pm.summary(trace)['r_hat'][["Wm0"]])
 print(pm.summary(trace)['mean'][["Wm0"]])
 
 #Save
-filename = data_comb
+if data_comb=="DESI_CMB":
+    filename = which_DESI+"_CMB"
+else:
+    filename = data_comb
+
 if mean_mode is not None:
     filename += '_'+mean_mode
 if challenge is not None:
