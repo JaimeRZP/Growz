@@ -35,7 +35,6 @@ c = data_class.c
 which_DESI = 'DESI_hs'
 DESI = data_class.get_synthetic(which_DESI, new=True)
 Euclid = data_class.get_synthetic('Euclid', new=True)
-WFIRST = data_class.get_synthetic('WFIRST', new=True)
 CC = data_class.get_CC(new=False)
 DSS = data_class.get_DSS(new=False)
 BOSS = data_class.get_BOSS(new=False)
