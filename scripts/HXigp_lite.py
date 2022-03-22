@@ -13,11 +13,19 @@ from pymc3.gp.util import plot_gp_dist
 
 #Load data
 z_max = 1110
-res = 100
-x_arr = np.linspace(0, np.log(1+z_max), res)
-dx = np.mean(np.diff(x_arr))
-z_arr = np.exp(x_arr)-1
-a_arr = 1./(1+z_arr)
+nz = 200
+x_int = np.linspace(0, np.log(1+z_max), nz)
+z_int = np.exp(x_int)-1
+a_int = 1./(1+z_int)
+dx = np.mean(np.diff(x_int))
+
+x_H = np.linspace(0, np.log(1+z_max), 150)
+z_H = np.exp(x_H)-1
+a_H = 1./(1+z_H)
+
+x_Xi = np.linspace(0, np.log(1+z_max), 50)
+z_Xi = np.exp(x_Xi)-1
+a_Xi = 1./(1+z_Xi)
 
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/' 
 challenge = None #'cosmo61'
@@ -27,12 +35,12 @@ if challenge is not None:
 print('data path: ', path)
 mean_path =  None #'LCDM_cosmo44_10000_10000'
 mean_mode = 'Planck'
-data_class = MakeData(z_max, res, path,
+data_class = MakeData(z_max, nz, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
 c = data_class.c
 
-which_DESI = 'DESI_hs'
+which_DESI = 'DESI'
 DESI = data_class.get_synthetic(which_DESI, new=True)
 Euclid = data_class.get_synthetic('Euclid', new=True)
 CC = data_class.get_CC(new=False)
@@ -110,6 +118,12 @@ for dataset_name in datasets:
     data_cov = block_diag(data_cov, dataset['cov'])
 data_cov = data_cov[1:]
 
+idx_H = data_class.make_idx(z_int, z_H)
+U_H = data_class.make_U(z_int, z_H, idx_H)
+
+idx_Xi = data_class.make_idx(z_int, z_Xi)
+U_Xi = data_class.make_U(z_int, z_Xi, idx_Xi)
+
 #base model
 with pm.Model() as model:
     ℓ_H = pm.Uniform("ℓ_H", 0.01, 6) 
@@ -123,20 +137,24 @@ with pm.Model() as model:
     H_gp = pm.gp.Latent(cov_func=H_gp_cov)
     
     #Mean of the gp
-    H = pm.Deterministic('H', H0*tt.sqrt(Wm0_m*(1+z_arr)**3+Wr0*(1+z_arr)**4+WL0))
-    DH_gp = H_gp.prior("DH_gp", X=x_arr[:, None]) 
+    H = pm.Deterministic('H', H0*tt.sqrt(Wm0_m*(1+z_H)**3+Wr0*(1+z_H)**4+WL0))
+    DH_gp = H_gp.prior("DH_gp", X=x_H[:, None]) 
     H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H*A0*(1+DH_gp)))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
     
+    H_int = tt.zeros(nz)
+    H_int = tt.inc_subtensor(H_int[1:], H_gp[idx_H[1:]]+(H_gp[idx_H[1:]+1]-H_gp[idx_H[1:]])*U_H[1:])
+    H_int = tt.inc_subtensor(H_int[0], H_gp[0])
+    
     if get_dM:
-        dH_gp = pm.Deterministic("dH", tt.as_tensor_variable((c/1000)/H_gp))
-        dM_rec_gp = tt.zeros(len(z_arr)+1)
+        dH_gp = pm.Deterministic("dH", tt.as_tensor_variable((c/1000)/H_int))
+        dM_rec_gp = tt.zeros(len(z_int)+1)
         dM_rec_gp = tt.inc_subtensor(dM_rec_gp[1:],
-                  tt.as_tensor_variable(dx*tt.cumsum(dH_gp*(1+z_arr))))
+                  tt.as_tensor_variable(dx*tt.cumsum(dH_gp*(1+z_int))))
         dM_trap_gp = tt.as_tensor_variable(0.5*(dM_rec_gp[1:]+dM_rec_gp[:-1])-0.5*dM_rec_gp[1])
         dM_gp = pm.Deterministic('dM_gp', dM_trap_gp)
-        dA_gp = pm.Deterministic('dA_gp', dM_gp/(1+z_arr))
-        dL_gp = pm.Deterministic('dL_gp', dM_gp*(1+z_arr))
+        dA_gp = pm.Deterministic('dA_gp', dM_gp/(1+z_int))
+        dL_gp = pm.Deterministic('dL_gp', dM_gp*(1+z_int))
         
     if get_rd:
         rd_gp = pm.Normal("rd_gp", 150, 5)
@@ -146,18 +164,21 @@ with pm.Model() as model:
         η_Xi = pm.HalfNormal("η_Xi", sigma=0.5)
         Xi_gp_cov = η_Xi ** 2 * pm.gp.cov.ExpQuad(1, ℓ_Xi) + pm.gp.cov.WhiteNoise(1e-3)
         Xi_gp = pm.gp.Latent(cov_func=Xi_gp_cov)
-        DXi_gp = Xi_gp.prior("DXi_gp", X=x_arr[:, None]) 
-        Xi_gp = pm.Deterministic("Xi_gp", tt.as_tensor_variable(np.ones_like(z_arr)+DXi_gp)) 
+        DXi_gp = Xi_gp.prior("DXi_gp", X=x_Xi[:, None]) 
+        Xi_gp = pm.Deterministic("Xi_gp", tt.as_tensor_variable(np.ones_like(z_Xi)+DXi_gp)) 
+        Xi_int = tt.zeros(nz)
+        Xi_int = tt.inc_subtensor(Xi_int[1:], Xi_gp[idx_Xi[1:]]+(Xi_gp[idx_Xi[1:]+1]-Xi_gp[idx_Xi[1:]])*U_Xi[1:])
+        Xi_int = tt.inc_subtensor(Xi_int[0], Xi_gp[0])
         Wm0 = pm.Uniform("Wm0", 0., 1.0) 
         s80 = pm.Normal("s80", 0.8, 0.5)
-        E = H_gp/H_gp[0]
-        Om = tt.as_tensor_variable(Xi_gp*Wm0)
+        E = H_int/H_int[0]
+        Om = tt.as_tensor_variable(Xi_int*Wm0)
         Omm = Om[::-1]
-        xx = x_arr[::-1]
+        xx = x_int[::-1]
         ee = E[::-1]
         aa = np.exp(-xx)
         dx = np.mean(np.diff(xx))
-
+    
         nz = len(aa)
         dd = tt.zeros(nz)
         yy = tt.zeros(nz)
@@ -175,7 +196,7 @@ with pm.Model() as model:
         y = tt.as_tensor_variable(yy[::-1])
         d = tt.as_tensor_variable(dd[::-1])
         
-        fs8_gp = pm.Deterministic('fs8_gp', s80*y/(a_arr**2*E*d[0]))
+        fs8_gp = pm.Deterministic('fs8_gp', s80*y/(a_int**2*E*d[0]))
         s8_gp = pm.Deterministic('s8_gp', s80*d/d[0])
 
     theory = tt.as_tensor_variable([])
@@ -327,7 +348,7 @@ if mean_mode is not None:
 if challenge is not None:
     filename += '_'+challenge
     
-filename += '_Xi_H_{}_{}'.format(n_samples, n_tune)
+filename += '_Xi_H_lite_{}_{}'.format(n_samples, n_tune)
 print(filename)
 A0 = np.array(trace.posterior["A0"]).flatten()
 n_H = np.array(trace.posterior["η_H"]).flatten()
@@ -382,7 +403,8 @@ else:
 
 os.mkdir(filename)
 np.savez(os.path.join(filename,'samples.npz'), 
-         z_arr = z_arr,
+         z_H = z_H,
+         z_Xi = z_Xi,
          A0=A0,
          n_Xi=n_Xi,
          l_Xi=l_Xi,
