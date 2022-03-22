@@ -35,11 +35,9 @@ data_class = MakeData(z_max, nz, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
 c = data_class.c
-
-DESI = data_class.get_DESI(new=True, mode=None)
-geo_DESI = data_class.get_DESI(new=True, mode='geo')
-gro_DESI = data_class.get_DESI(new=True, mode='gro')
-#WFIRST = data_class.get_WFIRST(new=True)
+which_DESI = 'DESI_hs'
+DESI = data_class.get_synthetic(which_DESI, new=True)
+Euclid = data_class.get_synthetic('Euclid', new=True)
 CC = data_class.get_CC(new=False)
 DSS = data_class.get_DSS(new=False)
 BOSS = data_class.get_BOSS(new=False)
@@ -52,13 +50,10 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=True)
 
-n_samples = 4000
-n_tune = 7000
-
+n_samples = 2 #3000
+n_tune = 2 #7000
 datadict = {'DESI': DESI,
-            'geo_DESI': geo_DESI,
-            'gro_DESI': gro_DESI,
-            #'WFIRST': WFIRST,
+            'Euclid': Euclid,
             'CC': CC,
             'DS17': DS17, 
             'BOSS': BOSS,
@@ -71,7 +66,7 @@ datadict = {'DESI': DESI,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'DESI_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
@@ -83,14 +78,14 @@ data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'Add': ['CC', 'DS17', 'Wigglez', 'DSS'],
              'Add_CMB': ['CC', 'DS17', 'Wigglez', 'DSS', 'CMB'],
              'DESI_CMB': ['DESI', 'CMB'], 
-             'DESI_CMB_geo': ['geo_DESI', 'CMB'], 
-             'DESI_gro': ['gro_DESI'], 
-             'WFIRST_CMB': ['WFIRST', 'CMB']}
+             'Euclid_CMB': ['Euclid', 'CMB'],
+             'WFIRST_CMB': ['WFIRST', 'CMB'],
+             'CMB': ['CMB']}
 datasets = data_combs[data_comb]
 
-need_dM = ['DESI', 'geo_DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
+need_dM = ['DESI', 'WFIRST', 'Euclid','geo_DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
            'Wigglez', 'DS17', 'CMB', 'FCMB']
-need_fs8 = ['DESI', 'gro_DESI', 'BOSS', 'eBOSS', 'gro_BOSS', 
+need_fs8 = ['DESI', 'WFIRST', 'Euclid', 'BOSS', 'eBOSS', 'gro_BOSS', 
             'gro_eBOSS', 'Wigglez', 'DSS']
 need_rd = ['BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS', 'CMB']
 
@@ -108,6 +103,7 @@ if any(dataset in datasets for dataset in need_rd):
     get_rd = True
 else:
     get_rd = False
+
         
 #Data
 data = np.array([])
@@ -328,9 +324,14 @@ print(pm.summary(trace)['r_hat'][["A0", "ℓ", "η"]])
 print(pm.summary(trace)['mean'][["A0", "ℓ", "η"]])
 
 #Save
-filename = data_comb
-if mean_mode is not None:
-    filename += '_'+mean_mode
+if data_comb=="DESI_CMB":
+    filename = which_DESI+"_CMB"
+else:
+    filename = data_comb
+
+#if mean_mode is not None:
+#    filename += '_'+mean_mode
+
 if challenge is not None:
     filename += '_'+challenge
     

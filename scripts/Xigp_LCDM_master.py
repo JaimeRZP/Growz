@@ -13,7 +13,7 @@ from pymc3.gp.util import plot_gp_dist
 
 #Load data
 z_max = 1110
-res = 200
+res = 100
 x_arr = np.linspace(0, np.log(1+z_max), res)
 dx = np.mean(np.diff(x_arr))
 z_arr = np.exp(x_arr)-1
@@ -32,10 +32,9 @@ data_class = MakeData(z_max, res, path,
                       cosmo_path=mean_path)
 c = data_class.c
 
-DESI = data_class.get_synthetic('DESI', new=True)
-DESIfs = data_class.get_synthetic('DESI_fs', new=True)
+which_DESI = 'DESI_hs'
+DESI = data_class.get_synthetic(which_DESI, new=True)
 Euclid = data_class.get_synthetic('Euclid', new=True)
-WFIRST = data_class.get_synthetic('WFIRST', new=True)
 CC = data_class.get_CC(new=False)
 DSS = data_class.get_DSS(new=False)
 BOSS = data_class.get_BOSS(new=False)
@@ -51,8 +50,6 @@ CMB = data_class.get_CMB(new=True)
 n_samples = 3000
 n_tune = 7000
 datadict = {'DESI': DESI,
-            'DESIfs': DESIfs,
-            'WFIRST': WFIRST,
             'Euclid': Euclid,
             'CC': CC,
             'DS17': DS17, 
@@ -66,7 +63,7 @@ datadict = {'DESI': DESI,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'DESI_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
@@ -78,15 +75,14 @@ data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'Add': ['CC', 'DS17', 'Wigglez', 'DSS'],
              'Add_CMB': ['CC', 'DS17', 'Wigglez', 'DSS', 'CMB'],
              'DESI_CMB': ['DESI', 'CMB'], 
-             'DESIfs_CMB': ['DESIfs', 'CMB'],
              'Euclid_CMB': ['Euclid', 'CMB'],
              'WFIRST_CMB': ['WFIRST', 'CMB'],
              'CMB': ['CMB']}
 datasets = data_combs[data_comb]
 
-need_dM = ['DESI', 'geo_DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
+need_dM = ['DESI', 'WFIRST', 'Euclid','geo_DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
            'Wigglez', 'DS17', 'CMB', 'FCMB']
-need_fs8 = ['DESI', 'gro_DESI', 'BOSS', 'eBOSS', 'gro_BOSS', 
+need_fs8 = ['DESI', 'WFIRST', 'Euclid', 'BOSS', 'eBOSS', 'gro_BOSS', 
             'gro_eBOSS', 'Wigglez', 'DSS']
 need_rd = ['BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS', 'CMB']
 
@@ -313,9 +309,14 @@ print(pm.summary(trace)['r_hat'][["ℓ_Xi", "η_Xi"]])
 print(pm.summary(trace)['mean'][["ℓ_Xi", "η_Xi"]])
 
 #Save
-filename = data_comb
-if mean_mode is not None:
-    filename += '_'+mean_mode
+if data_comb=="DESI_CMB":
+    filename = which_DESI+"_CMB"
+else:
+    filename = data_comb
+
+#if mean_mode is not None:
+#    filename += '_'+mean_mode
+    
 if challenge is not None:
     filename += '_'+challenge
     

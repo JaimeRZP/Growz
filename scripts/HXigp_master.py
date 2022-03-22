@@ -322,8 +322,9 @@ if data_comb=="DESI_CMB":
 else:
     filename = data_comb
 
-if mean_mode is not None:
-    filename += '_'+mean_mode
+#if mean_mode is not None:
+#    filename += '_'+mean_mode
+
 if challenge is not None:
     filename += '_'+challenge
     
