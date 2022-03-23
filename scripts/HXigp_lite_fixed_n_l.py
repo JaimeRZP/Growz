@@ -13,7 +13,7 @@ from pymc3.gp.util import plot_gp_dist
 
 #Load data
 z_max = 1110
-res = 200
+nz = 200
 x_int = np.linspace(0, np.log(1+z_max), nz)
 z_int = np.exp(x_int)-1
 a_int = 1./(1+z_int)
@@ -35,7 +35,7 @@ if challenge is not None:
 print('data path: ', path)
 mean_path =  None #'LCDM_cosmo44_10000_10000'
 mean_mode = 'Planck'
-data_class = MakeData(z_max, res, path,
+data_class = MakeData(z_max, nz, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
 c = data_class.c
