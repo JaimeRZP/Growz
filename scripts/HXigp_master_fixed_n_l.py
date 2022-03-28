@@ -47,8 +47,8 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=True)
 
-n_samples = 2 #3000
-n_tune = 2 #7000
+n_samples = 3000
+n_tune = 3000
 datadict = {'DESI': DESI,
             'Euclid': Euclid,
             'CC': CC,
@@ -113,7 +113,7 @@ data_cov = data_cov[1:]
 #base model
 with pm.Model() as model:
     ℓ_H = 1.0
-    η_H = 0.1
+    η_H = 0.2
     A0 = pm.Normal("A0", 1, 0.2)
     H0 = data_class.H0
     Wm0_m = data_class.Wm0
@@ -143,7 +143,7 @@ with pm.Model() as model:
         
     if get_fs8:
         ℓ_Xi = 1.0
-        η_Xi = 0.35
+        η_Xi = 0.4
         Xi_gp_cov = η_Xi ** 2 * pm.gp.cov.ExpQuad(1, ℓ_Xi) + pm.gp.cov.WhiteNoise(1e-3)
         Xi_gp = pm.gp.Latent(cov_func=Xi_gp_cov)
         DXi_gp = Xi_gp.prior("DXi_gp", X=x_arr[:, None]) 
@@ -311,6 +311,10 @@ if 'CMB' in datasets:
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
     trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.90)
+
+#print r-stat 
+print(pm.summary(trace)['r_hat'][["Wm0", "H0"]])
+print(pm.summary(trace)['mean'][["Wm0", "H0"]])
 
 #Save
 if data_comb=="DESI_CMB":

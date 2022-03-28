@@ -13,7 +13,7 @@ from pymc3.gp.util import plot_gp_dist
 
 #Load data
 z_max = 1110
-res = 100
+res = 200
 x_arr = np.linspace(0, np.log(1+z_max), res)
 dx = np.mean(np.diff(x_arr))
 z_arr = np.exp(x_arr)-1
@@ -48,7 +48,7 @@ DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=True)
 
 n_samples = 3000
-n_tune = 7000
+n_tune = 3000
 datadict = {'DESI': DESI,
             'Euclid': Euclid,
             'CC': CC,
@@ -135,8 +135,8 @@ with pm.Model() as model:
         rd_gp = pm.Normal("rd_gp", 150, 5) 
         
     if get_fs8:
-        ℓ_Xi = pm.Uniform("ℓ_Xi", 0.01, 6) 
-        η_Xi = pm.HalfNormal("η_Xi", sigma=0.5)
+        ℓ_Xi = 1 #pm.Uniform("ℓ_Xi", 0.01, 6) 
+        η_Xi = 0.4 #pm.HalfNormal("η_Xi", sigma=0.5)
         Xi_gp_cov = η_Xi ** 2 * pm.gp.cov.ExpQuad(1, ℓ_Xi) + pm.gp.cov.WhiteNoise(1e-5)
         Xi_gp = pm.gp.Latent(cov_func=Xi_gp_cov)
         DXi_gp = Xi_gp.prior("DXi_gp", X=x_arr[:, None]) 
@@ -302,11 +302,11 @@ if 'CMB' in datasets:
 #Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
-    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.97)
+    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.90)
 
 #print r-stat
-print(pm.summary(trace)['r_hat'][["ℓ_Xi", "η_Xi"]])
-print(pm.summary(trace)['mean'][["ℓ_Xi", "η_Xi"]])
+print(pm.summary(trace)['r_hat'][["Wm0", "H0"]])
+print(pm.summary(trace)['mean'][["Wm0", "H0"]])
 
 #Save
 if data_comb=="DESI_CMB":
@@ -341,8 +341,6 @@ else:
     rd = None
     
 if get_fs8:
-    n_Xi = np.array(trace.posterior["η_Xi"]).flatten()
-    l_Xi = np.array(trace.posterior["ℓ_Xi"]).flatten()
     DXiz = np.array(trace.posterior["DXi_gp"])
     DXiz = DXiz.reshape(-1, DXiz.shape[-1])
     Xiz = np.array(trace.posterior["Xi_gp"])
@@ -354,8 +352,6 @@ if get_fs8:
     s80 = np.array(trace.posterior["s80"]).flatten()
     S80 = s80*np.sqrt(Omega_m/0.3)
 else: 
-    n_Xi = None
-    l_Xi = None
     DXiz = None
     Xiz = None
     s8z = None 
@@ -372,8 +368,6 @@ else:
 os.mkdir(filename)
 np.savez(os.path.join(filename,'samples.npz'), 
          z_arr = z_arr,
-         n_Xi=n_Xi,
-         l_Xi=l_Xi,
          DXiz=DXiz,
          Xiz=Xiz,
          Hz=Hz,
