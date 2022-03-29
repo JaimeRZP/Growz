@@ -47,7 +47,7 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=True)
 
-n_samples = 3000
+n_samples = 3001
 n_tune = 3000
 datadict = {'DESI': DESI,
             'Euclid': Euclid,
@@ -306,7 +306,7 @@ if 'CMB' in datasets:
 #Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
-    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.90)
+    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.93)
 
 #print r-stat
 print(pm.summary(trace)['r_hat'][["Wm0", "H0"]])
@@ -314,8 +314,8 @@ print(pm.summary(trace)['mean'][["Wm0", "H0"]])
 
 #Save
 filename = data_comb
-if mean_mode is not None:
-    filename += '_'+mean_mode
+#if mean_mode is not None:
+#    filename += '_'+mean_mode
 if challenge is not None:
     filename += '_'+challenge
     

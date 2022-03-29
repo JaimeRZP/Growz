@@ -300,8 +300,8 @@ print(pm.summary(trace)['mean'][["Wm0", "H0"]])
 
 #Save
 filename = data_comb
-if mean_mode is not None:
-    filename += '_'+mean_mode
+#if mean_mode is not None:
+#    filename += '_'+mean_mode
 if challenge is not None:
     filename += '_'+challenge
     
