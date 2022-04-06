@@ -63,7 +63,7 @@ datadict = {'DESI': DESI,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'All_gro' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
@@ -314,16 +314,16 @@ H0 = np.array(trace.posterior["H0"]).flatten()
 H0_gp = np.array(trace.posterior["H0_gp"]).flatten()
 Omega_m = np.array(trace.posterior["Wm0"]).flatten()
 
-if get_dM:
-    dMz = np.array(trace.posterior["dM_gp"])
-    dMz = dMz.reshape(-1, dMz.shape[-1])
-else:
-    dMz = None
+#if get_dM:
+#    dMz = np.array(trace.posterior["dM_gp"])
+#    dMz = dMz.reshape(-1, dMz.shape[-1])
+#else:
+#    dMz = None
 
-if get_rd:
-    rd = np.array(trace.posterior["rd_gp"]).flatten()
-else:
-    rd = None
+#if get_rd:
+#    rd = np.array(trace.posterior["rd_gp"]).flatten()
+#else:
+#    rd = None
     
 if get_fs8:
     DXiz = np.array(trace.posterior["DXi_gp"])
@@ -356,7 +356,7 @@ np.savez(os.path.join(filename,'samples.npz'),
          DXiz=DXiz,
          Xiz=Xiz,
          Hz=Hz,
-         dMz=dMz,
+         #dMz=dMz,
          s8z=s8z,
          fs8z=fs8z,
          H0=H0,
@@ -364,5 +364,5 @@ np.savez(os.path.join(filename,'samples.npz'),
          Omega_m=Omega_m,
          s80=s80,
          S80=S80,
-         rd=rd,
+         #rd=rd,
          M=M)
