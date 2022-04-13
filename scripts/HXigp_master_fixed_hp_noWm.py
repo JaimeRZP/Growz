@@ -63,7 +63,7 @@ datadict = {'DESI': DESI,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'DESI_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
@@ -116,14 +116,14 @@ with pm.Model() as model:
     η_H = 0.2
     A0 = pm.Normal("A0", 1, 0.2)
     H0 = data_class.H0
-    Wm0_m = data_class.Wm0
+    Wm0 = data_class.Wm0
     Wr0 = data_class.Wr0
     WL0 = data_class.WL0
     H_gp_cov = η_H ** 2 * pm.gp.cov.ExpQuad(1, ℓ_H) + pm.gp.cov.WhiteNoise(1e-5)
     H_gp = pm.gp.Latent(cov_func=H_gp_cov)
     
     #Mean of the gp
-    H = pm.Deterministic('H', H0*tt.sqrt(Wm0_m*(1+z_arr)**3+Wr0*(1+z_arr)**4+WL0))
+    H = pm.Deterministic('H', H0*tt.sqrt(Wm0*(1+z_arr)**3+Wr0*(1+z_arr)**4+WL0))
     DH_gp = H_gp.prior("DH_gp", X=x_arr[:, None]) 
     H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H*A0*(1+DH_gp)))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
@@ -148,7 +148,6 @@ with pm.Model() as model:
         Xi_gp = pm.gp.Latent(cov_func=Xi_gp_cov)
         DXi_gp = Xi_gp.prior("DXi_gp", X=x_arr[:, None]) 
         Xi_gp = pm.Deterministic("Xi_gp", tt.as_tensor_variable(np.ones_like(z_arr)+DXi_gp)) 
-        Wm0 = 0.3
         s80 = pm.Normal("s80", 0.8, 0.5)
         E = H_gp/H_gp[0]
         Om = tt.as_tensor_variable(Xi_gp*Wm0)
@@ -311,10 +310,6 @@ if 'CMB' in datasets:
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
     trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.90)
-
-#print r-stat 
-print(pm.summary(trace)['r_hat'][["H0"]])
-print(pm.summary(trace)['mean'][["H0"]])
 
 #Save
 if data_comb=="DESI_CMB":

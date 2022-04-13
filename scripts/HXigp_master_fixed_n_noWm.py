@@ -47,8 +47,8 @@ Wigglez = data_class.get_Wigglez(new=False)
 DS17 = data_class.get_DS17(new=False)
 CMB = data_class.get_CMB(new=True)
 
-n_samples = 2 #3000
-n_tune = 2 #3000
+n_samples = 3000
+n_tune = 3000
 datadict = {'DESI': DESI,
             'Euclid': Euclid,
             'CC': CC,
@@ -63,7 +63,7 @@ datadict = {'DESI': DESI,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'DESI_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
@@ -313,8 +313,8 @@ with model:
     trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.90)
 
 #print r-stat 
-print(pm.summary(trace)['r_hat'][["H0"]])
-print(pm.summary(trace)['mean'][["H0"]])
+#print(pm.summary(trace)['r_hat'][["H0"]])
+#print(pm.summary(trace)['mean'][["H0"]])
 
 #Save
 if data_comb=="DESI_CMB":
