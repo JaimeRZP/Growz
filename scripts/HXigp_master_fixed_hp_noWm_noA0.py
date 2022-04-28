@@ -112,8 +112,8 @@ data_cov = data_cov[1:]
 
 #base model
 with pm.Model() as model:
-    ℓ_H = pm.Uniform("ℓ_H", 0.01, 6) 
-    η_H = 0.2
+    ℓ_H = 3.28 #pm.Uniform("ℓ_H", 0.01, 6) 
+    η_H = 3*0.11
     A0 = 1.0 #pm.Normal("A0", 1, 0.2)
     H0 = data_class.H0
     Wm0_m = data_class.Wm0
@@ -142,8 +142,8 @@ with pm.Model() as model:
         rd_gp = pm.Normal("rd_gp", 150, 5)
         
     if get_fs8:
-        ℓ_Xi = pm.Uniform("ℓ_Xi", 0.01, 6)
-        η_Xi = 0.4
+        ℓ_Xi = 3.06 #pm.Uniform("ℓ_Xi", 0.01, 6)
+        η_Xi = 3*0.35
         Xi_gp_cov = η_Xi ** 2 * pm.gp.cov.ExpQuad(1, ℓ_Xi) + pm.gp.cov.WhiteNoise(1e-3)
         Xi_gp = pm.gp.Latent(cov_func=Xi_gp_cov)
         DXi_gp = Xi_gp.prior("DXi_gp", X=x_arr[:, None]) 
@@ -327,11 +327,11 @@ if mean_mode is not None:
 if challenge is not None:
     filename += '_'+challenge
     
-filename += '_Xi_H_fixed_hp_noWm_noA0_{}_{}'.format(n_samples, n_tune)
+filename += '_Xi_H_wider_hp_noWm_noA0_{}_{}'.format(n_samples, n_tune)
 print(filename)
 A0 = 1.0
 n_H = η_H
-l_H = np.array(trace.posterior["ℓ_H"]).flatten()
+l_H = l_H #np.array(trace.posterior["ℓ_H"]).flatten()
 DHz = np.array(trace.posterior["DH_gp"])
 DHz = DHz.reshape(-1, DHz.shape[-1])
 Hz = np.array(trace.posterior["H_gp"])
@@ -351,7 +351,7 @@ else:
     
 if get_fs8:
     n_Xi = η_Xi
-    l_Xi = np.array(trace.posterior["ℓ_Xi"]).flatten()
+    l_Xi = l_Xi #np.array(trace.posterior["ℓ_Xi"]).flatten()
     DXiz = np.array(trace.posterior["DXi_gp"])
     DXiz = DXiz.reshape(-1, DXiz.shape[-1])
     Xiz = np.array(trace.posterior["Xi_gp"])
