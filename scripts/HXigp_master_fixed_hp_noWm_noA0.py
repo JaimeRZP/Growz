@@ -113,7 +113,7 @@ data_cov = data_cov[1:]
 #base model
 with pm.Model() as model:
     ℓ_H = 3.28 #pm.Uniform("ℓ_H", 0.01, 6) 
-    η_H = 3*0.11
+    η_H = 3*0.11 #pm.HalfNormal("η_H", sigma=0.2) 
     A0 = 1.0 #pm.Normal("A0", 1, 0.2)
     H0 = data_class.H0
     Wm0_m = data_class.Wm0
@@ -143,7 +143,7 @@ with pm.Model() as model:
         
     if get_fs8:
         ℓ_Xi = 3.06 #pm.Uniform("ℓ_Xi", 0.01, 6)
-        η_Xi = 3*0.35
+        η_Xi = 3*0.35 #pm.HalfNormal("η_Xi", sigma=0.5)
         Xi_gp_cov = η_Xi ** 2 * pm.gp.cov.ExpQuad(1, ℓ_Xi) + pm.gp.cov.WhiteNoise(1e-3)
         Xi_gp = pm.gp.Latent(cov_func=Xi_gp_cov)
         DXi_gp = Xi_gp.prior("DXi_gp", X=x_arr[:, None]) 

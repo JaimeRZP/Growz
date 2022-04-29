@@ -13,19 +13,24 @@ from pymc3.gp.util import plot_gp_dist
 
 #Load data
 z_max = 1110
-nz = 200
-x_int = np.linspace(0, np.log(1+z_max), nz)
+
+nz_int = 200
+x_int = np.linspace(0, np.log(1+z_max), nz_int)
 z_int = np.exp(x_int)-1
 a_int = 1./(1+z_int)
-dx = np.mean(np.diff(x_int))
+dx_int = np.mean(np.diff(x_int))
 
-x_H = np.linspace(0, np.log(1+z_max), 150)
-z_H = np.exp(x_H)-1
-a_H = 1./(1+z_H)
+nz_Hgp = 150
+x_Hgp = np.linspace(0, np.log(1+z_max), nz_Hgp)
+z_Hgp = np.exp(x_Hgp)-1
+a_Hgp = 1./(1+z_Hgp)
+dx_Hgp = np.mean(np.diff(x_Hgp))
 
-x_Xi = np.linspace(0, np.log(1+z_max), 50)
-z_Xi = np.exp(x_Xi)-1
-a_Xi = 1./(1+z_Xi)
+nz_Xigp = 30
+x_Xigp = np.linspace(0, np.log(1+z_max), nz_Xigp)
+z_Xigp = np.exp(x_Xigp)-1
+a_Xigp = 1./(1+z_Xigp)
+dx_Xigp = np.mean(np.diff(x_Xigp))
 
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/' 
 challenge = None #'cosmo61'
@@ -43,16 +48,16 @@ c = data_class.c
 which_DESI = 'DESI'
 DESI = data_class.get_synthetic(which_DESI, new=True)
 Euclid = data_class.get_synthetic('Euclid', new=True)
-CC = data_class.get_CC(new=False)
-DSS = data_class.get_DSS(new=False)
-BOSS = data_class.get_BOSS(new=False)
-geo_BOSS = data_class.get_BOSS(new=False, mode='geo')
-gro_BOSS = data_class.get_BOSS(new=False, mode='gro')
-eBOSS = data_class.get_eBOSS(new=False)
-geo_eBOSS = data_class.get_eBOSS(new=False, mode='geo')
-gro_eBOSS = data_class.get_eBOSS(new=False, mode='gro')
-Wigglez = data_class.get_Wigglez(new=False)
-DS17 = data_class.get_DS17(new=False)
+CC = data_class.get_CC(new=True)
+DSS = data_class.get_DSS(new=True)
+BOSS = data_class.get_BOSS(new=True)
+geo_BOSS = data_class.get_BOSS(new=True, mode='geo')
+gro_BOSS = data_class.get_BOSS(new=True, mode='gro')
+eBOSS = data_class.get_eBOSS(new=True)
+geo_eBOSS = data_class.get_eBOSS(new=True, mode='geo')
+gro_eBOSS = data_class.get_eBOSS(new=True, mode='gro')
+Wigglez = data_class.get_Wigglez(new=True)
+DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 
 n_samples = 2 #3000
@@ -118,39 +123,40 @@ for dataset_name in datasets:
     data_cov = block_diag(data_cov, dataset['cov'])
 data_cov = data_cov[1:]
 
-idx_H = data_class.make_idx(z_int, z_H)
-U_H = data_class.make_U(z_int, z_H, idx_H)
+idx_Hgp = data_class.make_idx(z_int, z_Hgp)
+U_Hgp = data_class.make_U(z_int, z_Hgp, idx_Hgp)
 
-idx_Xi = data_class.make_idx(z_int, z_Xi)
-U_Xi = data_class.make_U(z_int, z_Xi, idx_Xi)
+idx_Xigp = data_class.make_idx(z_int, z_Xigp)
+U_Xigp = data_class.make_U(z_int, z_Xigp, idx_Xigp)
 
 #base model
 with pm.Model() as model:
     ℓ_H = pm.Uniform("ℓ_H", 0.01, 6) 
     η_H = pm.HalfNormal("η_H", sigma=0.2) 
-    A0 = pm.Normal("A0", 1, 0.2)
+    A0 = 1 #pm.Normal("A0", 1, 0.2)
     H0 = data_class.H0
-    Wm0_m = data_class.Wm0
+    Wm0 = data_class.Wm0
     Wr0 = data_class.Wr0
     WL0 = data_class.WL0
     H_gp_cov = η_H ** 2 * pm.gp.cov.ExpQuad(1, ℓ_H) + pm.gp.cov.WhiteNoise(1e-5)
     H_gp = pm.gp.Latent(cov_func=H_gp_cov)
     
     #Mean of the gp
-    H = pm.Deterministic('H', H0*tt.sqrt(Wm0_m*(1+z_H)**3+Wr0*(1+z_H)**4+WL0))
-    DH_gp = H_gp.prior("DH_gp", X=x_H[:, None]) 
+    H = pm.Deterministic('H', H0*tt.sqrt(Wm0*(1+z_Hgp)**3+Wr0*(1+z_Hgp)**4+WL0))
+    DH_gp = H_gp.prior("DH_gp", X=x_Hgp[:, None]) 
     H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H*A0*(1+DH_gp)))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
     
-    H_int = tt.zeros(nz)
-    H_int = tt.inc_subtensor(H_int[1:], H_gp[idx_H[1:]]+(H_gp[idx_H[1:]+1]-H_gp[idx_H[1:]])*U_H[1:])
+    H_int = tt.zeros(nz_int)
+    H_int = tt.inc_subtensor(H_int[1:], H_gp[idx_Hgp[1:]]+(H_gp[idx_Hgp[1:]+1]-H_gp[idx_Hgp[1:]])*U_Hgp[1:])
     H_int = tt.inc_subtensor(H_int[0], H_gp[0])
+    H_int = pm.Deterministic('H_int', H_int)
     
     if get_dM:
         dH_gp = pm.Deterministic("dH", tt.as_tensor_variable((c/1000)/H_int))
         dM_rec_gp = tt.zeros(len(z_int)+1)
         dM_rec_gp = tt.inc_subtensor(dM_rec_gp[1:],
-                  tt.as_tensor_variable(dx*tt.cumsum(dH_gp*(1+z_int))))
+                  tt.as_tensor_variable(dx_int*tt.cumsum(dH_gp*(1+z_int))))
         dM_trap_gp = tt.as_tensor_variable(0.5*(dM_rec_gp[1:]+dM_rec_gp[:-1])-0.5*dM_rec_gp[1])
         dM_gp = pm.Deterministic('dM_gp', dM_trap_gp)
         dA_gp = pm.Deterministic('dA_gp', dM_gp/(1+z_int))
@@ -164,12 +170,14 @@ with pm.Model() as model:
         η_Xi = pm.HalfNormal("η_Xi", sigma=0.5)
         Xi_gp_cov = η_Xi ** 2 * pm.gp.cov.ExpQuad(1, ℓ_Xi) + pm.gp.cov.WhiteNoise(1e-3)
         Xi_gp = pm.gp.Latent(cov_func=Xi_gp_cov)
-        DXi_gp = Xi_gp.prior("DXi_gp", X=x_Xi[:, None]) 
-        Xi_gp = pm.Deterministic("Xi_gp", tt.as_tensor_variable(np.ones_like(z_Xi)+DXi_gp)) 
-        Xi_int = tt.zeros(nz)
-        Xi_int = tt.inc_subtensor(Xi_int[1:], Xi_gp[idx_Xi[1:]]+(Xi_gp[idx_Xi[1:]+1]-Xi_gp[idx_Xi[1:]])*U_Xi[1:])
+        DXi_gp = Xi_gp.prior("DXi_gp", X=x_Xigp[:, None]) 
+        Xi_gp = pm.Deterministic("Xi_gp", tt.as_tensor_variable(np.ones_like(z_Xigp)+DXi_gp))
+        
+        Xi_int = tt.zeros(nz_int)
+        Xi_int = tt.inc_subtensor(Xi_int[1:], Xi_gp[idx_Xigp[1:]]+(Xi_gp[idx_Xigp[1:]+1]-Xi_gp[idx_Xigp[1:]])*U_Xigp[1:])
         Xi_int = tt.inc_subtensor(Xi_int[0], Xi_gp[0])
-        Wm0 = pm.Uniform("Wm0", 0., 1.0) 
+        Xi_int = pm.Deterministic('Xi_int', Xi_int)
+        
         s80 = pm.Normal("s80", 0.8, 0.5)
         E = H_int/H_int[0]
         Om = tt.as_tensor_variable(Xi_int*Wm0)
@@ -178,14 +186,13 @@ with pm.Model() as model:
         ee = E[::-1]
         aa = np.exp(-xx)
         dx = np.mean(np.diff(xx))
-    
-        nz = len(aa)
-        dd = tt.zeros(nz)
-        yy = tt.zeros(nz)
+
+        dd = tt.zeros(nz_int)
+        yy = tt.zeros(nz_int)
         dd = tt.inc_subtensor(dd[0], aa[0])
         yy = tt.inc_subtensor(yy[0], aa[0]**3*E[0])
 
-        for i in range(nz-1):
+        for i in range(nz_int-1):
             A0 = -1.5*Omm[i]/(aa[i]*ee[i])
             B0 = -1./(aa[i]**2*ee[i])
             A1 = -1.5*Omm[i]/(aa[i+1]*ee[i+1])
@@ -206,41 +213,18 @@ if 'DESI' in datasets:
     print('Adding DESI')
     with model:
         DESI_H = pm.Deterministic('DESI_H',
-                 tt.as_tensor_variable(H_gp[DESI['idx']]+(H_gp[DESI['idx']+1]-H_gp[DESI['idx']])*DESI['U']))
+                 tt.as_tensor_variable(H_int[DESI['idx']]+(H_int[DESI['idx']+1]-H_int[DESI['idx']])*DESI['U']))
         DESI_dA = pm.Deterministic('DESI_dA',
                   tt.as_tensor_variable(dA_gp[DESI['idx']]+(dA_gp[DESI['idx']+1]-dA_gp[DESI['idx']])*DESI['U']))
         DESI_fs8 = pm.Deterministic('DESI_fs8',
                    tt.as_tensor_variable(fs8_gp[DESI['idx']]+(fs8_gp[DESI['idx']+1]-fs8_gp[DESI['idx']])*DESI['U']))
         theory = tt.concatenate([theory, DESI_H, DESI_dA, DESI_fs8])
-        
-if 'Euclid' in datasets:
-    print('Adding Euclid')
-    with model:
-        Euclid_H = pm.Deterministic('Euclid_H',
-                 tt.as_tensor_variable(H_gp[Euclid['idx']]+(H_gp[Euclid['idx']+1]-H_gp[Euclid['idx']])*Euclid['U']))
-        Euclid_dA = pm.Deterministic('Euclid_dA',
-                  tt.as_tensor_variable(dA_gp[Euclid['idx']]+(dA_gp[Euclid['idx']+1]-dA_gp[Euclid['idx']])*Euclid['U']))
-        Euclid_fs8 = pm.Deterministic('Euclid_fs8',
-                   tt.as_tensor_variable(fs8_gp[Euclid['idx']]+(fs8_gp[Euclid['idx']+1]-fs8_gp[Euclid['idx']])*Euclid['U']))
-        theory = tt.concatenate([theory, Euclid_H, Euclid_dA, Euclid_fs8])
-        
-if 'WFIRST' in datasets:
-    print('Adding WFIRST')
-    with model:
-        WFIRST_H = pm.Deterministic('WFIRST_H',
-                 tt.as_tensor_variable(H_gp[WFIRST['idx']]+(H_gp[WFIRST['idx']+1]-H_gp[WFIRST['idx']])*WFIRST['U']))
-        WFIRST_dA = pm.Deterministic('WFIRST_dA',
-                  tt.as_tensor_variable(dA_gp[WFIRST['idx']]+(dA_gp[WFIRST['idx']+1]-dA_gp[WFIRST['idx']])*WFIRST['U']))
-        WFIRST_fs8 = pm.Deterministic('WFIRST_fs8',
-                   tt.as_tensor_variable(fs8_gp[WFIRST['idx']]+(fs8_gp[WFIRST['idx']+1]-fs8_gp[WFIRST['idx']])*WFIRST['U']))
-        theory = tt.concatenate([theory, WFIRST_H, WFIRST_dA, WFIRST_fs8])
-
 
 if 'CC' in datasets:
     print('Adding CCs')
     with model:
         CC_H = pm.Deterministic("CC_H",
-               tt.as_tensor_variable(H_gp[CC['idx']]+(H_gp[CC['idx']+1]-H_gp[CC['idx']])*CC['U']))
+               tt.as_tensor_variable(H_int[CC['idx']]+(H_int[CC['idx']+1]-H_int[CC['idx']])*CC['U']))
         theory = tt.concatenate([theory, CC_H])
         
 if 'DS17' in datasets:
@@ -255,7 +239,7 @@ if 'DS17' in datasets:
 if 'BOSS' in datasets:
     print('Adding BOSS')
     with model:
-        B_H = tt.as_tensor_variable(H_gp[BOSS['idx']]+(H_gp[BOSS['idx']+1]-H_gp[BOSS['idx']])*BOSS['U'])
+        B_H = tt.as_tensor_variable(H_int[BOSS['idx']]+(H_int[BOSS['idx']+1]-H_int[BOSS['idx']])*BOSS['U'])
         B_dM = tt.as_tensor_variable(dM_gp[BOSS['idx']]+(dM_gp[BOSS['idx']+1]-dM_gp[BOSS['idx']])*BOSS['U'])
         B_fs8 = pm.Deterministic("B_fs8", 
                    tt.as_tensor_variable(fs8_gp[BOSS['idx']]+(fs8_gp[BOSS['idx']+1]-fs8_gp[BOSS['idx']])*BOSS['U']))
@@ -267,7 +251,7 @@ if 'BOSS' in datasets:
 if 'geo_BOSS' in datasets:
     print('Adding geo_BOSS')
     with model:
-        B_H = tt.as_tensor_variable(H_gp[BOSS['idx']]+(H_gp[BOSS['idx']+1]-H_gp[BOSS['idx']])*BOSS['U'])
+        B_H = tt.as_tensor_variable(H_int[BOSS['idx']]+(H_int[BOSS['idx']+1]-H_int[BOSS['idx']])*BOSS['U'])
         B_dM = tt.as_tensor_variable(dM_gp[BOSS['idx']]+(dM_gp[BOSS['idx']+1]-dM_gp[BOSS['idx']])*BOSS['U'])
         #Get alpha_perp and alpha_para 
         B_para = pm.Deterministic("B_para", B_H*rd_gp/BOSS['rd'])
@@ -357,6 +341,8 @@ DHz = np.array(trace.posterior["DH_gp"])
 DHz = DHz.reshape(-1, DHz.shape[-1])
 Hz = np.array(trace.posterior["H_gp"])
 Hz = Hz.reshape(-1, Hz.shape[-1])
+Hz_int = np.array(trace.posterior["H_int"])
+Hz_int = Hz_int.reshape(-1, Hz_int.shape[-1])
 H0_gp = np.array(trace.posterior["H0_gp"]).flatten()
 
 if get_dM:
@@ -377,11 +363,12 @@ if get_fs8:
     DXiz = DXiz.reshape(-1, DXiz.shape[-1])
     Xiz = np.array(trace.posterior["Xi_gp"])
     Xiz = Xiz.reshape(-1, Xiz.shape[-1])
+    Xiz_int = np.array(trace.posterior["Xi_int"])
+    Xiz_int = Xiz_int.reshape(-1, Xiz_int.shape[-1])
     s8z = np.array(trace.posterior["s8_gp"])
     s8z = s8z.reshape(-1, s8z.shape[-1])
     fs8z = np.array(trace.posterior["fs8_gp"])
     fs8z = fs8z.reshape(-1, fs8z.shape[-1])
-    Omega_m = np.array(trace.posterior["Wm0"]).flatten()
     s80 = np.array(trace.posterior["s80"]).flatten()
     S80 = s80*np.sqrt(Omega_m/0.3)
 else: 
@@ -414,11 +401,12 @@ np.savez(os.path.join(filename,'samples.npz'),
          DXiz=DXiz,
          Xiz=Xiz,
          Hz=Hz,
+         Xiz_int=Xiz_int,
+         Hz_int=Hz_int,
          dMz=dMz,
          s8z=s8z,
          fs8z=fs8z,
          H0_gp=H0_gp,
-         Omega_m=Omega_m,
          s80=s80,
          S80=S80,
          rd=rd,
