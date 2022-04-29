@@ -26,7 +26,6 @@ z_Hgp = np.exp(x_Hgp)-1
 a_Hgp = 1./(1+z_Hgp)
 dx_Hgp = np.mean(np.diff(x_Hgp))
 
-
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/' 
 challenge = None #'cosmo61'
 if challenge is not None:
@@ -35,7 +34,7 @@ if challenge is not None:
 print('data path: ', path)
 mean_path =  None #'LCDM_cosmo44_10000_10000'
 mean_mode = 'Planck'
-data_class = MakeData(z_max, nz, path,
+data_class = MakeData(z_max, nz_int, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
 c = data_class.c
