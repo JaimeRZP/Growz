@@ -13,18 +13,22 @@ from pymc3.gp.util import plot_gp_dist
 
 #Load data
 z_max = 1110
-nz = 200
-x_int = np.linspace(0, np.log(1+z_max), nz)
+
+nz_int = 200
+x_int = np.linspace(0, np.log(1+z_max), nz_int)
 z_int = np.exp(x_int)-1
 a_int = 1./(1+z_int)
-dx = np.mean(np.diff(x_int))
+dx_int = np.mean(np.diff(x_int))
 
-x_gp = np.linspace(0, np.log(1+z_max), 150)
-z_gp = np.exp(x_gp)-1
-a_gp = 1./(1+z_gp)
+nz_Hgp = 150
+x_Hgp = np.linspace(0, np.log(1+z_max), nz_Hgp)
+z_Hgp = np.exp(x_Hgp)-1
+a_Hgp = 1./(1+z_Hgp)
+dx_Hgp = np.mean(np.diff(x_Hgp))
+
 
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/' 
-challenge = None #'cosmo51'
+challenge = None #'cosmo61'
 if challenge is not None:
     path += 'challenge/'+'cosmo{}_seed100{}'.format(challenge[-2], challenge[-1])
 
@@ -35,19 +39,20 @@ data_class = MakeData(z_max, nz, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
 c = data_class.c
-which_DESI = 'DESI_hs'
+
+which_DESI = 'DESI'
 DESI = data_class.get_synthetic(which_DESI, new=True)
 Euclid = data_class.get_synthetic('Euclid', new=True)
-CC = data_class.get_CC(new=False)
-DSS = data_class.get_DSS(new=False)
-BOSS = data_class.get_BOSS(new=False)
-geo_BOSS = data_class.get_BOSS(new=False, mode='geo')
-gro_BOSS = data_class.get_BOSS(new=False, mode='gro')
-eBOSS = data_class.get_eBOSS(new=False)
-geo_eBOSS = data_class.get_eBOSS(new=False, mode='geo')
-gro_eBOSS = data_class.get_eBOSS(new=False, mode='gro')
-Wigglez = data_class.get_Wigglez(new=False)
-DS17 = data_class.get_DS17(new=False)
+CC = data_class.get_CC(new=True)
+DSS = data_class.get_DSS(new=True)
+BOSS = data_class.get_BOSS(new=True)
+geo_BOSS = data_class.get_BOSS(new=True, mode='geo')
+gro_BOSS = data_class.get_BOSS(new=True, mode='gro')
+eBOSS = data_class.get_eBOSS(new=True)
+geo_eBOSS = data_class.get_eBOSS(new=True, mode='geo')
+gro_eBOSS = data_class.get_eBOSS(new=True, mode='gro')
+Wigglez = data_class.get_Wigglez(new=True)
+DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 
 n_samples = 2 #3000
@@ -103,7 +108,6 @@ if any(dataset in datasets for dataset in need_rd):
     get_rd = True
 else:
     get_rd = False
-
         
 #Data
 data = np.array([])
@@ -114,41 +118,42 @@ for dataset_name in datasets:
     data_cov = block_diag(data_cov, dataset['cov'])
 data_cov = data_cov[1:]
 
-idx = data_class.make_idx(z_int, z_gp)
-U = data_class.make_U(z_int, z_gp, idx)
+idx_Hgp = data_class.make_idx(z_int, z_Hgp)
+U_Hgp = data_class.make_U(z_int, z_Hgp, idx_Hgp)
+
+idx_Xigp = data_class.make_idx(z_int, z_Xigp)
+U_Xigp = data_class.make_U(z_int, z_Xigp, idx_Xigp)
 
 #base model
 with pm.Model() as model:
-    ℓ = pm.Uniform("ℓ", 0.01, 6) 
-    η = pm.HalfNormal("η", sigma=0.2) 
-    A0 = pm.Normal("A0", 1, 0.2)
+    ℓ_H = pm.Uniform("ℓ_H", 0.01, 6) 
+    η_H = pm.HalfNormal("η_H", sigma=0.2) 
+    A0 = 1 #pm.Normal("A0", 1, 0.2)
     H0 = data_class.H0
-    Wm0_m = data_class.Wm0
+    Wm0 = data_class.Wm0
     Wr0 = data_class.Wr0
     WL0 = data_class.WL0
-    gp_cov = η ** 2 * pm.gp.cov.ExpQuad(1, ℓ) + pm.gp.cov.WhiteNoise(1e-5)
-    gp = pm.gp.Latent(cov_func=gp_cov)
+    H_gp_cov = η_H ** 2 * pm.gp.cov.ExpQuad(1, ℓ_H) + pm.gp.cov.WhiteNoise(1e-5)
+    H_gp = pm.gp.Latent(cov_func=H_gp_cov)
     
     #Mean of the gp
-    H = pm.Deterministic('H', H0*tt.sqrt(Wm0_m*(1+z_gp)**3+Wr0*(1+z_gp)**4+WL0))
-    
-    #Set up Gaussian process
-    DH_gp = gp.prior("DH_gp", X=x_gp[:, None]) 
-    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(A0*H*(1+DH_gp)))
+    H = pm.Deterministic('H', H0*tt.sqrt(Wm0*(1+z_Hgp)**3+Wr0*(1+z_Hgp)**4+WL0))
+    DH_gp = H_gp.prior("DH_gp", X=x_Hgp[:, None]) 
+    H_gp = pm.Deterministic("H_gp", tt.as_tensor_variable(H*A0*(1+DH_gp)))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
     
-    H_int = tt.zeros(nz)
-    H_int = tt.inc_subtensor(H_int[1:], H_gp[idx[1:]]+(H_gp[idx[1:]+1]-H_gp[idx[1:]])*U[1:])
+    H_int = tt.zeros(nz_int)
+    H_int = tt.inc_subtensor(H_int[1:], H_gp[idx_Hgp[1:]]+(H_gp[idx_Hgp[1:]+1]-H_gp[idx_Hgp[1:]])*U_Hgp[1:])
     H_int = tt.inc_subtensor(H_int[0], H_gp[0])
+    H_int = pm.Deterministic('H_int', H_int)
     
     if get_dM:
         dH_gp = pm.Deterministic("dH", tt.as_tensor_variable((c/1000)/H_int))
         dM_rec_gp = tt.zeros(len(z_int)+1)
         dM_rec_gp = tt.inc_subtensor(dM_rec_gp[1:],
-                  tt.as_tensor_variable(dx*tt.cumsum(dH_gp*(1+z_int))))
+                  tt.as_tensor_variable(dx_int*tt.cumsum(dH_gp*(1+z_int))))
         dM_trap_gp = tt.as_tensor_variable(0.5*(dM_rec_gp[1:]+dM_rec_gp[:-1])-0.5*dM_rec_gp[1])
         dM_gp = pm.Deterministic('dM_gp', dM_trap_gp)
-        #dM_gp = pm.Deterministic('dM_gp', dM_rec_gp[:-1])
         dA_gp = pm.Deterministic('dA_gp', dM_gp/(1+z_int))
         dL_gp = pm.Deterministic('dL_gp', dM_gp*(1+z_int))
         
@@ -163,10 +168,10 @@ with pm.Model() as model:
         ee = E[::-1]
         aa = np.exp(-xx)
         dx = np.mean(np.diff(xx))
-        
+
         nz = len(aa)
-        dd = tt.zeros(nz)
-        yy = tt.zeros(nz)
+        dd = tt.zeros(nz_int)
+        yy = tt.zeros(nz_int)
         dd = tt.inc_subtensor(dd[0], aa[0])
         yy = tt.inc_subtensor(yy[0], aa[0]**3*E[0])
 
@@ -183,55 +188,32 @@ with pm.Model() as model:
         
         fs8_gp = pm.Deterministic('fs8_gp', s80*y/(a_int**2*E*d[0]))
         s8_gp = pm.Deterministic('s8_gp', s80*d/d[0])
-        
+
     theory = tt.as_tensor_variable([])
-    
+
 #Modules
 if 'DESI' in datasets:
     print('Adding DESI')
     with model:
         DESI_H = pm.Deterministic('DESI_H',
-                 tt.as_tensor_variable(H_gp[DESI['idx']]+(H_gp[DESI['idx']+1]-H_gp[DESI['idx']])*DESI['U']))
+                 tt.as_tensor_variable(H_int[DESI['idx']]+(H_int[DESI['idx']+1]-H_int[DESI['idx']])*DESI['U']))
         DESI_dA = pm.Deterministic('DESI_dA',
                   tt.as_tensor_variable(dA_gp[DESI['idx']]+(dA_gp[DESI['idx']+1]-dA_gp[DESI['idx']])*DESI['U']))
         DESI_fs8 = pm.Deterministic('DESI_fs8',
                    tt.as_tensor_variable(fs8_gp[DESI['idx']]+(fs8_gp[DESI['idx']+1]-fs8_gp[DESI['idx']])*DESI['U']))
         theory = tt.concatenate([theory, DESI_H, DESI_dA, DESI_fs8])
 
-if 'gro_DESI' in datasets:
-    print('Adding DESI_gro')
-    with model:
-        DESI_fs8 = pm.Deterministic('DESI_fs8',
-                   tt.as_tensor_variable(fs8_gp[DESI['idx']]+(fs8_gp[DESI['idx']+1]-fs8_gp[DESI['idx']])*DESI['U']))
-        theory = tt.concatenate([theory, DESI_fs8])
-
-if 'geo_DESI' in datasets:
-    print('Adding DESI_geo')
-    with model:
-        DESI_H = pm.Deterministic('DESI_H',
-                 tt.as_tensor_variable(H_gp[DESI['idx']]+(H_gp[DESI['idx']+1]-H_gp[DESI['idx']])*DESI['U']))
-        DESI_dA = pm.Deterministic('DESI_dA',
-                  tt.as_tensor_variable(dA_gp[DESI['idx']]+(dA_gp[DESI['idx']+1]-dA_gp[DESI['idx']])*DESI['U']))
-        theory = tt.concatenate([theory, DESI_H, DESI_dA])
-        
-if 'WFIRST' in datasets:
-    print('Adding WFIRST')
-    with model:
-        WFIRST_E = pm.Deterministic('WFIRST_E',
-                   tt.as_tensor_variable(E_gp[WFIRST['idx']]+(E_gp[WFIRST['idx']+1]-E_gp[WFIRST['idx']])*WFIRST['U']))
-        theory = tt.concatenate([theory, WFIRST_E])
-
 if 'CC' in datasets:
     print('Adding CCs')
     with model:
         CC_H = pm.Deterministic("CC_H",
-               tt.as_tensor_variable(H_gp[CC['idx']]+(H_gp[CC['idx']+1]-H_gp[CC['idx']])*CC['U']))
+               tt.as_tensor_variable(H_int[CC['idx']]+(H_int[CC['idx']+1]-H_int[CC['idx']])*CC['U']))
         theory = tt.concatenate([theory, CC_H])
         
 if 'DS17' in datasets:
     print('Adding Pantheon')
     with model:
-        M = pm.Normal('M', mu=-19.3, sigma=1)
+        M = pm.Normal('M', mu=-19.0, sigma=1)
         DS17_dL = tt.as_tensor_variable(dL_gp[DS17['idx']]+(dL_gp[DS17['idx']+1]-dL_gp[DS17['idx']])*DS17['U'])
         DS17_u = pm.Deterministic("DS17_dL",
                  tt.as_tensor_variable(5*tt.log10(DS17_dL)+25+M))
@@ -240,7 +222,7 @@ if 'DS17' in datasets:
 if 'BOSS' in datasets:
     print('Adding BOSS')
     with model:
-        B_H = tt.as_tensor_variable(H_gp[BOSS['idx']]+(H_gp[BOSS['idx']+1]-H_gp[BOSS['idx']])*BOSS['U'])
+        B_H = tt.as_tensor_variable(H_int[BOSS['idx']]+(H_int[BOSS['idx']+1]-H_int[BOSS['idx']])*BOSS['U'])
         B_dM = tt.as_tensor_variable(dM_gp[BOSS['idx']]+(dM_gp[BOSS['idx']+1]-dM_gp[BOSS['idx']])*BOSS['U'])
         B_fs8 = pm.Deterministic("B_fs8", 
                    tt.as_tensor_variable(fs8_gp[BOSS['idx']]+(fs8_gp[BOSS['idx']+1]-fs8_gp[BOSS['idx']])*BOSS['U']))
@@ -252,7 +234,7 @@ if 'BOSS' in datasets:
 if 'geo_BOSS' in datasets:
     print('Adding geo_BOSS')
     with model:
-        B_H = tt.as_tensor_variable(H_gp[BOSS['idx']]+(H_gp[BOSS['idx']+1]-H_gp[BOSS['idx']])*BOSS['U'])
+        B_H = tt.as_tensor_variable(H_int[BOSS['idx']]+(H_int[BOSS['idx']+1]-H_int[BOSS['idx']])*BOSS['U'])
         B_dM = tt.as_tensor_variable(dM_gp[BOSS['idx']]+(dM_gp[BOSS['idx']+1]-dM_gp[BOSS['idx']])*BOSS['U'])
         #Get alpha_perp and alpha_para 
         B_para = pm.Deterministic("B_para", B_H*rd_gp/BOSS['rd'])
@@ -316,12 +298,11 @@ if 'CMB' in datasets:
 #Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
-    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune,
-                      target_accept=0.99)
+    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.97)
 
 #print r-stat
-print(pm.summary(trace)['r_hat'][["A0", "ℓ", "η"]])
-print(pm.summary(trace)['mean'][["A0", "ℓ", "η"]])
+print(pm.summary(trace)['r_hat'][["ℓ_H", "η_H"]])
+print(pm.summary(trace)['mean'][["ℓ_H", "η_H"]])
 
 #Save
 if data_comb=="DESI_CMB":
@@ -329,15 +310,13 @@ if data_comb=="DESI_CMB":
 else:
     filename = data_comb
 
-#if mean_mode is not None:
-#    filename += '_'+mean_mode
-
+if mean_mode is not None:
+    filename += '_'+mean_mode
 if challenge is not None:
     filename += '_'+challenge
     
-filename += '_lite_{}_{}'.format(n_samples, n_tune)
+filename += '_H_lite_{}_{}'.format(n_samples, n_tune)
 print(filename)
-
 n = np.array(trace.posterior["η"]).flatten()
 l = np.array(trace.posterior["ℓ"]).flatten()
 A0 = np.array(trace.posterior["A0"]).flatten()
@@ -380,7 +359,8 @@ else:
 
 os.mkdir(filename)
 np.savez(os.path.join(filename,'samples.npz'), 
-         z_gp = z_gp,
+         z_int = z_int,
+         z_Hgp = z_Hgp,
          n=n,
          l=l,
          A0=A0,
@@ -391,6 +371,25 @@ np.savez(os.path.join(filename,'samples.npz'),
          fs8z=fs8z,
          H0_gp=H0_gp,
          Omega_m=Omega_m,
+         s80=s80,
+         S80=S80,
+         rd=rd,
+         M=M)
+
+os.mkdir(filename)
+np.savez(os.path.join(filename,'samples.npz'), 
+         A0=A0,
+         n=n,
+         DHz=DHz,
+         DXiz=DXiz,
+         Xiz=Xiz,
+         Hz=Hz,
+         Xiz_int=Xiz_int,
+         Hz_int=Hz_int,
+         dMz=dMz,
+         s8z=s8z,
+         fs8z=fs8z,
+         H0_gp=H0_gp,
          s80=s80,
          S80=S80,
          rd=rd,

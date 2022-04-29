@@ -26,12 +26,6 @@ z_Hgp = np.exp(x_Hgp)-1
 a_Hgp = 1./(1+z_Hgp)
 dx_Hgp = np.mean(np.diff(x_Hgp))
 
-nz_Xigp = 30
-x_Xigp = np.linspace(0, np.log(1+z_max), nz_Xigp)
-z_Xigp = np.exp(x_Xigp)-1
-a_Xigp = 1./(1+z_Xigp)
-dx_Xigp = np.mean(np.diff(x_Xigp))
-
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/' 
 challenge = None #'cosmo61'
 if challenge is not None:
@@ -390,8 +384,9 @@ else:
 
 os.mkdir(filename)
 np.savez(os.path.join(filename,'samples.npz'), 
-         z_H = z_H,
-         z_Xi = z_Xi,
+         z_int = z_int,
+         z_Hgp = z_Hgp,
+         z_Xigp = z_Xigp,
          A0=A0,
          n_Xi=n_Xi,
          l_Xi=l_Xi,

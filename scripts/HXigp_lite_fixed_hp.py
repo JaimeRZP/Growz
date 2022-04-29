@@ -328,7 +328,7 @@ if mean_mode is not None:
 if challenge is not None:
     filename += '_'+challenge
     
-filename += '_Xi_H_lite_{}_{}'.format(n_samples, n_tune)
+filename += '_Xi_H_lite_fixed_hp_{}_{}'.format(n_samples, n_tune)
 print(filename)
 A0 = np.array(trace.posterior["A0"]).flatten()
 n_H = n_H #np.array(trace.posterior["η_H"]).flatten()
@@ -386,8 +386,9 @@ else:
 
 os.mkdir(filename)
 np.savez(os.path.join(filename,'samples.npz'), 
-         z_H = z_H,
-         z_Xi = z_Xi,
+         z_int = z_int,
+         z_Hgp = z_Hgp,
+         z_Xigp = z_Xigp,
          A0=A0,
          n_Xi=n_Xi,
          l_Xi=l_Xi,
