@@ -55,7 +55,7 @@ DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 
 n_samples = 2 #3000
-n_tune = 2 #7000
+n_tune = 2 #3000
 datadict = {'DESI': DESI,
             'Euclid': Euclid,
             'CC': CC,
@@ -125,9 +125,9 @@ U_Xigp = data_class.make_U(z_int, z_Xigp, idx_Xigp)
 
 #base model
 with pm.Model() as model:
-    ℓ_H = pm.Uniform("ℓ_H", 0.01, 6) 
-    η_H = pm.HalfNormal("η_H", sigma=0.2) 
-    A0 = 1 #pm.Normal("A0", 1, 0.2)
+    ℓ_H = 3.0 #pm.Uniform("ℓ_H", 0.01, 6) 
+    η_H = 0.2 #pm.HalfNormal("η_H", sigma=0.2) 
+    A0 = pm.Normal("A0", 1, 0.2)
     H0 = data_class.H0
     Wm0 = data_class.Wm0
     Wr0 = data_class.Wr0
@@ -297,11 +297,11 @@ if 'CMB' in datasets:
 #Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
-    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.97)
+    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.9)
 
 #print r-stat
-print(pm.summary(trace)['r_hat'][["ℓ_H", "η_H"]])
-print(pm.summary(trace)['mean'][["ℓ_H", "η_H"]])
+#print(pm.summary(trace)['r_hat'][["ℓ_H", "η_H"]])
+#print(pm.summary(trace)['mean'][["ℓ_H", "η_H"]])
 
 #Save
 if data_comb=="DESI_CMB":
@@ -314,10 +314,10 @@ if mean_mode is not None:
 if challenge is not None:
     filename += '_'+challenge
     
-filename += '_H_lite_{}_{}'.format(n_samples, n_tune)
+filename += '_H_lite_fixed_hp_{}_{}'.format(n_samples, n_tune)
 print(filename)
-n = np.array(trace.posterior["η"]).flatten()
-l = np.array(trace.posterior["ℓ"]).flatten()
+#n = np.array(trace.posterior["η"]).flatten()
+#l = np.array(trace.posterior["ℓ"]).flatten()
 A0 = np.array(trace.posterior["A0"]).flatten()
 DHz = np.array(trace.posterior["DH_gp"])
 DHz = DHz.reshape(-1, DHz.shape[-1])
@@ -360,8 +360,8 @@ os.mkdir(filename)
 np.savez(os.path.join(filename,'samples.npz'), 
          z_int = z_int,
          z_Hgp = z_Hgp,
-         n=n,
-         l=l,
+         #n=n,
+         #l=l,
          A0=A0,
          DHz = DHz,
          Hz=Hz,
