@@ -60,8 +60,8 @@ Wigglez = data_class.get_Wigglez(new=True)
 DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 
-n_samples = 2 #3000
-n_tune = 2 #7000
+n_samples = 3000
+n_tune = 3000
 datadict = {'DESI': DESI,
             'Euclid': Euclid,
             'CC': CC,
@@ -76,7 +76,7 @@ datadict = {'DESI': DESI,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'DESI_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
              'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
@@ -331,8 +331,8 @@ if challenge is not None:
 filename += '_Xi_H_lite_fixed_hp_{}_{}'.format(n_samples, n_tune)
 print(filename)
 A0 = np.array(trace.posterior["A0"]).flatten()
-n_H = n_H #np.array(trace.posterior["η_H"]).flatten()
-l_H = l_H# np.array(trace.posterior["ℓ_H"]).flatten()
+#n_H = np.array(trace.posterior["η_H"]).flatten()
+#l_H = np.array(trace.posterior["ℓ_H"]).flatten()
 DHz = np.array(trace.posterior["DH_gp"])
 DHz = DHz.reshape(-1, DHz.shape[-1])
 Hz = np.array(trace.posterior["H_gp"])
@@ -353,8 +353,8 @@ else:
     rd = None
     
 if get_fs8:
-    n_Xi = n_Xi #np.array(trace.posterior["η_Xi"]).flatten()
-    l_Xi = l_Xi #np.array(trace.posterior["ℓ_Xi"]).flatten()
+    #n_Xi = np.array(trace.posterior["η_Xi"]).flatten()
+    #l_Xi = np.array(trace.posterior["ℓ_Xi"]).flatten()
     DXiz = np.array(trace.posterior["DXi_gp"])
     DXiz = DXiz.reshape(-1, DXiz.shape[-1])
     Xiz = np.array(trace.posterior["Xi_gp"])
@@ -366,7 +366,7 @@ if get_fs8:
     fs8z = np.array(trace.posterior["fs8_gp"])
     fs8z = fs8z.reshape(-1, fs8z.shape[-1])
     s80 = np.array(trace.posterior["s80"]).flatten()
-    S80 = s80*np.sqrt(Omega_m/0.3)
+    S80 = s80*np.sqrt(Wm0/0.3)
 else: 
     A0 = None
     n_Xi = None
@@ -390,10 +390,10 @@ np.savez(os.path.join(filename,'samples.npz'),
          z_Hgp = z_Hgp,
          z_Xigp = z_Xigp,
          A0=A0,
-         n_Xi=n_Xi,
-         l_Xi=l_Xi,
-         n_H=n_H,
-         l_H=l_H,
+        # n_Xi=n_Xi,
+        # l_Xi=l_Xi,
+        # n_H=n_H,
+        # l_H=l_H,
          DHz=DHz,
          DXiz=DXiz,
          Xiz=Xiz,

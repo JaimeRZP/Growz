@@ -126,7 +126,7 @@ with pm.Model() as model:
     
     if get_fs8:
         ℓ_Xi = 3 #pm.Uniform("ℓ_Xi", 0.01, 6) 
-        η_Xi = 0.75 #pm.HalfNormal("η_Xi", sigma=0.5)
+        η_Xi = 4*0.35 #pm.HalfNormal("η_Xi", sigma=0.5)
         Xi_gp_cov = η_Xi ** 2 * pm.gp.cov.ExpQuad(1, ℓ_Xi) + pm.gp.cov.WhiteNoise(1e-5)
         Xi_gp = pm.gp.Latent(cov_func=Xi_gp_cov)
         DXi_gp = Xi_gp.prior("DXi_gp", X=x_arr[:, None]) 

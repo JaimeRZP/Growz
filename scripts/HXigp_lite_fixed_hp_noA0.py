@@ -328,7 +328,7 @@ if mean_mode is not None:
 if challenge is not None:
     filename += '_'+challenge
     
-filename += '_Xi_H_lite_fixed_hp_{}_{}'.format(n_samples, n_tune)
+filename += '_Xi_H_lite_fixed_hp_noA0_{}_{}'.format(n_samples, n_tune)
 print(filename)
 n_H = n_H #np.array(trace.posterior["η_H"]).flatten()
 l_H = l_H# np.array(trace.posterior["ℓ_H"]).flatten()
