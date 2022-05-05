@@ -331,17 +331,17 @@ class MakeData():
                     88.8,  83. ,  81.5,  83. ,  95. ,  77. ,  87.1,  82.6,  92.8,
                     89. ,  80.9,  97. ,  90.4, 104. ,  87.9,  97.3,  92. ,  97.3,
                    105. , 125. ,  90. , 117. , 154. , 168. , 160. , 177. , 140. ,
-                   202. , 186.5, 222. , 226. ])
+                   202. , 186.5])
             z_CC = np.array([0.07  , 0.09  , 0.12  , 0.17  , 0.179 , 0.199 , 0.2   ,
                    0.27  , 0.28  , 0.352 , 0.38  , 0.3802, 0.4   , 0.4004, 0.4247,
                    0.44  , 0.4497, 0.47  , 0.4783, 0.48  , 0.51  , 0.593 , 0.6   ,
                    0.61  , 0.68  , 0.73  , 0.781 , 0.875 , 0.88  , 0.9   , 1.037 ,
-                   1.3   , 1.363 , 1.43  , 1.53  , 1.75  , 1.965 , 2.34  , 2.36  ])
+                   1.3   , 1.363 , 1.43  , 1.53  , 1.75  , 1.965])
             CC_err= np.array([19.6,  12. ,  26.2,   8. ,   4. ,   5. ,  29.6,  14. ,
                     36.6,  14. ,   1.9,  13.5,  17. ,  10.2,  11.2,   7.8,  12.9,
                     23. ,   9. ,  62. ,   1.9,  13. ,   6.1,   2.1,   8. ,   7. ,
                     12. ,  17. ,  40. ,  23. ,  20. ,  17. ,  33.6,  18. ,  14. ,
-                    40. ,  50.4,   7. ,   8. ])
+                    40. ,  50.4])
             CC_idx =  self.make_idx(z_CC, z_arr) 
             CC_U = self.make_U(z_CC, z_arr, CC_idx)
             CC_cov = np.zeros([len(z_CC),len(z_CC)])
@@ -356,6 +356,35 @@ class MakeData():
                      U=CC_U)
         
         return np.load(filepath)
+
+    def get_false_CC(self, z_arr=None, new='False'):
+        if z_arr is None:
+            z_arr = self.z_arr
+        dataset_name = 'false_CC'
+        filepath = os.path.join(self.path, dataset_name+'.npz')
+        if (os.path.exists(filepath)) and (new is False):
+            print('Found file for '+ dataset_name)
+            return np.load(filepath)
+        else:
+            print('Making new '+ dataset_name)
+            CC_data = np.array([222. , 226. ])
+            z_CC = np.array([2.34  , 2.36  ])
+            CC_err= np.array([7. ,   8. ])
+            CC_idx =  self.make_idx(z_CC, z_arr) 
+            CC_U = self.make_U(z_CC, z_arr, CC_idx)
+            CC_cov = np.zeros([len(z_CC),len(z_CC)])
+            for i in np.arange(len(z_CC)):
+                CC_cov[i,i] = CC_err[i]**2
+            np.savez(os.path.join(self.path, dataset_name),  
+                     data = CC_data,
+                     z=z_CC,
+                     cov=CC_cov,
+                     err=CC_err, 
+                     idx=CC_idx, 
+                     U=CC_U)
+        
+        return np.load(filepath)
+
     
     def get_Wigglez(self, z_arr=None, new='False'):
         if z_arr is None:
