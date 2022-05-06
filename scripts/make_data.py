@@ -402,6 +402,34 @@ class MakeData():
         
         return np.load(filepath)
     
+    def get_Vipers(self, z_arr=None, new='False'):
+        if z_arr is None:
+            z_arr = self.z_arr
+        dataset_name = 'Vipers'
+        filepath = os.path.join(self.path, dataset_name+'.npz')
+        if (os.path.exists(filepath)) and (new is False):
+            print('Found file for '+ dataset_name)
+            pass
+        else:
+            print('Making new '+ dataset_name)
+            z_Vipers = np.array([0.60, 0.86])
+            fs8_Vipers = np.array([0.55, 0.40])
+            data_Vipers = np.concatenate([fs8_Vipers])
+            Vipers_idx =  self.make_idx(z_Vipers, z_arr)
+            Vipers_U = self.make_U(z_Vipers, z_arr, Vipers_idx)
+            Vipers_cov = np.array([[0.12, 0], 
+                                  [0, 0.11]])
+            Vipers_fs8_err = np.sqrt(np.diag(Vipers_cov))
+            np.savez(os.path.join(self.path, dataset_name),  
+             data = fs8_Vipers,
+             z=z_Vipers,
+             cov=Vipers_cov,
+             err=Vipers_fs8_err, 
+             idx=Vipers_idx,
+             U=Vipers_U)
+        
+        return np.load(filepath)
+    
     def get_DSS(self, z_arr=None, new='False'):
         if z_arr is None:
             z_arr = self.z_arr
