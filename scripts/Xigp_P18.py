@@ -13,11 +13,17 @@ from pymc3.gp.util import plot_gp_dist
 
 #Load data
 z_max = 1110
-res = 200
-x_arr = np.linspace(0, np.log(1+z_max), res)
-dx = np.mean(np.diff(x_arr))
-z_arr = np.exp(x_arr)-1
-a_arr = 1./(1+z_arr)
+nz_int = 200
+x_int = np.linspace(0, np.log(1+z_max), nz_int)
+z_int = np.exp(x_int)-1
+a_int = 1./(1+z_int)
+dx_int = np.mean(np.diff(x_int))
+
+nz_Xigp = 30
+x_Xigp = np.linspace(0, np.log(1+z_max), nz_Xigp)
+z_Xigp = np.exp(x_Xigp)-1
+a_Xigp = 1./(1+z_Xigp)
+dx_Xigp = np.mean(np.diff(x_Xigp))
 
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/' 
 challenge = None #'cosmo61'
@@ -34,7 +40,6 @@ c = data_class.c
 
 which_DESI = 'DESI'
 DESI = data_class.get_synthetic(which_DESI, new=True)
-Euclid = data_class.get_synthetic('Euclid', new=True)
 CC = data_class.get_CC(new=True)
 DSS = data_class.get_DSS(new=True)
 BOSS = data_class.get_BOSS(new=True)
@@ -44,13 +49,13 @@ eBOSS = data_class.get_eBOSS(new=True)
 geo_eBOSS = data_class.get_eBOSS(new=True, mode='geo')
 gro_eBOSS = data_class.get_eBOSS(new=True, mode='gro')
 Wigglez = data_class.get_Wigglez(new=True)
+Vipers = data_class.get_Vipers(new=True)
 DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 
 n_samples = 3000
 n_tune = 3000
 datadict = {'DESI': DESI,
-            'Euclid': Euclid,
             'CC': CC,
             'DS17': DS17, 
             'BOSS': BOSS,
@@ -60,30 +65,22 @@ datadict = {'DESI': DESI,
             'geo_eBOSS': geo_eBOSS,
             'gro_eBOSS': gro_eBOSS,
             'Wigglez': Wigglez,
+            'Vipers': Vipers,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'All_gro' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
-             'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
-             'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
-             'All_CMB_geo': ['CC', 'DS17', 'geo_BOSS', 'geo_eBOSS', 'CMB'],
-             'All_gro': ['gro_BOSS', 'gro_eBOSS', 'Wigglez', 'DSS'],
-             'All_CMB_gro': ['gro_BOSS', 'gro_eBOSS', 'Wigglez', 'DSS', 'CMB'],
-             'SDSS': ['BOSS', 'eBOSS'],
-             'SDSS_CMB': ['BOSS', 'eBOSS', 'CMB'],
-             'Add': ['CC', 'DS17', 'Wigglez', 'DSS'],
-             'Add_CMB': ['CC', 'DS17', 'Wigglez', 'DSS', 'CMB'],
-             'DESI_CMB': ['DESI', 'CMB'], 
-             'Euclid_CMB': ['Euclid', 'CMB'],
-             'WFIRST_CMB': ['WFIRST', 'CMB'],
-             'CMB': ['CMB']}
+             'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'Vipers', 'DSS', 'CMB'],
+             'geo': ['CC', 'DS17', 'geo_BOSS', 'geo_eBOSS', 'CMB'],
+             'gro': ['gro_BOSS', 'gro_eBOSS', 'Wigglez', 'Vipers', 'DSS'],
+             'DESI_CMB': ['DESI', 'CMB']}
 datasets = data_combs[data_comb]
 
-need_dM = ['DESI', 'WFIRST', 'Euclid','geo_DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
-           'Wigglez', 'DS17', 'CMB', 'FCMB']
-need_fs8 = ['DESI', 'WFIRST', 'Euclid', 'BOSS', 'eBOSS', 'gro_BOSS', 
-            'gro_eBOSS', 'Wigglez', 'DSS']
+need_dM = ['DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
+           'Wigglez', 'DS17', 'CMB']
+need_fs8 = ['DESI', 'BOSS', 'eBOSS', 'gro_BOSS', 
+            'gro_eBOSS', 'Wigglez', 'Vipers', 'DSS']
 need_rd = ['BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS', 'CMB']
 
 if any(dataset in datasets for dataset in need_dM):
@@ -110,6 +107,9 @@ for dataset_name in datasets:
     data_cov = block_diag(data_cov, dataset['cov'])
 data_cov = data_cov[1:]
 
+idx_Xigp = data_class.make_idx(z_int, z_Xigp)
+U_Xigp = data_class.make_U(z_int, z_Xigp, idx_Xigp)
+
 #base model
 with pm.Model() as model: 
     H0 = pm.Normal('H0', 67.27, 0.6)
@@ -125,15 +125,21 @@ with pm.Model() as model:
         rd_gp = pm.Normal('rd_gp', 144.46, 0.000003)
     
     if get_fs8:
-        ℓ_Xi = 3 #pm.Uniform("ℓ_Xi", 0.01, 6) 
-        η_Xi = 4*0.35 #pm.HalfNormal("η_Xi", sigma=0.5)
+        ℓ_Xi = pm.Uniform("ℓ_Xi", 0.01, 6) 
+        η_Xi = pm.HalfNormal("η_Xi", sigma=0.5)
         Xi_gp_cov = η_Xi ** 2 * pm.gp.cov.ExpQuad(1, ℓ_Xi) + pm.gp.cov.WhiteNoise(1e-5)
         Xi_gp = pm.gp.Latent(cov_func=Xi_gp_cov)
-        DXi_gp = Xi_gp.prior("DXi_gp", X=x_arr[:, None]) 
-        Xi_gp = pm.Deterministic("Xi_gp", tt.as_tensor_variable(np.ones_like(z_arr)+DXi_gp)) 
-        s80 = pm.Normal("s80", 0.811, 0.0073)
-        E = H_gp/H_gp[0]
-        Om = tt.as_tensor_variable(Xi_gp*Wm0)
+        DXi_gp = Xi_gp.prior("DXi_gp", X=x_Xigp[:, None]) 
+        Xi_gp = pm.Deterministic("Xi_gp", tt.as_tensor_variable(np.ones_like(z_Xigp)+DXi_gp))
+        
+        Xi_int = tt.zeros(nz_int)
+        Xi_int = tt.inc_subtensor(Xi_int[1:], Xi_gp[idx_Xigp[1:]]+(Xi_gp[idx_Xigp[1:]+1]-Xi_gp[idx_Xigp[1:]])*U_Xigp[1:])
+        Xi_int = tt.inc_subtensor(Xi_int[0], Xi_gp[0])
+        Xi_int = pm.Deterministic('Xi_int', Xi_int)
+        
+        s80 = pm.Normal("s80", 0.8, 0.5)
+        E = H_int/H_int[0]
+        Om = tt.as_tensor_variable(Xi_int*Wm0)
         Omm = Om[::-1]
         xx = x_arr[::-1]
         ee = E[::-1]
@@ -276,6 +282,13 @@ if 'Wigglez' in datasets:
                     tt.as_tensor_variable(fs8_gp[Wigglez['idx']]+(fs8_gp[Wigglez['idx']+1]-fs8_gp[Wigglez['idx']])*Wigglez['U']))
         theory = tt.concatenate([theory, Wigglez_fs8])
 
+if 'Vipers' in datasets:
+    print('Adding Vipers')
+    with model:
+        Vipers_fs8 = pm.Deterministic("Vipers_fs8",
+                    tt.as_tensor_variable(fs8_gp[Vipers['idx']]+(fs8_gp[Vipers['idx']+1]-fs8_gp[Vipers['idx']])*Vipers['U']))
+        theory = tt.concatenate([theory, Vipers_fs8])
+
 if 'DSS' in datasets:
     print('Adding DSS')
     with model:
@@ -330,6 +343,8 @@ if get_fs8:
     DXiz = DXiz.reshape(-1, DXiz.shape[-1])
     Xiz = np.array(trace.posterior["Xi_gp"])
     Xiz = Xiz.reshape(-1, Xiz.shape[-1])
+    Xiz_int = np.array(trace.posterior["Xi_int"])
+    Xiz_int = Xiz_int.reshape(-1, Xiz_int.shape[-1])
     s8z = np.array(trace.posterior["s8_gp"])
     s8z = s8z.reshape(-1, s8z.shape[-1])
     fs8z = np.array(trace.posterior["fs8_gp"])
@@ -339,6 +354,7 @@ if get_fs8:
 else: 
     DXiz = None
     Xiz = None
+    Xiz_int = None
     s8z = None 
     fs8z = None
     Omega_m = None
@@ -352,9 +368,11 @@ else:
 
 os.mkdir(filename)
 np.savez(os.path.join(filename,'samples.npz'), 
-         z_arr = z_arr,
+         z_int = z_int,
+         z_Xigp = z_Xigp,
          DXiz=DXiz,
          Xiz=Xiz,
+         Xiz_int=Xiz_int,
          Hz=Hz,
          #dMz=dMz,
          s8z=s8z,

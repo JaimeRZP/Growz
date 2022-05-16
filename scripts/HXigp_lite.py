@@ -13,7 +13,6 @@ from pymc3.gp.util import plot_gp_dist
 
 #Load data
 z_max = 1110
-
 nz_int = 200
 x_int = np.linspace(0, np.log(1+z_max), nz_int)
 z_int = np.exp(x_int)-1
@@ -25,6 +24,12 @@ x_Hgp = np.linspace(0, np.log(1+z_max), nz_Hgp)
 z_Hgp = np.exp(x_Hgp)-1
 a_Hgp = 1./(1+z_Hgp)
 dx_Hgp = np.mean(np.diff(x_Hgp))
+
+nz_Xigp = 30
+x_Xigp = np.linspace(0, np.log(1+z_max), nz_Xigp)
+z_Xigp = np.exp(x_Xigp)-1
+a_Xigp = 1./(1+z_Xigp)
+dx_Xigp = np.mean(np.diff(x_Xigp))
 
 path = '/mnt/zfsusers/jaimerz/PhD/Growz/data/' 
 challenge = None #'cosmo61'
@@ -41,7 +46,6 @@ c = data_class.c
 
 which_DESI = 'DESI'
 DESI = data_class.get_synthetic(which_DESI, new=True)
-Euclid = data_class.get_synthetic('Euclid', new=True)
 CC = data_class.get_CC(new=True)
 DSS = data_class.get_DSS(new=True)
 BOSS = data_class.get_BOSS(new=True)
@@ -51,13 +55,13 @@ eBOSS = data_class.get_eBOSS(new=True)
 geo_eBOSS = data_class.get_eBOSS(new=True, mode='geo')
 gro_eBOSS = data_class.get_eBOSS(new=True, mode='gro')
 Wigglez = data_class.get_Wigglez(new=True)
+Vipers = data_class.get_Vipers(new=True)
 DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 
-n_samples = 2 #3000
-n_tune = 2 #7000
+n_samples = 3000
+n_tune = 3000
 datadict = {'DESI': DESI,
-            'Euclid': Euclid,
             'CC': CC,
             'DS17': DS17, 
             'BOSS': BOSS,
@@ -67,30 +71,22 @@ datadict = {'DESI': DESI,
             'geo_eBOSS': geo_eBOSS,
             'gro_eBOSS': gro_eBOSS,
             'Wigglez': Wigglez,
+            'Vipers': Vipers,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'DESI_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
-             'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
-             'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
-             'All_CMB_geo': ['CC', 'DS17', 'geo_BOSS', 'geo_eBOSS', 'CMB'],
-             'All_gro': ['gro_BOSS', 'gro_eBOSS', 'Wigglez', 'DSS'],
-             'All_CMB_gro': ['gro_BOSS', 'gro_eBOSS', 'Wigglez', 'DSS', 'CMB'],
-             'SDSS': ['BOSS', 'eBOSS'],
-             'SDSS_CMB': ['BOSS', 'eBOSS', 'CMB'],
-             'Add': ['CC', 'DS17', 'Wigglez', 'DSS'],
-             'Add_CMB': ['CC', 'DS17', 'Wigglez', 'DSS', 'CMB'],
-             'DESI_CMB': ['DESI', 'CMB'], 
-             'Euclid_CMB': ['Euclid', 'CMB'],
-             'WFIRST_CMB': ['WFIRST', 'CMB'],
-             'CMB': ['CMB']}
+             'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'Vipers', 'DSS', 'CMB'],
+             'geo': ['CC', 'DS17', 'geo_BOSS', 'geo_eBOSS', 'CMB'],
+             'gro': ['gro_BOSS', 'gro_eBOSS', 'Wigglez', 'Vipers', 'DSS'],
+             'DESI_CMB': ['DESI', 'CMB']}
 datasets = data_combs[data_comb]
 
-need_dM = ['DESI', 'WFIRST', 'Euclid','geo_DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
-           'Wigglez', 'DS17', 'CMB', 'FCMB']
-need_fs8 = ['DESI', 'WFIRST', 'Euclid', 'BOSS', 'eBOSS', 'gro_BOSS', 
-            'gro_eBOSS', 'Wigglez', 'DSS']
+need_dM = ['DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
+           'Wigglez', 'DS17', 'CMB']
+need_fs8 = ['DESI', 'BOSS', 'eBOSS', 'gro_BOSS', 
+            'gro_eBOSS', 'Wigglez', 'Vipers', 'DSS']
 need_rd = ['BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS', 'CMB']
 
 if any(dataset in datasets for dataset in need_dM):
@@ -127,7 +123,7 @@ U_Xigp = data_class.make_U(z_int, z_Xigp, idx_Xigp)
 with pm.Model() as model:
     ℓ_H = pm.Uniform("ℓ_H", 0.01, 6) 
     η_H = pm.HalfNormal("η_H", sigma=0.2) 
-    A0 = 1 #pm.Normal("A0", 1, 0.2)
+    A0 = pm.Normal("A0", 1, 0.2)
     H0 = data_class.H0
     Wm0 = data_class.Wm0
     Wr0 = data_class.Wr0
@@ -292,6 +288,13 @@ if 'Wigglez' in datasets:
         Wigglez_fs8 = pm.Deterministic("Wigglez_fs8",
                     tt.as_tensor_variable(fs8_gp[Wigglez['idx']]+(fs8_gp[Wigglez['idx']+1]-fs8_gp[Wigglez['idx']])*Wigglez['U']))
         theory = tt.concatenate([theory, Wigglez_fs8])
+        
+if 'Vipers' in datasets:
+    print('Adding Vipers')
+    with model:
+        Vipers_fs8 = pm.Deterministic("Vipers_fs8",
+                    tt.as_tensor_variable(fs8_gp[Vipers['idx']]+(fs8_gp[Vipers['idx']+1]-fs8_gp[Vipers['idx']])*Vipers['U']))
+        theory = tt.concatenate([theory, Vipers_fs8])
 
 if 'DSS' in datasets:
     print('Adding DSS')
@@ -312,8 +315,8 @@ with model:
     trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.97)
 
 #print r-stat
-print(pm.summary(trace)['r_hat'][["ℓ_H", "η_H"]])
-print(pm.summary(trace)['mean'][["ℓ_H", "η_H"]])
+print(pm.summary(trace)['r_hat'][["ℓ_H", "η_H", "ℓ_Xi", "η_Xi"]])
+print(pm.summary(trace)['mean'][["ℓ_H", "η_H", "ℓ_Xi", "η_Xi"]])
 
 #Save
 if data_comb=="DESI_CMB":
@@ -371,6 +374,7 @@ else:
     l_Xi = None
     DXiz = None
     Xiz = None
+    Xiz_int = None
     s8z = None 
     fs8z = None
     Omega_m = None
