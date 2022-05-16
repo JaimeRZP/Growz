@@ -33,7 +33,7 @@ if challenge is not None:
 print('data path: ', path)
 mean_path =  None #'LCDM_cosmo44_10000_10000'
 mean_mode = 'Planck'
-data_class = MakeData(z_max, res, path,
+data_class = MakeData(z_max, nz_int, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
 c = data_class.c
@@ -53,8 +53,8 @@ Vipers = data_class.get_Vipers(new=True)
 DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 
-n_samples = 3000
-n_tune = 3000
+n_samples = 2 #3000
+n_tune = 2 #3000
 datadict = {'DESI': DESI,
             'CC': CC,
             'DS17': DS17, 
@@ -119,10 +119,10 @@ with pm.Model() as model:
     #W0wa
     w0 = pm.Normal('w0', -1, 0.5)
     wa = pm.Normal('wa', 0, 0.5)
-    nuz = pm.Deterministic('nuz', 3*(1+w0+z_arr*(1+w0+wa))/(1+z_arr))
+    nuz = pm.Deterministic('nuz', 3*(1+w0+z_int*(1+w0+wa))/(1+z_int))
     
     #Mean of the gp
-    H_gp = pm.Deterministic('H_gp', H0*tt.sqrt(Wm0*(1+z_arr)**3+Wr0*(1+z_arr)**4+WL0*(1+z_arr)**nuz))
+    H_gp = pm.Deterministic('H_gp', H0*tt.sqrt(Wm0*(1+z_int)**3+Wr0*(1+z_int)**4+WL0*(1+z_int)**nuz))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
     
     if get_dM:

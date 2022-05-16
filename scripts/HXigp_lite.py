@@ -323,11 +323,6 @@ if data_comb=="DESI_CMB":
     filename = which_DESI+"_CMB"
 else:
     filename = data_comb
-
-if mean_mode is not None:
-    filename += '_'+mean_mode
-if challenge is not None:
-    filename += '_'+challenge
     
 filename += '_Xi_H_lite_{}_{}'.format(n_samples, n_tune)
 print(filename)

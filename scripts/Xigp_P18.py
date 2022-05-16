@@ -33,7 +33,7 @@ if challenge is not None:
 print('data path: ', path)
 mean_path =  None #'LCDM_cosmo44_10000_10000'
 mean_mode = 'Planck'
-data_class = MakeData(z_max, res, path,
+data_class = MakeData(z_max, nz_int, path,
                       cosmo_mode=mean_mode,
                       cosmo_path=mean_path)
 c = data_class.c
@@ -53,8 +53,8 @@ Vipers = data_class.get_Vipers(new=True)
 DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 
-n_samples = 3000
-n_tune = 3000
+n_samples = 2 #3000
+n_tune = 2 #3000
 datadict = {'DESI': DESI,
             'CC': CC,
             'DS17': DS17, 
@@ -118,7 +118,7 @@ with pm.Model() as model:
     WL0 = pm.Deterministic('WL', 1-Wm0-Wr0)
     
     #Mean of the gp
-    H_gp = pm.Deterministic('H_gp', H0*tt.sqrt(Wm0*(1+z_arr)**3+Wr0*(1+z_arr)**4+WL0))
+    H_gp = pm.Deterministic('H_gp', H0*tt.sqrt(Wm0*(1+z_int)**3+Wr0*(1+z_int)**4+WL0))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
        
     if get_rd:
@@ -313,11 +313,6 @@ print(pm.summary(trace)['mean'][["Wm0", "H0"]])
 
 #Save
 filename = data_comb
-#if mean_mode is not None:
-#    filename += '_'+mean_mode
-if challenge is not None:
-    filename += '_'+challenge
-    
 filename += '_Xi_P18_full_widehp_{}_{}'.format(n_samples, n_tune)
 print(filename)
 
@@ -326,17 +321,6 @@ Hz = Hz.reshape(-1, Hz.shape[-1])
 H0 = np.array(trace.posterior["H0"]).flatten()
 H0_gp = np.array(trace.posterior["H0_gp"]).flatten()
 Omega_m = np.array(trace.posterior["Wm0"]).flatten()
-
-#if get_dM:
-#    dMz = np.array(trace.posterior["dM_gp"])
-#    dMz = dMz.reshape(-1, dMz.shape[-1])
-#else:
-#    dMz = None
-
-#if get_rd:
-#    rd = np.array(trace.posterior["rd_gp"]).flatten()
-#else:
-#    rd = None
     
 if get_fs8:
     n_Xi = np.array(trace.posterior["η_Xi"]).flatten()
@@ -365,11 +349,6 @@ else:
     s80 = None
     S80 = None
 
-if 'DS17' in datasets:
-    M = np.array(trace.posterior["M"]).flatten()
-else:
-    M = None
-
 os.mkdir(filename)
 np.savez(os.path.join(filename,'samples.npz'), 
          z_int = z_int,
@@ -380,13 +359,10 @@ np.savez(os.path.join(filename,'samples.npz'),
          Xiz=Xiz,
          Xiz_int=Xiz_int,
          Hz=Hz,
-         #dMz=dMz,
          s8z=s8z,
          fs8z=fs8z,
          H0=H0,
          H0_gp=H0_gp,
          Omega_m=Omega_m,
          s80=s80,
-         S80=S80,
-         #rd=rd,
-         M=M)
+         S80=S80)
