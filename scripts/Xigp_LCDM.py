@@ -151,7 +151,7 @@ with pm.Model() as model:
         E = H_int/H_int[0]
         Om = tt.as_tensor_variable(Xi_int*Wm0)
         Omm = Om[::-1]
-        xx = x_arr[::-1]
+        xx = x_int[::-1]
         ee = E[::-1]
         aa = np.exp(-xx)
         dx = np.mean(np.diff(xx))
@@ -173,7 +173,7 @@ with pm.Model() as model:
         y = tt.as_tensor_variable(yy[::-1])
         d = tt.as_tensor_variable(dd[::-1])
         
-        fs8_gp = pm.Deterministic('fs8_gp', s80*y/(a_arr**2*E*d[0]))
+        fs8_gp = pm.Deterministic('fs8_gp', s80*y/(a_int**2*E*d[0]))
         s8_gp = pm.Deterministic('s8_gp', s80*d/d[0])
 
     theory = tt.as_tensor_variable([])
