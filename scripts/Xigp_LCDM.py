@@ -354,6 +354,8 @@ else:
     rd = None
     
 if get_fs8:
+    n_Xi = np.array(trace.posterior["η_Xi"]).flatten()
+    l_Xi = np.array(trace.posterior["ℓ_Xi"]).flatten()
     DXiz = np.array(trace.posterior["DXi_gp"])
     DXiz = DXiz.reshape(-1, DXiz.shape[-1])
     Xiz = np.array(trace.posterior["Xi_gp"])
@@ -366,7 +368,9 @@ if get_fs8:
     fs8z = fs8z.reshape(-1, fs8z.shape[-1])
     s80 = np.array(trace.posterior["s80"]).flatten()
     S80 = s80*np.sqrt(Omega_m/0.3)
-else: 
+else:
+    n_Xi = None
+    l_Xi = None
     DXiz = None
     Xiz = None
     Xiz_int = None
@@ -385,6 +389,8 @@ os.mkdir(filename)
 np.savez(os.path.join(filename,'samples.npz'), 
          z_int = z_int,
          z_Xigp = z_Xigp,
+         n_Xi=n_Xi,
+         l_Xi=l_Xi,
          DXiz=DXiz,
          Xiz=Xiz,
          Xiz_int=Xiz_int,
