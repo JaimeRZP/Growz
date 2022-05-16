@@ -69,7 +69,7 @@ datadict = {'DESI': DESI,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'gro' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'Vipers', 'DSS', 'CMB'],
              'geo': ['CC', 'DS17', 'geo_BOSS', 'geo_eBOSS', 'CMB'],

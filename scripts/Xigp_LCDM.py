@@ -125,7 +125,7 @@ with pm.Model() as model:
         dH_gp = pm.Deterministic("dH", tt.as_tensor_variable((c/1000)/H_gp))
         dM_rec_gp = tt.zeros(len(z_int)+1)
         dM_rec_gp = tt.inc_subtensor(dM_rec_gp[1:],
-                  tt.as_tensor_variable(dx*tt.cumsum(dH_gp*(1+z_int))))
+                  tt.as_tensor_variable(dx_int*tt.cumsum(dH_gp*(1+z_int))))
         dM_trap_gp = tt.as_tensor_variable(0.5*(dM_rec_gp[1:]+dM_rec_gp[:-1])-0.5*dM_rec_gp[1])
         dM_gp = pm.Deterministic('dM_gp', dM_trap_gp)
         dA_gp = pm.Deterministic('dA_gp', dM_gp/(1+z_int))
