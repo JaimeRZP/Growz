@@ -138,7 +138,7 @@ with pm.Model() as model:
         Xi_int = pm.Deterministic('Xi_int', Xi_int)
         
         s80 = pm.Normal("s80", 0.8, 0.5)
-        E = H_int/H_int[0]
+        E = H_gp/H_gp[0]
         Om = tt.as_tensor_variable(Xi_int*Wm0)
         Omm = Om[::-1]
         xx = x_arr[::-1]
