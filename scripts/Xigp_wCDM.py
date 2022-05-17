@@ -152,7 +152,7 @@ with pm.Model() as model:
         Xi_int = pm.Deterministic('Xi_int', Xi_int)
         
         s80 = pm.Normal("s80", 0.8, 0.5)
-        E = H_int/H_int[0]
+        E = H_gp/H_gp[0]
         Om = tt.as_tensor_variable(Xi_int*Wm0)
         Omm = Om[::-1]
         xx = x_int[::-1]
@@ -363,6 +363,7 @@ if get_fs8:
     Xiz = Xiz.reshape(-1, Xiz.shape[-1])
     Xiz_int = np.array(trace.posterior["Xi_int"])
     Xiz_int = Xiz_int.reshape(-1, Xiz_int.shape[-1])
+    Omega_m = np.array(trace.posterior["Wm0"]).flatten()
     s8z = np.array(trace.posterior["s8_gp"])
     s8z = s8z.reshape(-1, s8z.shape[-1])
     fs8z = np.array(trace.posterior["fs8_gp"])

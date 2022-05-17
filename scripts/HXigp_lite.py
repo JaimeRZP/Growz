@@ -372,7 +372,6 @@ else:
     Xiz_int = None
     s8z = None 
     fs8z = None
-    Omega_m = None
     s80 = None
     S80 = None
 
