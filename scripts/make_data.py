@@ -417,17 +417,69 @@ class MakeData():
             data_Vipers = np.concatenate([fs8_Vipers])
             Vipers_idx =  self.make_idx(z_Vipers, z_arr)
             Vipers_U = self.make_U(z_Vipers, z_arr, Vipers_idx)
-            Vipers_cov = np.array([[0.12, 0], 
-                                  [0, 0.11]])
+            Vipers_cov = np.array([[0.12**2, 0], 
+                                  [0, 0.11**2]])
             Vipers_fs8_err = np.sqrt(np.diag(Vipers_cov))
             np.savez(os.path.join(self.path, dataset_name),  
-             data = fs8_Vipers,
-             z=z_Vipers,
-             cov=Vipers_cov,
-             err=Vipers_fs8_err, 
-             idx=Vipers_idx,
-             U=Vipers_U)
+                     data = fs8_Vipers,
+                     z=z_Vipers,
+                     cov=Vipers_cov,
+                     err=Vipers_fs8_err, 
+                     idx=Vipers_idx,
+                     U=Vipers_U)
         
+        return np.load(filepath)
+    
+    def get_6dF(self, z_arr=None, new='False'):
+        if z_arr is None:
+            z_arr = self.z_arr
+        dataset_name = '6dF'
+        filepath = os.path.join(self.path, dataset_name+'.npz')
+        if (os.path.exists(filepath)) and (new is False):
+            print('Found file for '+ dataset_name)
+            pass
+        else:
+            print('Making new '+ dataset_name)
+            z_6dF = np.array([0.067])
+            fs8_6dF = np.array([0.423])
+            cov_6dF = np.array([[0.055**2]])
+            err_6dF = np.array([0.055])
+            idx_6dF = self.make_idx(z_6dF, z_arr)
+            U_6dF = self.make_U(z_6dF, z_arr, idx_6dF)
+            np.savez(os.path.join(self.path, dataset_name),  
+                     data = fs8_6dF,
+                     z=z_6dF,
+                     cov=cov_6dF,
+                     err=err_6dF, 
+                     idx=idx_6dF, 
+                     U=U_6dF)
+            
+        return np.load(filepath)
+    
+    def get_FastSound(self, z_arr=None, new='False'):
+        if z_arr is None:
+            z_arr = self.z_arr
+        dataset_name = 'FastSound'
+        filepath = os.path.join(self.path, dataset_name+'.npz')
+        if (os.path.exists(filepath)) and (new is False):
+            print('Found file for '+ dataset_name)
+            pass
+        else:
+            print('Making new '+ dataset_name)
+            z_FastSound = np.array([1.4])
+            fs8_FastSound = np.array([0.482])
+            cov_FastSound = np.array([[0.116**2]])
+            err_FastSound = np.array([0.116])
+            idx_FastSound = self.make_idx(z_FastSound, z_arr)
+            U_FastSound = self.make_U(z_FastSound, z_arr, idx_FastSound)
+            np.savez(os.path.join(self.path, dataset_name),  
+                     data = fs8_FastSound,
+                     z=z_FastSound,
+                     cov=cov_FastSound,
+                     err=err_FastSound, 
+                     idx=idx_FastSound, 
+                     U=U_FastSound)
+            
         return np.load(filepath)
     
     def get_DSS(self, z_arr=None, new='False'):
