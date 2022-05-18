@@ -56,6 +56,8 @@ geo_eBOSS = data_class.get_eBOSS(new=True, mode='geo')
 gro_eBOSS = data_class.get_eBOSS(new=True, mode='gro')
 Wigglez = data_class.get_Wigglez(new=True)
 Vipers = data_class.get_Vipers(new=True)
+sixdF = data_class.get_6dF(new=True)
+FastSound = data_class.get_FastSound(new=True)
 DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 
@@ -72,21 +74,23 @@ datadict = {'DESI': DESI,
             'gro_eBOSS': gro_eBOSS,
             'Wigglez': Wigglez,
             'Vipers': Vipers,
+            '6dF': sixdF,
+            'FastSound': FastSound,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
-data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
-             'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'Vipers', 'DSS', 'CMB'],
+data_comb = 'gro' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', '6dF', 'FastSound', 'DSS'],
+             'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'Vipers', '6dF', 'FastSound', 'DSS', 'CMB'],
              'geo': ['CC', 'DS17', 'geo_BOSS', 'geo_eBOSS', 'CMB'],
-             'gro': ['gro_BOSS', 'gro_eBOSS', 'Wigglez', 'Vipers', 'DSS'],
+             'gro': ['gro_BOSS', 'gro_eBOSS', 'Wigglez', 'Vipers', '6dF', 'FastSound', 'DSS'],
              'DESI_CMB': ['DESI', 'CMB']}
 datasets = data_combs[data_comb]
 
 need_dM = ['DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
            'Wigglez', 'DS17', 'CMB']
 need_fs8 = ['DESI', 'BOSS', 'eBOSS', 'gro_BOSS', 
-            'gro_eBOSS', 'Wigglez', 'Vipers', 'DSS']
+            'gro_eBOSS', 'Wigglez', 'Vipers', '6dF', 'FastSound', 'DSS']
 need_rd = ['BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS', 'CMB']
 
 if any(dataset in datasets for dataset in need_dM):
@@ -295,6 +299,20 @@ if 'Vipers' in datasets:
         Vipers_fs8 = pm.Deterministic("Vipers_fs8",
                     tt.as_tensor_variable(fs8_gp[Vipers['idx']]+(fs8_gp[Vipers['idx']+1]-fs8_gp[Vipers['idx']])*Vipers['U']))
         theory = tt.concatenate([theory, Vipers_fs8])
+        
+if '6dF' in datasets:
+    print('Adding 6dF')
+    with model:
+        sixdF_fs8 = pm.Deterministic("6dF_fs8",
+                    tt.as_tensor_variable(fs8_gp[sixdF['idx']]+(fs8_gp[sixdF['idx']+1]-fs8_gp[sixdF['idx']])*sixdF['U']))
+        theory = tt.concatenate([theory, sixdF_fs8])
+        
+if 'FastSound' in datasets:
+    print('Adding FastSound')
+    with model:
+        FastSound_fs8 = pm.Deterministic("FastSound_fs8",
+                    tt.as_tensor_variable(fs8_gp[FastSound['idx']]+(fs8_gp[FastSound['idx']+1]-fs8_gp[FastSound['idx']])*FastSound['U']))
+        theory = tt.concatenate([theory, FastSound_fs8])
 
 if 'DSS' in datasets:
     print('Adding DSS')

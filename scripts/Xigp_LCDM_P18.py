@@ -50,6 +50,8 @@ geo_eBOSS = data_class.get_eBOSS(new=True, mode='geo')
 gro_eBOSS = data_class.get_eBOSS(new=True, mode='gro')
 Wigglez = data_class.get_Wigglez(new=True)
 Vipers = data_class.get_Vipers(new=True)
+sixdF = data_class.get_6dF(new=True)
+FastSound = data_class.get_FastSound(new=True)
 DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 
@@ -66,21 +68,23 @@ datadict = {'DESI': DESI,
             'gro_eBOSS': gro_eBOSS,
             'Wigglez': Wigglez,
             'Vipers': Vipers,
+            '6dF': sixdF,
+            'FastSound': FastSound,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
-data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
-             'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'Vipers', 'DSS', 'CMB'],
+data_comb = 'gro' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', '6dF', 'FastSound', 'DSS'],
+             'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'Vipers', '6dF', 'FastSound', 'DSS', 'CMB'],
              'geo': ['CC', 'DS17', 'geo_BOSS', 'geo_eBOSS', 'CMB'],
-             'gro': ['gro_BOSS', 'gro_eBOSS', 'Wigglez', 'Vipers', 'DSS'],
+             'gro': ['gro_BOSS', 'gro_eBOSS', 'Wigglez', 'Vipers', '6dF', 'FastSound', 'DSS'],
              'DESI_CMB': ['DESI', 'CMB']}
 datasets = data_combs[data_comb]
 
 need_dM = ['DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
            'Wigglez', 'DS17', 'CMB']
 need_fs8 = ['DESI', 'BOSS', 'eBOSS', 'gro_BOSS', 
-            'gro_eBOSS', 'Wigglez', 'Vipers', 'DSS']
+            'gro_eBOSS', 'Wigglez', 'Vipers', '6dF', 'FastSound', 'DSS']
 need_rd = ['BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS', 'CMB']
 
 if any(dataset in datasets for dataset in need_dM):
@@ -112,28 +116,18 @@ U_Xigp = data_class.make_U(z_int, z_Xigp, idx_Xigp)
 
 #base model
 with pm.Model() as model: 
-    H0 = pm.Normal('H0', 70, 5)
+    H0 = pm.Normal('H0', 67.27, 0.6)
     Wr0 = data_class.Wr0
-    Wm0 = pm.Uniform('Wm0', 0 ,1-Wr0)
+    Wm0 = pm.TruncatedNormal('Wm0', mu=0.3166, sigma=0.0084, lower=0 , upper=1-Wr0) 
     WL0 = pm.Deterministic('WL', 1-Wm0-Wr0)
     
     #Mean of the gp
     H_gp = pm.Deterministic('H_gp', H0*tt.sqrt(Wm0*(1+z_int)**3+Wr0*(1+z_int)**4+WL0))
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
-    
-    if get_dM:
-        dH_gp = pm.Deterministic("dH", tt.as_tensor_variable((c/1000)/H_gp))
-        dM_rec_gp = tt.zeros(len(z_int)+1)
-        dM_rec_gp = tt.inc_subtensor(dM_rec_gp[1:],
-                  tt.as_tensor_variable(dx_int*tt.cumsum(dH_gp*(1+z_int))))
-        dM_trap_gp = tt.as_tensor_variable(0.5*(dM_rec_gp[1:]+dM_rec_gp[:-1])-0.5*dM_rec_gp[1])
-        dM_gp = pm.Deterministic('dM_gp', dM_trap_gp)
-        dA_gp = pm.Deterministic('dA_gp', dM_gp/(1+z_int))
-        dL_gp = pm.Deterministic('dL_gp', dM_gp*(1+z_int))
-        
+       
     if get_rd:
-        rd_gp = pm.Normal("rd_gp", 150, 5) 
-        
+        rd_gp = pm.Normal('rd_gp', 144.46, 0.000003)
+    
     if get_fs8:
         ℓ_Xi = pm.Uniform("ℓ_Xi", 0.01, 6) 
         η_Xi = pm.HalfNormal("η_Xi", sigma=0.5)
@@ -299,6 +293,20 @@ if 'Vipers' in datasets:
                     tt.as_tensor_variable(fs8_gp[Vipers['idx']]+(fs8_gp[Vipers['idx']+1]-fs8_gp[Vipers['idx']])*Vipers['U']))
         theory = tt.concatenate([theory, Vipers_fs8])
         
+if '6dF' in datasets:
+    print('Adding 6dF')
+    with model:
+        sixdF_fs8 = pm.Deterministic("6dF_fs8",
+                    tt.as_tensor_variable(fs8_gp[sixdF['idx']]+(fs8_gp[sixdF['idx']+1]-fs8_gp[sixdF['idx']])*sixdF['U']))
+        theory = tt.concatenate([theory, sixdF_fs8])
+        
+if 'FastSound' in datasets:
+    print('Adding FastSound')
+    with model:
+        FastSound_fs8 = pm.Deterministic("FastSound_fs8",
+                    tt.as_tensor_variable(fs8_gp[FastSound['idx']]+(fs8_gp[FastSound['idx']+1]-fs8_gp[FastSound['idx']])*FastSound['U']))
+        theory = tt.concatenate([theory, FastSound_fs8])
+
 if 'DSS' in datasets:
     print('Adding DSS')
     with model:
@@ -315,25 +323,15 @@ if 'CMB' in datasets:
 #Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
-    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.95)
+    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.90)
 
 #print r-stat
 print(pm.summary(trace)['r_hat'][["Wm0", "H0"]])
 print(pm.summary(trace)['mean'][["Wm0", "H0"]])
 
 #Save
-if data_comb=="DESI_CMB":
-    filename = which_DESI+"_CMB"
-else:
-    filename = data_comb
-
-#if mean_mode is not None:
-#    filename += '_'+mean_mode
-    
-if challenge is not None:
-    filename += '_'+challenge
-    
-filename += '_Xi_LCDM_{}_{}'.format(n_samples, n_tune)
+filename = data_comb
+filename += '_Xi_LCDM_P18_{}_{}'.format(n_samples, n_tune)
 print(filename)
 
 Hz = np.array(trace.posterior["H_gp"])
@@ -341,18 +339,12 @@ Hz = Hz.reshape(-1, Hz.shape[-1])
 H0 = np.array(trace.posterior["H0"]).flatten()
 H0_gp = np.array(trace.posterior["H0_gp"]).flatten()
 Omega_m = np.array(trace.posterior["Wm0"]).flatten()
-
-if get_dM:
-    dMz = np.array(trace.posterior["dM_gp"])
-    dMz = dMz.reshape(-1, dMz.shape[-1])
-else:
-    dMz = None
-
+    
 if get_rd:
     rd = np.array(trace.posterior["rd_gp"]).flatten()
 else:
     rd = None
-    
+
 if get_fs8:
     n_Xi = np.array(trace.posterior["η_Xi"]).flatten()
     l_Xi = np.array(trace.posterior["ℓ_Xi"]).flatten()
@@ -362,7 +354,6 @@ if get_fs8:
     Xiz = Xiz.reshape(-1, Xiz.shape[-1])
     Xiz_int = np.array(trace.posterior["Xi_int"])
     Xiz_int = Xiz_int.reshape(-1, Xiz_int.shape[-1])
-    Omega_m = np.array(trace.posterior["Wm0"]).flatten()
     s8z = np.array(trace.posterior["s8_gp"])
     s8z = s8z.reshape(-1, s8z.shape[-1])
     fs8z = np.array(trace.posterior["fs8_gp"])
@@ -381,11 +372,6 @@ else:
     s80 = None
     S80 = None
 
-if 'DS17' in datasets:
-    M = np.array(trace.posterior["M"]).flatten()
-else:
-    M = None
-
 os.mkdir(filename)
 np.savez(os.path.join(filename,'samples.npz'), 
          z_int = z_int,
@@ -396,7 +382,6 @@ np.savez(os.path.join(filename,'samples.npz'),
          Xiz=Xiz,
          Xiz_int=Xiz_int,
          Hz=Hz,
-         dMz=dMz,
          s8z=s8z,
          fs8z=fs8z,
          H0=H0,
@@ -404,5 +389,4 @@ np.savez(os.path.join(filename,'samples.npz'),
          Omega_m=Omega_m,
          s80=s80,
          S80=S80,
-         rd=rd,
-         M=M)
+         rd=rd)
