@@ -340,7 +340,7 @@ filename = data_comb
 if challenge is not None:
     filename += '_'+challenge
     
-filename += '_Xi_wCDM_{}_{}'.format(n_samples, n_tune)
+filename += '_Xi_wCDM_P18_{}_{}'.format(n_samples, n_tune)
 print(filename)
 
 Hz = np.array(trace.posterior["H_gp"])
