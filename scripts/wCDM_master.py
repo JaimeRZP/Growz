@@ -116,10 +116,10 @@ with pm.Model() as model:
     #W0wa
     w0 = pm.Normal('w0', -1, 0.5)
     wa = pm.Normal('wa', 0, 0.5)
-    nuz = pm.Deterministic('nuz', 3*(1+w0+z_int*(1+w0+wa))/(1+z_int))
+    nuz = pm.Deterministic('nuz', 3*(1+w0+z_arr*(1+w0+wa))/(1+z_arr))
     
     #Mean of the gp
-    H_gp = pm.Deterministic('H_gp', H0*tt.sqrt(Wm0*(1+z_int)**3+Wr0*(1+z_int)**4+WL0*(1+z_int)**nuz))
+    H_gp = pm.Deterministic('H_gp', H0*tt.sqrt(Wm0*(1+z_arr)**3+Wr0*(1+z_arr)**4+WL0*(1+z_arr)**nuz))
     H0_gp = pm.Deterministic("H0_gp", H0)
     
     if get_dM:
