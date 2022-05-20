@@ -34,7 +34,6 @@ c = data_class.c
 
 which_DESI = 'DESI'
 DESI = data_class.get_synthetic(which_DESI, new=True)
-Euclid = data_class.get_synthetic('Euclid', new=True)
 CC = data_class.get_CC(new=True)
 DSS = data_class.get_DSS(new=True)
 BOSS = data_class.get_BOSS(new=True)
@@ -44,13 +43,15 @@ eBOSS = data_class.get_eBOSS(new=True)
 geo_eBOSS = data_class.get_eBOSS(new=True, mode='geo')
 gro_eBOSS = data_class.get_eBOSS(new=True, mode='gro')
 Wigglez = data_class.get_Wigglez(new=True)
+Vipers = data_class.get_Vipers(new=True)
+sixdF = data_class.get_6dF(new=True)
+FastSound = data_class.get_FastSound(new=True)
 DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 
-n_samples = 1000
-n_tune = 1000
+n_samples = 2 #3000
+n_tune = 2 #3000
 datadict = {'DESI': DESI,
-            'Euclid': Euclid,
             'CC': CC,
             'DS17': DS17, 
             'BOSS': BOSS,
@@ -60,31 +61,24 @@ datadict = {'DESI': DESI,
             'geo_eBOSS': geo_eBOSS,
             'gro_eBOSS': gro_eBOSS,
             'Wigglez': Wigglez,
+            'Vipers': Vipers,
+            '6dF': sixdF,
+            'FastSound': FastSound,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'DESI_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
-data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS'],
-             'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'DSS', 'CMB'],
-             'All_CMB_NODSS': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'CMB'],
-             'All_CMB_geo': ['CC', 'DS17', 'geo_BOSS', 'geo_eBOSS', 'CMB'],
-             'All_gro': ['gro_BOSS', 'gro_eBOSS', 'Wigglez', 'DSS'],
-             'All_CMB_gro': ['gro_BOSS', 'gro_eBOSS', 'Wigglez', 'DSS', 'CMB'],
-             'SDSS': ['BOSS', 'eBOSS'],
-             'SDSS_CMB': ['BOSS', 'eBOSS', 'CMB'],
-             'Add': ['CC', 'DS17', 'Wigglez', 'DSS'],
-             'Add_CMB': ['CC', 'DS17', 'Wigglez', 'DSS', 'CMB'],
-             'DESI_CMB': ['DESI', 'CMB'], 
-             'DESIfs_CMB': ['DESIfs', 'CMB'],
-             'Euclid_CMB': ['Euclid', 'CMB'],
-             'WFIRST_CMB': ['WFIRST', 'CMB'],
-             'CMB': ['CMB']}
+data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', '6dF', 'FastSound', 'DSS'],
+             'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'Vipers', '6dF', 'FastSound', 'DSS', 'CMB'],
+             'geo': ['CC', 'DS17', 'geo_BOSS', 'geo_eBOSS', 'CMB'],
+             'gro': ['gro_BOSS', 'gro_eBOSS', 'Wigglez', 'Vipers', '6dF', 'FastSound', 'DSS'],
+             'DESI_CMB': ['DESI', 'CMB']}
 datasets = data_combs[data_comb]
 
-need_dM = ['DESI', 'DESIfs', 'WFIRST', 'Euclid','geo_DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
-           'Wigglez', 'DS17', 'CMB', 'FCMB']
-need_fs8 = ['DESI', 'DESIfs', 'WFIRST', 'Euclid', 'BOSS', 'eBOSS', 'gro_BOSS', 
-            'gro_eBOSS', 'Wigglez', 'DSS']
+need_dM = ['DESI', 'BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS',
+           'Wigglez', 'DS17', 'CMB']
+need_fs8 = ['DESI', 'BOSS', 'eBOSS', 'gro_BOSS', 
+            'gro_eBOSS', 'Wigglez', 'Vipers', '6dF', 'FastSound', 'DSS']
 need_rd = ['BOSS', 'eBOSS', 'geo_BOSS', 'geo_eBOSS', 'CMB']
 
 if any(dataset in datasets for dataset in need_dM):
@@ -135,16 +129,7 @@ with pm.Model() as model:
         dL_gp = pm.Deterministic('dL_gp', dM_gp*(1+z_arr))
         
     if get_rd:
-        #https://arxiv.org/pdf/2106.00428.pdf
-        wb0 =  pm.Uniform("wb0", 0.015, 0.03)
-        a1 = 0.00785436
-        a2 = 0.177084
-        a3 = 0.00912388
-        a4 = 0.618711
-        a5 = 11.9611
-        a6 = 2.81343
-        a7 = 0.784719
-        rd_gp = pm.Deterministic("rd_gp", 1/(a1*wb0**a2+a3*wm0**a4+a5*wb0**a6*wm0**a7)) 
+        rd_gp = pm.Normal("rd_gp", 150, 5)  
         
     if get_fs8:
         s80 = pm.Normal("s80", 0.8, 0.5)
@@ -300,6 +285,27 @@ if 'Wigglez' in datasets:
                     tt.as_tensor_variable(fs8_gp[Wigglez['idx']]+(fs8_gp[Wigglez['idx']+1]-fs8_gp[Wigglez['idx']])*Wigglez['U']))
         theory = tt.concatenate([theory, Wigglez_fs8])
 
+if 'Vipers' in datasets:
+    print('Adding Vipers')
+    with model:
+        Vipers_fs8 = pm.Deterministic("Vipers_fs8",
+                    tt.as_tensor_variable(fs8_gp[Vipers['idx']]+(fs8_gp[Vipers['idx']+1]-fs8_gp[Vipers['idx']])*Vipers['U']))
+        theory = tt.concatenate([theory, Vipers_fs8])
+
+if '6dF' in datasets:
+    print('Adding 6dF')
+    with model:
+        sixdF_fs8 = pm.Deterministic("6dF_fs8",
+                    tt.as_tensor_variable(fs8_gp[sixdF['idx']]+(fs8_gp[sixdF['idx']+1]-fs8_gp[sixdF['idx']])*sixdF['U']))
+        theory = tt.concatenate([theory, sixdF_fs8])
+        
+if 'FastSound' in datasets:
+    print('Adding FastSound')
+    with model:
+        FastSound_fs8 = pm.Deterministic("FastSound_fs8",
+                    tt.as_tensor_variable(fs8_gp[FastSound['idx']]+(fs8_gp[FastSound['idx']+1]-fs8_gp[FastSound['idx']])*FastSound['U']))
+        theory = tt.concatenate([theory, FastSound_fs8])        
+
 if 'DSS' in datasets:
     print('Adding DSS')
     with model:
@@ -350,9 +356,7 @@ else:
 
 if get_rd:
     rd = np.array(trace.posterior["rd_gp"]).flatten()
-    omega_b = np.array(trace.posterior["wb0"]).flatten()
 else:
-    omega_b = None
     rd = None
     
 if get_fs8:
@@ -382,7 +386,6 @@ np.savez(os.path.join(filename,'samples.npz'),
          fs8z=fs8z,
          H0_gp=H0_gp,
          Omega_m=Omega_m,
-         omega_b=omega_b,
          rd=rd,
          M=M,
          s80=s80,
