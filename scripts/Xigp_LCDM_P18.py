@@ -55,8 +55,8 @@ FastSound = data_class.get_FastSound(new=True)
 DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 
-n_samples = 2 #3000
-n_tune = 2 #3000
+n_samples = 3001
+n_tune = 3001
 datadict = {'DESI': DESI,
             'CC': CC,
             'DS17': DS17, 
@@ -141,7 +141,7 @@ with pm.Model() as model:
         Xi_int = tt.inc_subtensor(Xi_int[0], Xi_gp[0])
         Xi_int = pm.Deterministic('Xi_int', Xi_int)
         
-        s80 = pm.Normal("s80", 0.8, 0.5)
+        s80 = pm.Normal("s80", 0.8120, 0.0073)
         E = H_gp/H_gp[0]
         Om = tt.as_tensor_variable(Xi_int*Wm0)
         Omm = Om[::-1]
@@ -323,7 +323,7 @@ if 'CMB' in datasets:
 #Sampling
 with model:
     lkl= pm.MvNormal("lkl", mu=theory, cov=data_cov, observed=data)
-    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.90)
+    trace = pm.sample(n_samples, return_inferencedata=True, tune=n_tune, target_accept=0.95)
 
 #print r-stat
 print(pm.summary(trace)['r_hat'][["Wm0", "H0"]])
