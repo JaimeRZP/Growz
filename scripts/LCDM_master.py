@@ -129,7 +129,12 @@ with pm.Model() as model:
         dL_gp = pm.Deterministic('dL_gp', dM_gp*(1+z_arr))
         
     if get_rd:
-        rd_gp = pm.Normal("rd_gp", 150, 5)  
+        Wb0 = pm.Uniform("Wb0", 0.03, 0.07)
+        wb0 = pm.Deterministic("wb0", Wb0*(H0/100)**2)
+        rd_gp = pm.Normal("rd_gp",
+                          45.5337*tt.log(7.20376/wm0)/tt.sqrt(1+9.98592*wb0**0.801347))
+        alpha = tt.as_tensor_variable(1.11346377 - 2.79852466*Wb0 + 16.51112918*Wb0**2)
+        rs_gp = pm.Deterministic('rs_gp', rd_gp/alpha)
         
     if get_fs8:
         s80 = pm.Normal("s80", 0.8, 0.5)
@@ -316,7 +321,7 @@ if 'CMB' in datasets:
     print('Adding CMB')
     with model:
         dM_star = tt.as_tensor_variable(dM_gp[CMB['idx']]+(dM_gp[CMB['idx']+1]-dM_gp[CMB['idx']])*CMB['U'])
-        t100 = pm.Deterministic('t100', 100*rd_gp/dM_star) 
+        t100 = pm.Deterministic('t100', 100*rs_gp/dM_star) 
         theory = tt.concatenate([theory, t100])
 
 #Sampling
@@ -346,7 +351,7 @@ print(filename)
 Hz =np.array(trace.posterior["H_gp"])
 Hz = Hz.reshape(-1, Hz.shape[-1])
 H0_gp = np.array(trace.posterior["H0_gp"]).flatten()
-Omega_m = np.array(trace.posterior["Wm0"]).flatten()
+Wm0 = np.array(trace.posterior["Wm0"]).flatten()
 
 if get_dM:
     dMz = np.array(trace.posterior["dM_gp"])
@@ -355,9 +360,13 @@ else:
     dMz = None
 
 if get_rd:
+    Wb0 = np.array(trace.posterior["Wb0"]).flatten()
     rd = np.array(trace.posterior["rd_gp"]).flatten()
+    rs = np.array(trace.posterior["rs_gp"]).flatten()
 else:
+    Wb0 = None
     rd = None
+    rs = None
     
 if get_fs8:
     s8z = np.array(trace.posterior["s8_gp"])
@@ -385,8 +394,10 @@ np.savez(os.path.join(filename,'samples.npz'),
          s8z=s8z,
          fs8z=fs8z,
          H0_gp=H0_gp,
-         Omega_m=Omega_m,
-         rd=rd,
-         M=M,
+         Wm0=Wm0,
          s80=s80,
-         S80=S80)
+         S80=S80,
+         Wb0=Wb0,
+         rd=rd,
+         rs=rs,
+         M=M)

@@ -157,7 +157,11 @@ with pm.Model() as model:
         dL_gp = pm.Deterministic('dL_gp', dM_gp*(1+z_int))
         
     if get_rd:
-        rd_gp = pm.Normal("rd_gp", 150, 5)
+        Wb0 = pm.Uniform("Wb", 0.03, 0.07)
+        rd_gp = pm.Normal("rd_gp", 145, 3)
+        alpha = tt.as_tensor_variable(1.11346377 - 2.79852466*Wb0 + 16.51112918*Wb0**2)
+        rs_gp = pm.Deterministic('rs_gp', rd_gp/alpha)
+        
         
     if get_fs8:
         ℓ_Xi = pm.Uniform("ℓ_Xi", 0.01, 6) 
@@ -324,7 +328,7 @@ if 'CMB' in datasets:
     print('Adding CMB')
     with model:
         dM_star = tt.as_tensor_variable(dM_gp[CMB['idx']]+(dM_gp[CMB['idx']+1]-dM_gp[CMB['idx']])*CMB['U'])
-        t100 = pm.Deterministic('t100', 100*rd_gp/dM_star) 
+        t100 = pm.Deterministic('t100', 100*rs_gp/dM_star) 
         theory = tt.concatenate([theory, t100])
         
 #Sampling
@@ -362,9 +366,13 @@ else:
     dMz = None
 
 if get_rd:
+    Wb0 = np.array(trace.posterior["Wb0"]).flatten()
     rd = np.array(trace.posterior["rd_gp"]).flatten()
+    rs = np.array(trace.posterior["rs_gp"]).flatten()
 else:
+    Wb = None
     rd = None
+    rs = None
     
 if get_fs8:
     n_Xi = np.array(trace.posterior["η_Xi"]).flatten()
@@ -418,5 +426,7 @@ np.savez(os.path.join(filename,'samples.npz'),
          fs8z=fs8z,
          H0_gp=H0_gp,
          s80=s80,
+         Wb0=Wb0,
          rd=rd,
+         rs=rs,
          M=M)

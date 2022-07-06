@@ -521,15 +521,11 @@ class MakeData():
             z_CMB = np.array([1089.95]) 
             CMB_idx =  self.make_idx(z_CMB, z_arr)
             CMB_U = self.make_U(z_CMB, z_arr, CMB_idx)
-            #dM_CMB = self.dM_arr[CMB_idx]+(self.dM_arr[CMB_idx+1]-self.dM_arr[CMB_idx])*CMB_U
-            #perp_CMB = 100*(CMB_rd/dM_CMB)
-            CMB_rd = 144.46 
             perp_CMB = np.array([1.04109]) 
             CMB_cov = np.array([[0.00030**2]])
             CMB_err = np.array([0.00030])
             np.savez(os.path.join(self.path, dataset_name),  
              data = perp_CMB,
-             rd=CMB_rd,
              z=z_CMB,
              cov=CMB_cov,
              err=CMB_err, 
