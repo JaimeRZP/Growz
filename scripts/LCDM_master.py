@@ -109,7 +109,6 @@ data_cov = data_cov[1:]
 with pm.Model() as model:
     Wm0 = pm.Uniform("Wm0", 0., 1.)
     H0 = pm.Normal("H0", mu=70, sigma=5)
-    wm0 = pm.Deterministic("wm0", Wm0*(H0/100)**2)
     Wr0 = data_class.cosmo.Omega_g()+data_class.Omega_nu
     WL0 = pm.Deterministic("WL0", 1-Wm0-Wr0) 
     
@@ -131,6 +130,7 @@ with pm.Model() as model:
     if get_rd:
         Wb0 = pm.Uniform("Wb0", 0.03, 0.07)
         wb0 = pm.Deterministic("wb0", Wb0*(H0/100)**2)
+        wm0 = pm.Deterministic("wm0", Wm0*(H0/100)**2)
         rd_gp = pm.Normal("rd_gp",
                           45.5337*tt.log(7.20376/wm0)/tt.sqrt(1+9.98592*wb0**0.801347))
         alpha = tt.as_tensor_variable(1.11346377 - 2.79852466*Wb0 + 16.51112918*Wb0**2)
