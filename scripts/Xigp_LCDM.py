@@ -388,13 +388,12 @@ if get_fs8:
     Xiz = Xiz.reshape(-1, Xiz.shape[-1])
     Xiz_int = np.array(trace.posterior["Xi_int"])
     Xiz_int = Xiz_int.reshape(-1, Xiz_int.shape[-1])
-    Omega_m = np.array(trace.posterior["Wm0"]).flatten()
     s8z = np.array(trace.posterior["s8_gp"])
     s8z = s8z.reshape(-1, s8z.shape[-1])
     fs8z = np.array(trace.posterior["fs8_gp"])
     fs8z = fs8z.reshape(-1, fs8z.shape[-1])
     s80 = np.array(trace.posterior["s80"]).flatten()
-    S80 = s80*np.sqrt(Omega_m/0.3)
+    S80 = s80*np.sqrt(Wm0/0.3)
 else:
     n_Xi = None
     l_Xi = None
@@ -403,7 +402,6 @@ else:
     Xiz_int = None
     s8z = None 
     fs8z = None
-    Omega_m = None
     s80 = None
     S80 = None
 

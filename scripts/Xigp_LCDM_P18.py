@@ -361,7 +361,7 @@ if get_fs8:
     fs8z = np.array(trace.posterior["fs8_gp"])
     fs8z = fs8z.reshape(-1, fs8z.shape[-1])
     s80 = np.array(trace.posterior["s80"]).flatten()
-    S80 = s80*np.sqrt(Omega_m/0.3)
+    S80 = s80*np.sqrt(Wm0/0.3)
 else:
     n_Xi = None
     l_Xi = None
@@ -370,7 +370,6 @@ else:
     Xiz_int = None
     s8z = None 
     fs8z = None
-    Omega_m = None
     s80 = None
     S80 = None
 
@@ -387,7 +386,7 @@ np.savez(os.path.join(filename,'samples.npz'),
          s8z=s8z,
          fs8z=fs8z,
          H0_gp=H0_gp,
-         Omega_m=Omega_m,
+         Wm=Wm,
          s80=s80,
          S80=S80,
          rd=rd,
