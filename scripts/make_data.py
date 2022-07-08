@@ -47,13 +47,11 @@ class MakeData():
     def get_cosmo(self, mode='Planck', path=None):
         if mode=='Planck':
             print('Using Planck mean')
-            params = {'h': 0.6727,
-                      'Omega_cdm': 0.265621, #0.237153,
-                      'Omega_b': 0.0494116,
-                      'Omega_Lambda': 0.6834,
-                      'sigma8': 0.812}
-                      #'n_s': 0.9649,
-                      #'ln10^{10}A_s': 3.045}
+            params = {'h': 0.6736,
+                      'Omega_cdm': 0.26594, 
+                      'Omega_b': 0.04931,
+                      'Omega_Lambda': 0.6847,
+                      'sigma8': 0.8111}
         elif mode=='best_fit':
             print('Using best fit mean')
             params = {'h': 0.6833,

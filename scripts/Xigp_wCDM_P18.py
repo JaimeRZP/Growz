@@ -55,8 +55,8 @@ FastSound = data_class.get_FastSound(new=True)
 DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 
-n_samples = 2 #3000
-n_tune = 2 #3000
+n_samples = 1500
+n_tune = 1500
 datadict = {'DESI': DESI,
             'CC': CC,
             'DS17': DS17, 
@@ -73,7 +73,7 @@ datadict = {'DESI': DESI,
             'DSS': DSS,
             'CMB': CMB}
 
-data_comb = 'gro' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
+data_comb = 'All_CMB' # All, All_CMB, SDSS, SDSS_CMB, Add, Add_CMB
 data_combs = {'All': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', '6dF', 'FastSound', 'DSS'],
              'All_CMB': ['CC', 'DS17', 'BOSS', 'eBOSS', 'Wigglez', 'Vipers', '6dF', 'FastSound', 'DSS', 'CMB'],
              'geo': ['CC', 'DS17', 'geo_BOSS', 'geo_eBOSS', 'CMB'],
@@ -116,13 +116,13 @@ U_Xigp = data_class.make_U(z_int, z_Xigp, idx_Xigp)
 
 #base model
 with pm.Model() as model: 
-    H0 = pm.Normal('H0', 68.31, 0.82)
+    H0 = pm.Normal('H0', 64.89, 2.44)
     Wr0 = data_class.Wr0
-    Wm0 = pm.TruncatedNormal('Wm0', mu=0.307, sigma=0.011, lower=0 , upper=1-Wr0) 
+    Wm0 = pm.TruncatedNormal('Wm0', mu=0.342, sigma=0.026, lower=0 , upper=1-Wr0) 
     WL0 = pm.Deterministic('WL', 1-Wm0-Wr0)
     #W0wa
-    w0 = pm.Normal('w0', -0.957, 0.08)
-    wa = pm.Normal('wa', -0.29, 0.3)
+    w0 = pm.Normal('w0', -0.578, 0.267)
+    wa = pm.Normal('wa', -1.315, 0.757)
     nuz = pm.Deterministic('nuz', 3*(1+w0+z_int*(1+w0+wa))/(1+z_int))
     
     #Mean of the gp
@@ -130,8 +130,8 @@ with pm.Model() as model:
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
         
     if get_rd:
-        rd_gp = pm.Normal('rd_gp', 147.21, 0.23)
-        rs_gp = pm.Normal('rs_gp', 144.57, 0.22)
+        rd_gp = pm.Normal('rd_gp', 147.03, 0.288)
+        rs_gp = pm.Normal('rs_gp', 144.37, 0.287)
         
     if get_fs8:
         ℓ_Xi = pm.Uniform("ℓ_Xi", 0.01, 6)  
@@ -146,7 +146,7 @@ with pm.Model() as model:
         Xi_int = tt.inc_subtensor(Xi_int[0], Xi_gp[0])
         Xi_int = pm.Deterministic('Xi_int', Xi_int)
         
-        s80 = pm.Normal("s80", 0.82, 0.011)
+        s80 = pm.Normal("s80", 0.795, 0.026)
         E = H_gp/H_gp[0]
         Om = tt.as_tensor_variable(Xi_int*Wm0)
         Omm = Om[::-1]

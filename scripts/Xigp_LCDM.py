@@ -55,8 +55,8 @@ FastSound = data_class.get_FastSound(new=True)
 DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 
-n_samples = 2 #3000
-n_tune = 2 #3000
+n_samples = 3000
+n_tune = 3000
 datadict = {'DESI': DESI,
             'CC': CC,
             'DS17': DS17, 

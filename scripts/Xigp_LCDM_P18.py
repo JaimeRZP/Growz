@@ -55,8 +55,8 @@ FastSound = data_class.get_FastSound(new=True)
 DS17 = data_class.get_DS17(new=True)
 CMB = data_class.get_CMB(new=True)
 
-n_samples = 3001
-n_tune = 3001
+n_samples = 1500
+n_tune = 1500
 datadict = {'DESI': DESI,
             'CC': CC,
             'DS17': DS17, 
@@ -116,9 +116,9 @@ U_Xigp = data_class.make_U(z_int, z_Xigp, idx_Xigp)
 
 #base model
 with pm.Model() as model: 
-    H0 = pm.Normal('H0', 67.66, 0.42)
+    H0 = pm.Normal('H0', 67.73, 0.53)
     Wr0 = data_class.Wr0
-    Wm0 = pm.TruncatedNormal('Wm0', mu=0.3111, sigma=0.0056, lower=0 , upper=1-Wr0) 
+    Wm0 = pm.TruncatedNormal('Wm0', mu=0.3153, sigma=0.0073, lower=0 , upper=1-Wr0) 
     WL0 = pm.Deterministic('WL', 1-Wm0-Wr0)
     
     #Mean of the gp
@@ -126,8 +126,8 @@ with pm.Model() as model:
     H0_gp = pm.Deterministic("H0_gp", tt.as_tensor_variable(H_gp[0]))
        
     if get_rd:
-        rd_gp = pm.Normal('rd_gp', 147.21, 0.23)
-        rs_gp = pm.Normal('rs_gp', 144.57, 0.22)
+        rd_gp = pm.Normal('rd_gp', 147.09, 0.26)
+        rs_gp = pm.Normal('rs_gp', 144.43, 0.26)
     
     if get_fs8:
         ℓ_Xi = pm.Uniform("ℓ_Xi", 0.01, 6) 
@@ -142,7 +142,7 @@ with pm.Model() as model:
         Xi_int = tt.inc_subtensor(Xi_int[0], Xi_gp[0])
         Xi_int = pm.Deterministic('Xi_int', Xi_int)
         
-        s80 = pm.Normal("s80", 0.8102, 0.0060)
+        s80 = pm.Normal("s80", 0.8111, 0.0060)
         E = H_gp/H_gp[0]
         Om = tt.as_tensor_variable(Xi_int*Wm0)
         Omm = Om[::-1]
